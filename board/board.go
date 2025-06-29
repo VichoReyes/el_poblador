@@ -125,3 +125,54 @@ func PrintBoard() {
 	// TODO: Implement proper hexagon grid layout
 	fmt.Println("TODO: Implement hexagon grid layout")
 }
+
+// CrossCoord represents the coordinates of an intersection point
+// where three hexagons meet. Uses a tilted x-y coordinate system.
+type CrossCoord struct {
+	X, Y int
+}
+
+// TileCoord represents the coordinates of a hexagonal tile.
+// Uses the same tilted x-y coordinate system but represents the tile's position.
+type TileCoord struct {
+	X, Y int
+}
+
+// PathCoord represents a path/edge between two intersections.
+type PathCoord struct {
+	From, To CrossCoord
+}
+
+// NewCrossCoord creates a new intersection coordinate
+func NewCrossCoord(x, y int) CrossCoord {
+	return CrossCoord{X: x, Y: y}
+}
+
+// NewTileCoord creates a new tile coordinate
+func NewTileCoord(x, y int) TileCoord {
+	return TileCoord{X: x, Y: y}
+}
+
+// NewPathCoord creates a new path coordinate between two intersections
+func NewPathCoord(from, to CrossCoord) PathCoord {
+	// Ensure canonical ordering (ascending)
+	if (from.X < to.X) || (from.X == to.X && from.Y < to.Y) {
+		return PathCoord{From: from, To: to}
+	}
+	return PathCoord{From: to, To: from}
+}
+
+// String returns the string representation of an intersection coordinate
+func (ic CrossCoord) String() string {
+	return fmt.Sprintf("(%d,%d)", ic.X, ic.Y)
+}
+
+// String returns the string representation of a tile coordinate
+func (tc TileCoord) String() string {
+	return fmt.Sprintf("[%d,%d]", tc.X, tc.Y)
+}
+
+// String returns the string representation of a path coordinate
+func (pc PathCoord) String() string {
+	return fmt.Sprintf("%s-%s", pc.From.String(), pc.To.String())
+}
