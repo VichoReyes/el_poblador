@@ -125,9 +125,3 @@ func PrintBoard() {
 	// TODO: Implement proper hexagon grid layout
 	fmt.Println("TODO: Implement hexagon grid layout")
 }
-
-// GetBoardSize returns the dimensions of the board
-func GetBoardSize() (int, int) {
-	// TODO: Return actual board dimensions
-	return 5, 5 // placeholder
-}

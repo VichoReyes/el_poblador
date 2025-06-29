@@ -13,10 +13,6 @@ func main() {
 	board.PrintBoard()
 
 	fmt.Println()
-	width, height := board.GetBoardSize()
-	fmt.Printf("Board size: %dx%d\n", width, height)
-
-	fmt.Println()
 	fmt.Println("=== Tile Rendering Test ===")
 
 	// Test different tile types
