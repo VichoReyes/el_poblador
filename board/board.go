@@ -120,8 +120,30 @@ func (tile *Tile) getTerrainColor() string {
 	return fmt.Sprintf("\033[38;5;%dm", colorNumber)
 }
 
+// Board represents the game board
+type Board struct {
+	tiles map[TileCoord]Tile
+}
+
+// NewDesertBoard creates a new board of only desert tiles
+func NewDesertBoard() *Board {
+	board := &Board{
+		tiles: make(map[TileCoord]Tile),
+	}
+	// brute force all tile coords
+	for x := -3; x < 12; x++ {
+		for y := 0; y <= 5; y++ {
+			coord, valid := NewTileCoord(x, y)
+			if valid {
+				board.tiles[coord] = Tile{Terrain: Desierto, DiceNumber: 0}
+			}
+		}
+	}
+	return board
+}
+
 // PrintBoard prints the game board made of ASCII hexagons
-func PrintBoard() {
+func (b *Board) Print() {
 	// TODO: Implement proper hexagon grid layout
 	fmt.Println("TODO: Implement hexagon grid layout")
 }
@@ -204,9 +226,17 @@ func (c CrossCoord) Neighbors() []CrossCoord {
 	return neighbors
 }
 
-// NewTileCoord creates a new tile coordinate
-func NewTileCoord(x, y int) TileCoord {
-	return TileCoord{X: x, Y: y}
+// NewTileCoord creates a new tile coordinate and returns whether it is valid
+func NewTileCoord(x, y int) (TileCoord, bool) {
+	if (x+y)%2 == 0 {
+		return TileCoord{}, false
+	}
+	topLeft := NewCrossCoord(x, y)
+	bottomRight := NewCrossCoord(x, y+1)
+	if topLeft.IsInBounds() && bottomRight.IsInBounds() {
+		return TileCoord{X: x, Y: y}, true
+	}
+	return TileCoord{}, false
 }
 
 // NewPathCoord creates a new path coordinate between two intersections

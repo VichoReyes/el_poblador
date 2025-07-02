@@ -38,8 +38,8 @@ func TestPathCoordCanonicalOrdering(t *testing.T) {
 
 func TestCoordinateTypesAreDistinct(t *testing.T) {
 	// This test verifies that the types are different at runtime
-	intersection := NewCrossCoord(1, 1)
-	tile := NewTileCoord(1, 1)
+	intersection := NewCrossCoord(1, 0)
+	tile, _ := NewTileCoord(1, 0)
 
 	// They should have different string representations
 	if intersection.String() == tile.String() {
@@ -47,7 +47,7 @@ func TestCoordinateTypesAreDistinct(t *testing.T) {
 	}
 
 	// They should be different types (this is checked at compile time, but we can verify the behavior)
-	if intersection.String() == "(1,1)" && tile.String() == "[1,1]" {
+	if intersection.String() == "(1,0)" && tile.String() == "[1,0]" {
 		// This is the expected behavior
 	} else {
 		t.Error("Unexpected string representations")
@@ -127,5 +127,18 @@ func TestCrossCoordNeighborsProperty(t *testing.T) {
 
 	if err := quick.Check(f, nil); err != nil {
 		t.Error("Property test failed:", err)
+	}
+}
+
+func TestNewDesertBoardTileCount(t *testing.T) {
+	board := NewDesertBoard()
+
+	// Count number of tiles
+	tileCount := len(board.tiles)
+
+	// Standard Catan board has 19 hexagonal tiles
+	expectedTiles := 19
+	if tileCount != expectedTiles {
+		t.Errorf("Expected %d tiles in desert board, got %d", expectedTiles, tileCount)
 	}
 }

@@ -10,7 +10,7 @@ func main() {
 	fmt.Println("Testing board printing functionality:")
 	fmt.Println()
 
-	board.PrintBoard()
+	// board.PrintBoard()
 
 	fmt.Println()
 	fmt.Println("=== Tile Rendering Test ===")
