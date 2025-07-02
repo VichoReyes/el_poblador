@@ -36,6 +36,6 @@ func main() {
 	fmt.Println("Testing board printing functionality:")
 	fmt.Println()
 
-	board := board.NewDesertBoard()
+	board := board.NewChaoticBoard()
 	board.Print()
 }

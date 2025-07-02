@@ -2,6 +2,7 @@ package board
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 )
 
@@ -137,6 +138,28 @@ func NewDesertBoard() *Board {
 			coord, valid := NewTileCoord(x, y)
 			if valid {
 				board.tiles[coord] = Tile{Terrain: Desierto, DiceNumber: 0}
+			}
+		}
+	}
+	return board
+}
+
+// NewChaoticBoard creates a new board with random tiles
+func NewChaoticBoard() *Board {
+	board := &Board{
+		tiles: make(map[TileCoord]Tile),
+	}
+	// brute force all tile coords
+	for x := -3; x < 12; x++ {
+		for y := 0; y <= 5; y++ {
+			coord, valid := NewTileCoord(x, y)
+			if valid {
+				terrain := TerrainType(rand.Intn(6))
+				dice := rand.Intn(11) + 2
+				if terrain == Desierto {
+					dice = 0
+				}
+				board.tiles[coord] = Tile{Terrain: terrain, DiceNumber: dice}
 			}
 		}
 	}
