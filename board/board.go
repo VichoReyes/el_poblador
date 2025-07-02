@@ -2,6 +2,7 @@ package board
 
 import (
 	"fmt"
+	"strings"
 )
 
 // TerrainType represents the different types of terrain in Catan
@@ -144,8 +145,68 @@ func NewDesertBoard() *Board {
 
 // PrintBoard prints the game board made of ASCII hexagons
 func (b *Board) Print() {
-	// TODO: Implement proper hexagon grid layout
-	fmt.Println("TODO: Implement hexagon grid layout")
+	// there will be 20 lines
+	// there will be at most 5 tiles per line, plus 2 for padding
+	lines := make([][]string, 20)
+	for i := range lines {
+		lines[i] = make([]string, 7)
+	}
+
+	// see the full board in coordinates.md to understand the operations
+	for coords, tile := range b.tiles {
+		topLine := 5 + 3*coords.Y - coords.X
+		horizontalPos := (1 + coords.X + coords.Y) / 2
+		rendered := tile.RenderTile()
+		lines[topLine][horizontalPos] = rendered[0]
+		lines[topLine+1][horizontalPos] = rendered[1]
+		lines[topLine+2][horizontalPos] = rendered[2]
+		lines[topLine+3][horizontalPos] = rendered[3]
+	}
+
+	// pad the lines to center the characters
+	padToCenter(lines)
+
+	// print the lines
+	for _, line := range lines {
+		fmt.Println(strings.Join(line, ""))
+	}
+}
+
+func terminalLength(s string) int {
+	n := 0
+	skip := false
+	for _, c := range s {
+		if c == '\033' {
+			skip = true
+		} else if c == 'm' {
+			skip = false
+		} else if !skip {
+			n++
+		}
+	}
+	return n
+}
+
+func padToCenter(lines [][]string) {
+	maxLineLength := 0
+	for _, line := range lines {
+		sum := 0
+		for _, s := range line {
+			sum += terminalLength(s)
+		}
+		if sum > maxLineLength {
+			maxLineLength = sum
+		}
+	}
+	for _, line := range lines {
+		sum := 0
+		for _, s := range line {
+			sum += terminalLength(s)
+		}
+		padding := (maxLineLength - sum) / 2
+		line[0] = strings.Repeat(" ", padding)
+		line[len(line)-1] = strings.Repeat(" ", padding)
+	}
 }
 
 // CrossCoord represents the coordinates of an intersection point

@@ -6,12 +6,6 @@ import (
 )
 
 func main() {
-	fmt.Println("=== Board Component Test ===")
-	fmt.Println("Testing board printing functionality:")
-	fmt.Println()
-
-	// board.PrintBoard()
-
 	fmt.Println()
 	fmt.Println("=== Tile Rendering Test ===")
 
@@ -38,5 +32,10 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Println("=== End Test ===")
+	fmt.Println("=== Board Component Test ===")
+	fmt.Println("Testing board printing functionality:")
+	fmt.Println()
+
+	board := board.NewDesertBoard()
+	board.Print()
 }
