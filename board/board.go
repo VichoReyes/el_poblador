@@ -148,6 +148,62 @@ func NewCrossCoord(x, y int) CrossCoord {
 	return CrossCoord{X: x, Y: y}
 }
 
+// IsInBounds checks if the coordinate is within the bounds of the board
+// currently only for 3-4 player games
+func (c CrossCoord) IsInBounds() bool {
+	x := c.X
+	y := c.Y
+	// left edge
+	if x+y < 0 {
+		return false
+	}
+	// top left edge
+	if y < 0 {
+		return false
+	}
+	// top right edge
+	if x-y > 6 {
+		return false
+	}
+	// right edge
+	if x+y > 11 {
+		return false
+	}
+	// bottom right edge
+	if y > 5 {
+		return false
+	}
+	// bottom left edge
+	if x-y < -5 {
+		return false
+	}
+	return true
+}
+
+func (c CrossCoord) Neighbors() []CrossCoord {
+	var potential []CrossCoord
+	if (c.X+c.Y)%2 == 0 {
+		potential = []CrossCoord{
+			{X: c.X + 1, Y: c.Y},
+			{X: c.X - 1, Y: c.Y},
+			{X: c.X, Y: c.Y + 1},
+		}
+	} else {
+		potential = []CrossCoord{
+			{X: c.X + 1, Y: c.Y},
+			{X: c.X - 1, Y: c.Y},
+			{X: c.X, Y: c.Y - 1},
+		}
+	}
+	neighbors := []CrossCoord{}
+	for _, p := range potential {
+		if p.IsInBounds() {
+			neighbors = append(neighbors, p)
+		}
+	}
+	return neighbors
+}
+
 // NewTileCoord creates a new tile coordinate
 func NewTileCoord(x, y int) TileCoord {
 	return TileCoord{X: x, Y: y}

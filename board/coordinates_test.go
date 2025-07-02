@@ -2,6 +2,7 @@ package board
 
 import (
 	"testing"
+	"testing/quick"
 )
 
 func TestPathCoord(t *testing.T) {
@@ -50,5 +51,81 @@ func TestCoordinateTypesAreDistinct(t *testing.T) {
 		// This is the expected behavior
 	} else {
 		t.Error("Unexpected string representations")
+	}
+}
+func TestCrossCoordTraversal(t *testing.T) {
+	// Create a set to track visited coordinates
+	visited := make(map[CrossCoord]bool)
+
+	// Create a queue for BFS traversal
+	queue := []CrossCoord{NewCrossCoord(0, 0)}
+
+	// BFS traversal
+	for len(queue) > 0 {
+		// Pop first element
+		current := queue[0]
+		queue = queue[1:]
+
+		// Skip if already visited
+		if visited[current] {
+			continue
+		}
+
+		// Mark as visited
+		visited[current] = true
+
+		// Add unvisited neighbors to queue
+		for _, neighbor := range current.Neighbors() {
+			if !visited[neighbor] {
+				queue = append(queue, neighbor)
+			}
+		}
+	}
+
+	// Check total number of valid coordinates
+	expectedCount := 54
+	if len(visited) != expectedCount {
+		t.Errorf("Expected %d valid coordinates, got %d", expectedCount, len(visited))
+	}
+}
+
+func TestCrossCoordNeighborsProperty(t *testing.T) {
+	f := func(x, y int) bool {
+		// Limit coordinates to a reasonable range to find valid ones
+		x = x % 10
+		y = y % 10
+
+		coord := NewCrossCoord(x, y)
+		if !coord.IsInBounds() {
+			return true // Skip out of bounds coordinates
+		}
+
+		neighbors := coord.Neighbors()
+
+		// Property 1: Should have at least 2 neighbors
+		if len(neighbors) < 2 {
+			return false
+		}
+
+		// Property 2: Original coord should be neighbor of its neighbors
+		for _, n := range neighbors {
+			nNeighbors := n.Neighbors()
+			found := false
+			for _, nn := range nNeighbors {
+				if nn == coord {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if err := quick.Check(f, nil); err != nil {
+		t.Error("Property test failed:", err)
 	}
 }

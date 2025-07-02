@@ -46,6 +46,9 @@ So our triangle would have coords:
 
 (Commas omitted here for clarity)
 
+Notice that coords that add up to even numbers have a horizontal line to the left,
+while coords that add up to odd nums have a horizontal line to the right.
+
 ## Path/edge coordinates
 
 A path coordinate is simply a pair of intersections.
