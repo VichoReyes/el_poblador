@@ -23,3 +23,7 @@ Runs the board testing program (shows an empty board)
 ```bash
 go test ./board
 ```
+
+## License
+
+EUPL v1.2, in spanish
