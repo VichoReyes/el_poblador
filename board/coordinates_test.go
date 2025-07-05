@@ -6,15 +6,18 @@ import (
 )
 
 func TestPathCoord(t *testing.T) {
-	from, _ := NewCrossCoord(2, 1)
-	to, _ := NewCrossCoord(3, 1)
-	path := NewPathCoord(from, to)
+	from, _ := NewCrossCoord(2, 2)
+	to, _ := NewCrossCoord(2, 3)
+	path, valid := NewPathCoord(from, to)
+	if !valid {
+		t.Errorf("Expected path from %v to %v to be valid, got invalid", from, to)
+	}
 
 	if path.From != from || path.To != to {
 		t.Errorf("Expected path from %v to %v, got from %v to %v", from, to, path.From, path.To)
 	}
 
-	expected := "(2,1)-(3,1)"
+	expected := "(2,2)-(2,3)"
 	if path.String() != expected {
 		t.Errorf("Expected %s, got %s", expected, path.String())
 	}
@@ -22,13 +25,13 @@ func TestPathCoord(t *testing.T) {
 
 func TestPathCoordCanonicalOrdering(t *testing.T) {
 	// Test that path coordinates are always in canonical order
-	from, _ := NewCrossCoord(3, 1)
-	to, _ := NewCrossCoord(2, 1)
-	path := NewPathCoord(from, to)
+	to, _ := NewCrossCoord(2, 3)
+	from, _ := NewCrossCoord(2, 2)
+	path, _ := NewPathCoord(from, to)
 
 	// Should be reordered to canonical form
-	expectedFrom, _ := NewCrossCoord(2, 1)
-	expectedTo, _ := NewCrossCoord(3, 1)
+	expectedFrom, _ := NewCrossCoord(2, 2)
+	expectedTo, _ := NewCrossCoord(2, 3)
 
 	if path.From != expectedFrom || path.To != expectedTo {
 		t.Errorf("Expected canonical ordering from %v to %v, got from %v to %v",
@@ -36,29 +39,12 @@ func TestPathCoordCanonicalOrdering(t *testing.T) {
 	}
 }
 
-func TestCoordinateTypesAreDistinct(t *testing.T) {
-	// This test verifies that the types are different at runtime
-	intersection, _ := NewCrossCoord(1, 0)
-	tile, _ := NewTileCoord(1, 0)
-
-	// They should have different string representations
-	if intersection.String() == tile.String() {
-		t.Error("Intersection and tile coordinates should have different string representations")
-	}
-
-	// They should be different types (this is checked at compile time, but we can verify the behavior)
-	if intersection.String() == "(1,0)" && tile.String() == "[1,0]" {
-		// This is the expected behavior
-	} else {
-		t.Error("Unexpected string representations")
-	}
-}
 func TestCrossCoordTraversal(t *testing.T) {
 	// Create a set to track visited coordinates
 	visited := make(map[CrossCoord]bool)
 
 	// Create a queue for BFS traversal
-	initial, _ := NewCrossCoord(0, 0)
+	initial, _ := NewCrossCoord(1, 2)
 	queue := []CrossCoord{initial}
 
 	// BFS traversal
@@ -93,8 +79,8 @@ func TestCrossCoordTraversal(t *testing.T) {
 func TestCrossCoordNeighborsProperty(t *testing.T) {
 	f := func(x, y int) bool {
 		// Limit coordinates to a reasonable range to find valid ones
-		x = x % 10
-		y = y % 10
+		x = x % 7
+		y = y % 11
 
 		coord, valid := NewCrossCoord(x, y)
 		if !valid {

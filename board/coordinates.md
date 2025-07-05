@@ -29,25 +29,25 @@ but it won't start like that initially.
 
 ## Intersection coordinates
 
-The coordinates will be a tilted x-y, where X goes ↗️ and ➡️, and Y goes only ↘️.
+The coordinates will be x-y, where X goes only ➡️, but Y goes both ↘️ and ↙️.
 
-So our triangle would have coords:
+So our triangle could have coords:
 
 ```
-         /30‾‾‾\40
-        /20     \41
- /10‾‾‾\\       /
-/00     \\21___/31
+         /11‾‾‾\21
+        /12     \22
+ /02‾‾‾\\       /
+/03     \\13___/23
 \       //‾‾‾‾‾\
- \01___//11     \32
+ \04___//14     \24
         \       /
-         \12___/22
+         \15___/25
 ```
 
 (Commas omitted here for clarity)
 
-Notice that coords that add up to even numbers have a horizontal line to the left,
-while coords that add up to odd nums have a horizontal line to the right.
+Notice that coords that add up to even numbers have a horizontal line to the right,
+while coords that add up to odd nums have a horizontal line to the left.
 
 ## Path/edge coordinates
 
@@ -57,7 +57,7 @@ Canonical ordering is ascending.
 
 ## Tile coordinates
 
-Each tile is represented by the intersection on the left side of its top edge.
+Each tile is represented by the intersection on its leftmost edge.
 Not all edge coordinates have corresponding tiles.
 
 <details>
@@ -67,23 +67,23 @@ A full Catan board, with the tile coordinates, would look like this:
 
 ```
                  /‾‾‾‾‾\
-                /  5,0  \
+                /  2,1  \
          /‾‾‾‾‾\\       //‾‾‾‾‾\
-        /  3,0  \\_____//  6,1  \
+        /  1,2  \\_____//  3,2  \
  /‾‾‾‾‾\\       //‾‾‾‾‾\\       //‾‾‾‾‾\
-/  1,0  \\_____//  4,1  \\_____//  7,2  \
+/  0,3  \\_____//  2,3  \\_____//  4,3  \
 \       //‾‾‾‾‾\\       //‾‾‾‾‾\\       /
- \_____//  2,1  \\_____//  5,2  \\_____/
+ \_____//  1,4  \\_____//  3,4  \\_____/
  /‾‾‾‾‾\\       //‾‾‾‾‾\\       //‾‾‾‾‾\
-/  0,1  \\_____//  3,2  \\_____//  6,3  \
+/  0,5  \\_____//  2,5  \\_____//  4,5  \
 \       //‾‾‾‾‾\\       //‾‾‾‾‾\\       /
- \_____//  1,2  \\_____//  4,3  \\_____/
+ \_____//  1,6  \\_____//  3,6  \\_____/
  /‾‾‾‾‾\\       //‾‾‾‾‾\\       //‾‾‾‾‾\
-/ -1,2  \\_____//  2,3  \\_____//  5,4  \
+/  0,7  \\_____//  2,7  \\_____//  4,7  \
 \       //‾‾‾‾‾\\       //‾‾‾‾‾\\       /
- \_____//  0,3  \\_____//  3,4  \\_____/
+ \_____//  1,8  \\_____//  3,8  \\_____/
         \       //‾‾‾‾‾\\       /
-         \_____//  1,4  \\_____/
+         \_____//  2,9  \\_____/
                 \       /
                  \_____/
 ```

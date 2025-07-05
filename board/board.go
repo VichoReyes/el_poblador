@@ -3,6 +3,7 @@ package board
 import (
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 )
 
@@ -133,8 +134,8 @@ func NewDesertBoard() *Board {
 		tiles: make(map[TileCoord]Tile),
 	}
 	// brute force all tile coords
-	for x := -3; x < 12; x++ {
-		for y := 0; y <= 5; y++ {
+	for x := 0; x <= 5; x++ {
+		for y := 0; y <= 10; y++ {
 			coord, valid := NewTileCoord(x, y)
 			if valid {
 				board.tiles[coord] = Tile{Terrain: Desierto, DiceNumber: 0}
@@ -150,8 +151,8 @@ func NewChaoticBoard() *Board {
 		tiles: make(map[TileCoord]Tile),
 	}
 	// brute force all tile coords
-	for x := -3; x < 12; x++ {
-		for y := 0; y <= 5; y++ {
+	for x := 0; x <= 5; x++ {
+		for y := 0; y <= 10; y++ {
 			coord, valid := NewTileCoord(x, y)
 			if valid {
 				terrain := TerrainType(rand.Intn(6))
@@ -264,27 +265,27 @@ func (c CrossCoord) IsInBounds() bool {
 	x := c.X
 	y := c.Y
 	// left edge
-	if x+y < 0 {
+	if x < 0 {
 		return false
 	}
 	// top left edge
-	if y < 0 {
+	if x+y < 2 {
 		return false
 	}
 	// top right edge
-	if x-y > 6 {
+	if x-y > 3 {
 		return false
 	}
 	// right edge
-	if x+y > 11 {
+	if x > 5 {
 		return false
 	}
 	// bottom right edge
-	if y > 5 {
+	if x+y > 13 {
 		return false
 	}
 	// bottom left edge
-	if x-y < -5 {
+	if y-x > 8 {
 		return false
 	}
 	return true
@@ -295,14 +296,14 @@ func (c CrossCoord) Neighbors() []CrossCoord {
 	if (c.X+c.Y)%2 == 0 {
 		potential = []CrossCoord{
 			{X: c.X + 1, Y: c.Y},
-			{X: c.X - 1, Y: c.Y},
+			{X: c.X, Y: c.Y - 1},
 			{X: c.X, Y: c.Y + 1},
 		}
 	} else {
 		potential = []CrossCoord{
-			{X: c.X + 1, Y: c.Y},
 			{X: c.X - 1, Y: c.Y},
 			{X: c.X, Y: c.Y - 1},
+			{X: c.X, Y: c.Y + 1},
 		}
 	}
 	neighbors := []CrossCoord{}
@@ -319,21 +320,26 @@ func NewTileCoord(x, y int) (TileCoord, bool) {
 	if (x+y)%2 == 0 {
 		return TileCoord{}, false
 	}
-	_, ok1 := NewCrossCoord(x, y)
-	_, ok2 := NewCrossCoord(x, y+1)
-	if ok1 && ok2 {
+	_, leftOk := NewCrossCoord(x, y)
+	_, acrossOk := NewCrossCoord(x+1, y)
+	if leftOk && acrossOk {
 		return TileCoord{X: x, Y: y}, true
 	}
 	return TileCoord{}, false
 }
 
 // NewPathCoord creates a new path coordinate between two intersections
-func NewPathCoord(from, to CrossCoord) PathCoord {
+func NewPathCoord(from, to CrossCoord) (PathCoord, bool) {
+	// ensure from and to are neighbors
+	fromNeighbors := from.Neighbors()
+	if !slices.Contains(fromNeighbors, to) {
+		return PathCoord{}, false
+	}
 	// Ensure canonical ordering (ascending)
 	if (from.X < to.X) || (from.X == to.X && from.Y < to.Y) {
-		return PathCoord{From: from, To: to}
+		return PathCoord{From: from, To: to}, true
 	}
-	return PathCoord{From: to, To: from}
+	return PathCoord{From: to, To: from}, true
 }
 
 // String returns the string representation of an intersection coordinate
