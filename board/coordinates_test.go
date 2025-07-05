@@ -8,10 +8,7 @@ import (
 func TestPathCoord(t *testing.T) {
 	from, _ := NewCrossCoord(2, 2)
 	to, _ := NewCrossCoord(2, 3)
-	path, valid := NewPathCoord(from, to)
-	if !valid {
-		t.Errorf("Expected path from %v to %v to be valid, got invalid", from, to)
-	}
+	path := NewPathCoord(from, to)
 
 	if path.From != from || path.To != to {
 		t.Errorf("Expected path from %v to %v, got from %v to %v", from, to, path.From, path.To)
@@ -27,7 +24,7 @@ func TestPathCoordCanonicalOrdering(t *testing.T) {
 	// Test that path coordinates are always in canonical order
 	to, _ := NewCrossCoord(2, 3)
 	from, _ := NewCrossCoord(2, 2)
-	path, _ := NewPathCoord(from, to)
+	path := NewPathCoord(from, to)
 
 	// Should be reordered to canonical form
 	expectedFrom, _ := NewCrossCoord(2, 2)
@@ -127,5 +124,18 @@ func TestNewDesertBoardTileCount(t *testing.T) {
 	expectedTiles := 19
 	if tileCount != expectedTiles {
 		t.Errorf("Expected %d tiles in desert board, got %d", expectedTiles, tileCount)
+	}
+}
+
+func TestTileRender(t *testing.T) {
+	tile := Tile{Terrain: Arcilla, DiceNumber: 5}
+	rendered := tile.RenderTile()
+
+	lengthsExpected := [5]int{8, 10, 10, 10, 8}
+	for i, line := range rendered {
+		actualLength := terminalLength(line)
+		if actualLength != lengthsExpected[i] {
+			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength)
+		}
 	}
 }

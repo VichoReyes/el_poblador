@@ -45,32 +45,32 @@ type Tile struct {
 	DiceNumber int // 2-12, 0 for desert (no dice)
 }
 
-// RenderTile returns a 4-element array of strings representing the tile
+// RenderTile returns a 5-element array of strings representing the tile
 // looks like this:
 //
-//	/‾‾‾‾‾‾\
-//	/  B  \
-//	\  2   /
-//	\______/
+//		/‾‾‾‾‾‾\
+//		/  B  \
+//	    2
+//		\      /
+//		\______/
 //
 // where B is the terrain abbreviation and 2 is the dice number
-func (tile *Tile) RenderTile() [4]string {
+func (tile *Tile) RenderTile() [5]string {
 	terrainAbbrev := tile.getTerrainAbbrev()
 
-	// Format dice number, empty for desert
 	diceStr := ""
 	if tile.DiceNumber > 0 {
 		diceStr = fmt.Sprintf("%d", tile.DiceNumber)
 	}
 
-	// Create the 4 lines of the hexagon
 	code := tile.getTerrainColor()
 	endCode := "\033[0m"
-	lines := [4]string{
-		fmt.Sprintf("%s/‾‾‾‾‾\\%s", code, endCode),
+	lines := [5]string{
+		fmt.Sprintf("%s/‾‾‾‾‾‾\\%s", code, endCode),
 		fmt.Sprintf("%s/  %s  \\%s", code, terrainAbbrev, endCode),
-		fmt.Sprintf("%s\\  %2s   /%s", code, diceStr, endCode),
-		fmt.Sprintf("%s\\_____/%s", code, endCode),
+		fmt.Sprintf("%s    %2s    %s", code, diceStr, endCode),
+		fmt.Sprintf("%s\\        /%s", code, endCode),
+		fmt.Sprintf("%s\\______/%s", code, endCode),
 	}
 	return lines
 }
@@ -79,19 +79,19 @@ func (tile *Tile) RenderTile() [4]string {
 func (tile *Tile) getTerrainAbbrev() string {
 	switch tile.Terrain {
 	case Bosque:
-		return "BOS"
+		return "BOSQ"
 	case Arcilla:
-		return "ARC"
+		return "ARCI"
 	case Montaña:
-		return "MTN"
+		return "MONT"
 	case Plantación:
-		return "PLT"
+		return "PLAN"
 	case Pasto:
-		return "PAS"
+		return "PAST"
 	case Desierto:
-		return "DES"
+		return "DESI"
 	default:
-		return "???"
+		return "????"
 	}
 }
 
@@ -126,12 +126,17 @@ func (tile *Tile) getTerrainColor() string {
 // Board represents the game board
 type Board struct {
 	tiles map[TileCoord]Tile
+	// TODO: store something, not just bools
+	roads       map[PathCoord]bool
+	settlements map[CrossCoord]bool
 }
 
 // NewDesertBoard creates a new board of only desert tiles
 func NewDesertBoard() *Board {
 	board := &Board{
-		tiles: make(map[TileCoord]Tile),
+		tiles:       make(map[TileCoord]Tile),
+		roads:       make(map[PathCoord]bool),
+		settlements: make(map[CrossCoord]bool),
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -148,7 +153,9 @@ func NewDesertBoard() *Board {
 // NewChaoticBoard creates a new board with random tiles
 func NewChaoticBoard() *Board {
 	board := &Board{
-		tiles: make(map[TileCoord]Tile),
+		tiles:       make(map[TileCoord]Tile),
+		roads:       make(map[PathCoord]bool),
+		settlements: make(map[CrossCoord]bool),
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -168,32 +175,103 @@ func NewChaoticBoard() *Board {
 }
 
 // PrintBoard prints the game board made of ASCII hexagons
-func (b *Board) Print() {
-	// there will be 20 lines
-	// there will be at most 5 tiles per line, plus 2 for padding
-	lines := make([][]string, 20)
-	for i := range lines {
-		lines[i] = make([]string, 7)
-	}
+func (b *Board) Print() []string {
+	// there will be 31 lines (5 * 5 + 6 for the roads)
+	lines := make([]strings.Builder, 31)
+	leftPadding(lines)
 
-	// see the full board in coordinates.md to understand the operations
-	for coords, tile := range b.tiles {
-		topLine := 5 + 3*coords.Y - coords.X
-		horizontalPos := (1 + coords.X + coords.Y) / 2
-		rendered := tile.RenderTile()
-		lines[topLine][horizontalPos] = rendered[0]
-		lines[topLine+1][horizontalPos] = rendered[1]
-		lines[topLine+2][horizontalPos] = rendered[2]
-		lines[topLine+3][horizontalPos] = rendered[3]
+	for x := 0; x <= 5; x++ {
+		for y := 0; y <= 10; y++ {
+			coord, valid := NewCrossCoord(x, y)
+			if valid {
+				renderCrossing(b, lines, coord)
+			}
+		}
 	}
-
-	// pad the lines to center the characters
-	padToCenter(lines)
 
 	// print the lines
-	for _, line := range lines {
-		fmt.Println(strings.Join(line, ""))
+	renderedLines := []string{}
+	for i := range lines {
+		renderedLines = append(renderedLines, lines[i].String())
 	}
+	return renderedLines
+}
+
+// takes responsibility for the crossing and whatever is to its right
+// right-up and right-down paths
+func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord) {
+	// print crossing
+	midLine := coord.Y * 3
+	hasCity := board.settlements[coord]
+	if hasCity {
+		lines[midLine].WriteString("▲▲▲")
+	} else {
+		lines[midLine].WriteString("   ")
+	}
+
+	// print right side
+	tileCoord, valid := NewTileCoord(coord.X, coord.Y)
+	if valid {
+		up, valid := coord.Up()
+		if valid {
+			path := NewPathCoord(coord, up)
+			if board.roads[path] {
+				lines[midLine-2].WriteString("//")
+				lines[midLine-1].WriteString("//")
+			} else {
+				lines[midLine-2].WriteString("  ")
+				lines[midLine-1].WriteString("  ")
+			}
+		}
+		down, valid := coord.Down()
+		if valid {
+			path := NewPathCoord(coord, down)
+			if board.roads[path] {
+				lines[midLine+1].WriteString("//")
+				lines[midLine+2].WriteString("//")
+			} else {
+				lines[midLine+1].WriteString("  ")
+				lines[midLine+2].WriteString("  ")
+			}
+		}
+		tile := board.tiles[tileCoord]
+		renderedTile := tile.RenderTile()
+		lines[midLine-2].WriteString(renderedTile[0])
+		lines[midLine-1].WriteString(renderedTile[1])
+		lines[midLine].WriteString(renderedTile[2])
+		lines[midLine+1].WriteString(renderedTile[3])
+		lines[midLine+2].WriteString(renderedTile[4])
+	} else {
+		right, valid := coord.Right()
+		if !valid {
+			return
+		}
+		pathCoord := NewPathCoord(coord, right)
+		if board.roads[pathCoord] {
+			lines[midLine].WriteString(" ==== ")
+		} else {
+			lines[midLine].WriteString("      ")
+		}
+	}
+}
+
+func leftPadding(lines []strings.Builder) {
+	// fake paths, tiles and crossings spaces
+	top := []int{3 + 6 + 3 + 10, 2 + 8 + 2 + 10, 2 + 10 + 2 + 8, 3 + 10, 2 + 10, 2 + 8}
+	// left padding with virtual tiles would go
+	// 2, 2, 1, 0, 1, 2, repeat
+	pattern := []int{2, 2, 1, 0, 1, 2}
+	for i := range lines {
+		base := pattern[i%len(pattern)]
+		if i < len(top) {
+			base += top[i]
+		}
+		if len(lines)-i-1 < len(top) {
+			base += top[len(lines)-i-1]
+		}
+		lines[i].WriteString(strings.Repeat(" ", base))
+	}
+
 }
 
 func terminalLength(s string) int {
@@ -211,36 +289,13 @@ func terminalLength(s string) int {
 	return n
 }
 
-func padToCenter(lines [][]string) {
-	maxLineLength := 0
-	for _, line := range lines {
-		sum := 0
-		for _, s := range line {
-			sum += terminalLength(s)
-		}
-		if sum > maxLineLength {
-			maxLineLength = sum
-		}
-	}
-	for _, line := range lines {
-		sum := 0
-		for _, s := range line {
-			sum += terminalLength(s)
-		}
-		padding := (maxLineLength - sum) / 2
-		line[0] = strings.Repeat(" ", padding)
-		line[len(line)-1] = strings.Repeat(" ", padding)
-	}
-}
-
 // CrossCoord represents the coordinates of an intersection point
-// where three hexagons meet. Uses a tilted x-y coordinate system.
+// where three hexagons meet.
 type CrossCoord struct {
 	X, Y int
 }
 
 // TileCoord represents the coordinates of a hexagonal tile.
-// Uses the same tilted x-y coordinate system but represents the tile's position.
 type TileCoord struct {
 	X, Y int
 }
@@ -291,7 +346,30 @@ func (c CrossCoord) IsInBounds() bool {
 	return true
 }
 
+func (c CrossCoord) Up() (CrossCoord, bool) {
+	return NewCrossCoord(c.X, c.Y-1)
+}
+
+func (c CrossCoord) Down() (CrossCoord, bool) {
+	return NewCrossCoord(c.X, c.Y+1)
+}
+
+func (c CrossCoord) Left() (CrossCoord, bool) {
+	if (c.X+c.Y)%2 == 0 {
+		return CrossCoord{}, false
+	}
+	return NewCrossCoord(c.X-1, c.Y)
+}
+
+func (c CrossCoord) Right() (CrossCoord, bool) {
+	if (c.X+c.Y)%2 == 1 {
+		return CrossCoord{}, false
+	}
+	return NewCrossCoord(c.X+1, c.Y)
+}
+
 func (c CrossCoord) Neighbors() []CrossCoord {
+	// TODO: use Up, Down, Left, Right methods
 	var potential []CrossCoord
 	if (c.X+c.Y)%2 == 0 {
 		potential = []CrossCoord{
@@ -329,17 +407,17 @@ func NewTileCoord(x, y int) (TileCoord, bool) {
 }
 
 // NewPathCoord creates a new path coordinate between two intersections
-func NewPathCoord(from, to CrossCoord) (PathCoord, bool) {
-	// ensure from and to are neighbors
+// panics if from and to are not neighbors
+func NewPathCoord(from, to CrossCoord) PathCoord {
 	fromNeighbors := from.Neighbors()
 	if !slices.Contains(fromNeighbors, to) {
-		return PathCoord{}, false
+		panic("from and to are not neighbors")
 	}
 	// Ensure canonical ordering (ascending)
 	if (from.X < to.X) || (from.X == to.X && from.Y < to.Y) {
-		return PathCoord{From: from, To: to}, true
+		return PathCoord{From: from, To: to}
 	}
-	return PathCoord{From: to, To: from}, true
+	return PathCoord{From: to, To: from}
 }
 
 // String returns the string representation of an intersection coordinate

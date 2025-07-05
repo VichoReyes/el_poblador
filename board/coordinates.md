@@ -3,24 +3,78 @@
 Hexagons have the shape
 
 ```
- /‾‾‾‾‾\
-/       \
-\       /
- \_____/
+ /‾‾‾‾‾‾\
+/        \
+
+\        /
+ \______/
 ```
 
 Then we concatenate them so a triangle looks like this:
 
 ```
-         /‾‾‾‾‾\
-        /       \
- /‾‾‾‾‾\\       /
-/       \\_____/
-\       //‾‾‾‾‾\
- \_____//       \
-        \       /
-         \_____/
+asd          asd ====
+ \\            /‾‾‾‾‾‾\
+  \\          /        \
+  asd ==== asd
+  ///‾‾‾‾‾‾\  \        /
+ ///        \  \______/
+asd          sdf
+ \\\        /  /‾‾‾‾‾‾\
+  \\\______/  /        \
+  asd ==== asd
+              \        /
+               \______/
 ```
+
+Which leaves extra space for roads and settlements.
+
+## Rendering responsibilities
+
+There are 4 entity types that can print themselves
+- Tiles
+- Crossings
+- Paths
+- Padding
+
+### Tiles
+
+The tiles are responsible for the area delimited by their borders (between the slashes)
+For the middle row, they're responsible for a whitespace of length 10.  
+So their 5 rows take up the following spaces:
+- 8
+- 10
+- 10
+- 10
+- 8
+
+### Crossings
+
+Crossings are 3-character spaces, in a single line.
+
+### Paths
+
+Diagonal paths are 2x2 rhomboids, and horizontal ones are 6x1
+
+```
+ //
+//
+
+(quotes not included, notice the spaces)
+" ==== "
+```
+
+### Padding
+
+Padding is responsible for making the whole thing fit into a square.
+
+### Overall
+
+Iterate over crossing coordinates, left to right.
+Every crossing puts itself on the line, plus the item to its right.
+(can be a road or a tile).
+When the item is a tile, the crossing also takes responsibility for the
+paths going up and down, plus the whole tile.
 
 # Coordinates
 
