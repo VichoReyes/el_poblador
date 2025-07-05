@@ -249,9 +249,13 @@ type PathCoord struct {
 	From, To CrossCoord
 }
 
-// NewCrossCoord creates a new intersection coordinate
-func NewCrossCoord(x, y int) CrossCoord {
-	return CrossCoord{X: x, Y: y}
+// NewCrossCoord creates a intersection coordinate and returns whether it is valid
+func NewCrossCoord(x, y int) (CrossCoord, bool) {
+	coord := CrossCoord{X: x, Y: y}
+	if coord.IsInBounds() {
+		return coord, true
+	}
+	return CrossCoord{}, false
 }
 
 // IsInBounds checks if the coordinate is within the bounds of the board
@@ -315,9 +319,9 @@ func NewTileCoord(x, y int) (TileCoord, bool) {
 	if (x+y)%2 == 0 {
 		return TileCoord{}, false
 	}
-	topLeft := NewCrossCoord(x, y)
-	bottomRight := NewCrossCoord(x, y+1)
-	if topLeft.IsInBounds() && bottomRight.IsInBounds() {
+	_, ok1 := NewCrossCoord(x, y)
+	_, ok2 := NewCrossCoord(x, y+1)
+	if ok1 && ok2 {
 		return TileCoord{X: x, Y: y}, true
 	}
 	return TileCoord{}, false

@@ -6,8 +6,8 @@ import (
 )
 
 func TestPathCoord(t *testing.T) {
-	from := NewCrossCoord(2, 1)
-	to := NewCrossCoord(3, 1)
+	from, _ := NewCrossCoord(2, 1)
+	to, _ := NewCrossCoord(3, 1)
 	path := NewPathCoord(from, to)
 
 	if path.From != from || path.To != to {
@@ -22,13 +22,13 @@ func TestPathCoord(t *testing.T) {
 
 func TestPathCoordCanonicalOrdering(t *testing.T) {
 	// Test that path coordinates are always in canonical order
-	from := NewCrossCoord(3, 1)
-	to := NewCrossCoord(2, 1)
+	from, _ := NewCrossCoord(3, 1)
+	to, _ := NewCrossCoord(2, 1)
 	path := NewPathCoord(from, to)
 
 	// Should be reordered to canonical form
-	expectedFrom := NewCrossCoord(2, 1)
-	expectedTo := NewCrossCoord(3, 1)
+	expectedFrom, _ := NewCrossCoord(2, 1)
+	expectedTo, _ := NewCrossCoord(3, 1)
 
 	if path.From != expectedFrom || path.To != expectedTo {
 		t.Errorf("Expected canonical ordering from %v to %v, got from %v to %v",
@@ -38,7 +38,7 @@ func TestPathCoordCanonicalOrdering(t *testing.T) {
 
 func TestCoordinateTypesAreDistinct(t *testing.T) {
 	// This test verifies that the types are different at runtime
-	intersection := NewCrossCoord(1, 0)
+	intersection, _ := NewCrossCoord(1, 0)
 	tile, _ := NewTileCoord(1, 0)
 
 	// They should have different string representations
@@ -58,7 +58,8 @@ func TestCrossCoordTraversal(t *testing.T) {
 	visited := make(map[CrossCoord]bool)
 
 	// Create a queue for BFS traversal
-	queue := []CrossCoord{NewCrossCoord(0, 0)}
+	initial, _ := NewCrossCoord(0, 0)
+	queue := []CrossCoord{initial}
 
 	// BFS traversal
 	for len(queue) > 0 {
@@ -95,8 +96,8 @@ func TestCrossCoordNeighborsProperty(t *testing.T) {
 		x = x % 10
 		y = y % 10
 
-		coord := NewCrossCoord(x, y)
-		if !coord.IsInBounds() {
+		coord, valid := NewCrossCoord(x, y)
+		if !valid {
 			return true // Skip out of bounds coordinates
 		}
 
