@@ -23,7 +23,7 @@ func main() {
 		fmt.Printf("Tile %d (%s, dice: %d):\n", i+1, tile.Terrain.String(), tile.DiceNumber)
 		rendered := tile.RenderTile()
 		for i, line := range rendered {
-			if i == 0 || i == 4 {
+			if i == 0 || i == len(rendered)-1 {
 				fmt.Printf(" %s\n", line)
 			} else {
 				fmt.Printf("%s\n", line)

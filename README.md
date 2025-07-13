@@ -19,6 +19,12 @@ go run cmd/testboard/main.go
 ```
 Runs the board testing program (shows an empty board)
 
+### Full-Screen Terminal
+```bash
+go run cmd/fullscreen/main.go
+```
+Runs the full-screen terminal application (press 'q' to quit, 'r' to regenerate board)
+
 ### Running Tests
 ```bash
 go test ./board
