@@ -178,7 +178,7 @@ func NewChaoticBoard() *Board {
 func (b *Board) Print() []string {
 	// there will be 31 lines (5 * 5 + 6 for the roads)
 	lines := make([]strings.Builder, 31)
-	leftPadding(lines)
+	sidePadding(lines)
 
 	for x := 0; x <= 5; x++ {
 		for y := 0; y <= 10; y++ {
@@ -189,7 +189,8 @@ func (b *Board) Print() []string {
 		}
 	}
 
-	// print the lines
+	sidePadding(lines)
+
 	renderedLines := []string{}
 	for i := range lines {
 		renderedLines = append(renderedLines, lines[i].String())
@@ -255,7 +256,7 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord) {
 	}
 }
 
-func leftPadding(lines []strings.Builder) {
+func sidePadding(lines []strings.Builder) {
 	// fake paths, tiles and crossings spaces
 	top := []int{3 + 6 + 3 + 10, 2 + 8 + 2 + 10, 2 + 10 + 2 + 8, 3 + 10, 2 + 10, 2 + 8}
 	// left padding with virtual tiles would go

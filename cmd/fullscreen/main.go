@@ -1,201 +1,103 @@
 package main
 
 import (
-	"bufio"
 	"el_poblador/board"
 	"fmt"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 
-	"golang.org/x/term"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-// Terminal represents our full-screen terminal application
-type Terminal struct {
-	originalState *term.State
-	width         int
-	height        int
-	board         *board.Board
+// model represents the state of our application.
+type model struct {
+	board  *board.Board
+	width  int
+	height int
 }
 
-// NewTerminal creates a new terminal instance
-func NewTerminal() (*Terminal, error) {
-	// Get terminal size
-	width, height, err := term.GetSize(int(os.Stdin.Fd()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get terminal size: %w", err)
+// initialModel creates the initial state of the application.
+func initialModel() model {
+	return model{
+		board: board.NewChaoticBoard(),
 	}
-
-	// Save original terminal state
-	originalState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to enter raw mode: %w", err)
-	}
-
-	return &Terminal{
-		originalState: originalState,
-		width:         width,
-		height:        height,
-		board:         board.NewChaoticBoard(),
-	}, nil
 }
 
-// Cleanup restores the terminal to its original state
-func (t *Terminal) Cleanup() {
-	// Show cursor
-	fmt.Print("\033[?25h")
-	// Exit alternate screen buffer
-	fmt.Print("\033[?1049l")
-	// Restore original terminal state
-	term.Restore(int(os.Stdin.Fd()), t.originalState)
+// Init is the first function that will be called. It can be used to send
+// an initial command. We don't need to do that here, so we'll return nil.
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
-// Clear clears the screen and moves cursor to top-left
-func (t *Terminal) Clear() {
-	fmt.Print("\033[2J\033[H")
-}
+// Update is called when a message is received. Use it to update your model.
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	// Is it a key press?
+	case tea.KeyMsg:
+		switch msg.String() {
+		// These keys should exit the program.
+		case "ctrl+c", "q":
+			return m, tea.Quit
 
-// HideCursor hides the terminal cursor
-func (t *Terminal) HideCursor() {
-	fmt.Print("\033[?25l")
-}
-
-// ShowCursor shows the terminal cursor
-func (t *Terminal) ShowCursor() {
-	fmt.Print("\033[?25h")
-}
-
-// MoveCursor moves the cursor to the specified position (1-indexed)
-func (t *Terminal) MoveCursor(row, col int) {
-	fmt.Printf("\033[%d;%dH", row, col)
-}
-
-// EnterAlternateScreen enters the alternate screen buffer
-func (t *Terminal) EnterAlternateScreen() {
-	fmt.Print("\033[?1049h")
-}
-
-// DrawBoard draws the game board centered on screen
-func (t *Terminal) DrawBoard() {
-	lines := t.board.Print()
-
-	// Calculate centering offset
-	maxLineLength := 0
-	for _, line := range lines {
-		if len(line) > maxLineLength {
-			maxLineLength = len(line)
+		// The "r" key regenerates the board.
+		case "r":
+			m.board = board.NewChaoticBoard()
+			return m, nil
 		}
+
+	// Is it a window resize?
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	}
 
-	startRow := max((t.height-len(lines))/2, 1)
-
-	startCol := max((t.width-maxLineLength)/2, 1)
-
-	// Draw each line
-	for i, line := range lines {
-		t.MoveCursor(startRow+i, startCol)
-		fmt.Print(line)
-	}
+	return m, nil
 }
 
-// DrawStatusBar draws a status bar at the bottom of the screen
-func (t *Terminal) DrawStatusBar() {
-	t.MoveCursor(t.height, 1)
-	statusMsg := fmt.Sprintf("Terminal: %dx%d | Press 'q' to quit, 'r' to regenerate board", t.width, t.height)
+// View is called to render the program's UI.
+func (m model) View() string {
+	margin := lipgloss.NewStyle().Margin(1)
+	// Title text styled with bold.
+	titleText := lipgloss.NewStyle().Bold(true).Render("El Poblador - Bubble Tea Version")
 
-	// Pad or truncate to fit screen width
-	if len(statusMsg) > t.width {
-		statusMsg = statusMsg[:t.width]
-	} else {
-		statusMsg = statusMsg + strings.Repeat(" ", t.width-len(statusMsg))
-	}
+	// The title is placed in the center of the screen, with a margin below it.
+	renderedTitle := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, titleText)
 
-	// Draw with reverse video (white on black)
-	fmt.Printf("\033[7m%s\033[0m", statusMsg)
-}
+	// Help text styled as faint.
+	helpText := lipgloss.NewStyle().Faint(true).Render("Press 'r' to regenerate the board. Press 'q' to quit.")
 
-// DrawTitle draws a title at the top of the screen
-func (t *Terminal) DrawTitle() {
-	title := "El Poblador - Settlers of Catan"
-	startCol := (t.width - len(title)) / 2
-	if startCol < 1 {
-		startCol = 1
-	}
+	// The help text is placed in the center of the screen.
+	renderedHelp := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, helpText)
 
-	t.MoveCursor(1, startCol)
-	fmt.Printf("\033[1m%s\033[0m", title) // Bold text
-}
+	// Board
+	boardLines := m.board.Print()
+	boardContent := strings.Join(boardLines, "\n")
 
-// Render redraws the entire screen
-func (t *Terminal) Render() {
-	t.Clear()
-	t.DrawTitle()
-	t.DrawBoard()
-	t.DrawStatusBar()
-}
+	// players
+	players := strings.Join([]string{"John", "Jane", "Jim (turn)", "Jill"}, "\n\n")
+	dice := "⚂ ⚄"
+	sidebar := margin.Render(lipgloss.JoinVertical(lipgloss.Left, dice, players))
+	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebar)
 
-// ReadKey reads a single keypress
-func (t *Terminal) ReadKey() (byte, error) {
-	reader := bufio.NewReader(os.Stdin)
-	char, err := reader.ReadByte()
-	return char, err
-}
+	// Calculate the available space for the board.
+	availableHeight := m.height - lipgloss.Height(renderedTitle) - lipgloss.Height(renderedHelp)
 
-// Run starts the main application loop
-func (t *Terminal) Run() error {
-	// Enter alternate screen and hide cursor
-	t.EnterAlternateScreen()
-	t.HideCursor()
+	// Main content is the board, centered in the available space.
+	mainContent := lipgloss.Place(m.width, availableHeight,
+		lipgloss.Center,
+		lipgloss.Center,
+		renderedPlayers,
+	)
 
-	// Setup signal handling for cleanup
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	// Initial render
-	t.Render()
-
-	// Main event loop
-	for {
-		select {
-		case <-sigChan:
-			return nil
-		default:
-			// Read key input
-			key, err := t.ReadKey()
-			if err != nil {
-				return fmt.Errorf("failed to read key: %w", err)
-			}
-
-			// Handle input
-			switch key {
-			case 'q', 'Q':
-				return nil
-			case 'r', 'R':
-				t.board = board.NewChaoticBoard()
-				t.Render()
-			case '\x03': // Ctrl+C
-				return nil
-			}
-		}
-	}
+	return lipgloss.JoinVertical(lipgloss.Left, renderedTitle, mainContent, renderedHelp)
 }
 
 func main() {
-	// Create terminal instance
-	terminal, err := NewTerminal()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating terminal: %v\n", err)
-		os.Exit(1)
-	}
+	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 
-	// Ensure cleanup happens
-	defer terminal.Cleanup()
-
-	// Run the application
-	if err := terminal.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error running terminal: %v\n", err)
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}
 }
