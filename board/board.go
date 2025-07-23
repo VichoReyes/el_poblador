@@ -160,14 +160,20 @@ func NewChaoticBoard() *Board {
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
 		for y := 0; y <= 10; y++ {
-			coord, valid := NewTileCoord(x, y)
+			crossCoord, valid := NewCrossCoord(x, y)
+			if valid && rand.Intn(4) == 0 {
+				board.settlements[crossCoord] = true
+				neighbors := crossCoord.Neighbors()
+				board.roads[NewPathCoord(crossCoord, neighbors[rand.Intn(len(neighbors))])] = true
+			}
+			tileCoord, valid := NewTileCoord(x, y)
 			if valid {
 				terrain := TerrainType(rand.Intn(6))
 				dice := rand.Intn(11) + 2
 				if terrain == Desierto {
 					dice = 0
 				}
-				board.tiles[coord] = Tile{Terrain: terrain, DiceNumber: dice}
+				board.tiles[tileCoord] = Tile{Terrain: terrain, DiceNumber: dice}
 			}
 		}
 	}
@@ -211,8 +217,7 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord) {
 	}
 
 	// print right side
-	tileCoord, valid := NewTileCoord(coord.X, coord.Y)
-	if valid {
+	if (coord.X+coord.Y)%2 == 1 {
 		up, valid := coord.Up()
 		if valid {
 			path := NewPathCoord(coord, up)
@@ -228,20 +233,23 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord) {
 		if valid {
 			path := NewPathCoord(coord, down)
 			if board.roads[path] {
-				lines[midLine+1].WriteString("//")
-				lines[midLine+2].WriteString("//")
+				lines[midLine+1].WriteString("\\\\")
+				lines[midLine+2].WriteString("\\\\")
 			} else {
 				lines[midLine+1].WriteString("  ")
 				lines[midLine+2].WriteString("  ")
 			}
 		}
-		tile := board.tiles[tileCoord]
-		renderedTile := tile.RenderTile()
-		lines[midLine-2].WriteString(renderedTile[0])
-		lines[midLine-1].WriteString(renderedTile[1])
-		lines[midLine].WriteString(renderedTile[2])
-		lines[midLine+1].WriteString(renderedTile[3])
-		lines[midLine+2].WriteString(renderedTile[4])
+		tileCoord, valid := NewTileCoord(coord.X, coord.Y)
+		if valid {
+			tile := board.tiles[tileCoord]
+			renderedTile := tile.RenderTile()
+			lines[midLine-2].WriteString(renderedTile[0])
+			lines[midLine-1].WriteString(renderedTile[1])
+			lines[midLine].WriteString(renderedTile[2])
+			lines[midLine+1].WriteString(renderedTile[3])
+			lines[midLine+2].WriteString(renderedTile[4])
+		}
 	} else {
 		right, valid := coord.Right()
 		if !valid {
