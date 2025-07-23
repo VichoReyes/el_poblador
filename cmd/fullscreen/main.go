@@ -40,9 +40,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
-		// The "r" key regenerates the board.
-		case "r":
+		// The "c" key creates a chaotic board.
+		case "c":
 			m.board = board.NewChaoticBoard()
+			return m, nil
+
+		// The "l" key creates a legal board.
+		case "l":
+			m.board = board.NewLegalBoard()
 			return m, nil
 		}
 
@@ -65,7 +70,7 @@ func (m model) View() string {
 	renderedTitle := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, titleText)
 
 	// Help text styled as faint.
-	helpText := lipgloss.NewStyle().Faint(true).Render("Press 'r' to regenerate the board. Press 'q' to quit.")
+	helpText := lipgloss.NewStyle().Faint(true).Render("Press 'c' or 'l' to regenerate the board. Press 'q' to quit.")
 
 	// The help text is placed in the center of the screen.
 	renderedHelp := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, helpText)
