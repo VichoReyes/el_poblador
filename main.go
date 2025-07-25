@@ -44,7 +44,7 @@ func main() {
 		os.Exit(1)
 	}
 	game.Start(os.Args[1:])
-	p := tea.NewProgram(model{game: game})
+	p := tea.NewProgram(model{game: game}, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
