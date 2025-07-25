@@ -5,20 +5,41 @@ import (
 	"fmt"
 )
 
+func nextInitialPhase(game *Game, currentPlayer int, isFirstPair bool) Phase {
+	numPlayers := len(game.players)
+
+	if isFirstPair {
+		nextPlayer := currentPlayer + 1
+		if nextPlayer < numPlayers {
+			return PhaseInitialSettlements(game, nextPlayer, true)
+		} else {
+			return PhaseInitialSettlements(game, numPlayers-1, false)
+		}
+	} else {
+		nextPlayer := currentPlayer - 1
+		if nextPlayer >= 0 {
+			return PhaseInitialSettlements(game, nextPlayer, false)
+		} else {
+			return nil // TODO
+		}
+	}
+}
+
 type phaseInitialSettlements struct {
 	game        *Game
 	playerTurn  int
 	cursorCross board.CrossCoord
+	isFirstPair bool
 }
 
-func PhaseInitialSettlements(game *Game, playerTurn int) Phase {
+func PhaseInitialSettlements(game *Game, playerTurn int, isFirstPair bool) Phase {
 	cursorCross := game.board.ValidCrossCoord()
-	return &phaseInitialSettlements{game: game, playerTurn: playerTurn, cursorCross: cursorCross}
+	return &phaseInitialSettlements{game: game, playerTurn: playerTurn, cursorCross: cursorCross, isFirstPair: isFirstPair}
 }
 
 func (p *phaseInitialSettlements) Confirm() Phase {
 	p.game.board.SetSettlement(p.cursorCross, p.game.players[p.playerTurn].Name)
-	return PhaseInitialRoad(p.game, p.playerTurn, p.cursorCross)
+	return PhaseInitialRoad(p.game, p.playerTurn, p.cursorCross, p.isFirstPair)
 }
 
 func (p *phaseInitialSettlements) Cancel() Phase {
@@ -46,26 +67,27 @@ type phaseInitialRoad struct {
 	playerTurn  int
 	sourceCross board.CrossCoord
 	cursorCross board.CrossCoord
+	isFirstPair bool
 }
 
-func PhaseInitialRoad(game *Game, playerTurn int, sourceCross board.CrossCoord) Phase {
+func PhaseInitialRoad(game *Game, playerTurn int, sourceCross board.CrossCoord, isFirstPair bool) Phase {
 	return &phaseInitialRoad{
 		game:        game,
 		playerTurn:  playerTurn,
 		sourceCross: sourceCross,
 		cursorCross: sourceCross.Neighbors()[0],
+		isFirstPair: isFirstPair,
 	}
 }
 
 func (p *phaseInitialRoad) Confirm() Phase {
 	roadCoord := board.NewPathCoord(p.sourceCross, p.cursorCross)
 	p.game.board.SetRoad(roadCoord, p.game.players[p.playerTurn].Name)
-	// TODO: transition to next phase
-	return p
+	return nextInitialPhase(p.game, p.playerTurn, p.isFirstPair)
 }
 
 func (p *phaseInitialRoad) Cancel() Phase {
-	return PhaseInitialSettlements(p.game, p.playerTurn)
+	return PhaseInitialSettlements(p.game, p.playerTurn, p.isFirstPair)
 }
 
 func (p *phaseInitialRoad) HelpText() string {

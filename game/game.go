@@ -81,7 +81,7 @@ func (g *Game) Start(playerNames []string) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
 	})
 	g.board = board.NewLegalBoard()
-	g.phase = PhaseInitialSettlements(g, 0)
+	g.phase = PhaseInitialSettlements(g, 0, true)
 }
 
 func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossCoord, ok bool) {
