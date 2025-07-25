@@ -38,7 +38,9 @@ func PhaseInitialSettlements(game *Game, playerTurn int, isFirstPair bool) Phase
 }
 
 func (p *phaseInitialSettlements) Confirm() Phase {
-	p.game.board.SetSettlement(p.cursorCross, p.game.players[p.playerTurn].Name)
+	if !p.game.board.SetSettlement(p.cursorCross, p.game.players[p.playerTurn].Name) {
+		return p
+	}
 	return PhaseInitialRoad(p.game, p.playerTurn, p.cursorCross, p.isFirstPair)
 }
 

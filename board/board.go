@@ -504,8 +504,24 @@ func (pc PathCoord) String() string {
 	return fmt.Sprintf("%s-%s", pc.From.String(), pc.To.String())
 }
 
-func (b *Board) SetSettlement(coord CrossCoord, playerName string) {
+func (b *Board) CanPlaceSettlement(coord CrossCoord) bool {
+	if b.settlements[coord] {
+		return false
+	}
+	for _, neighbor := range coord.Neighbors() {
+		if b.settlements[neighbor] {
+			return false
+		}
+	}
+	return true
+}
+
+func (b *Board) SetSettlement(coord CrossCoord, playerName string) bool {
+	if !b.CanPlaceSettlement(coord) {
+		return false
+	}
 	b.settlements[coord] = true
+	return true
 }
 
 func (b *Board) SetRoad(coord PathCoord, playerName string) {
