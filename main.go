@@ -26,6 +26,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "up", "down", "left", "right":
 			m.game.MoveCursor(msg.String())
+		case "enter":
+			m.game.ConfirmAction()
+		case "esc":
+			m.game.CancelAction()
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width

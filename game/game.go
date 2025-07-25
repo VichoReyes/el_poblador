@@ -103,3 +103,11 @@ func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossC
 func (g *Game) MoveCursor(direction string) {
 	g.phase.MoveCursor(direction)
 }
+
+func (g *Game) ConfirmAction() {
+	g.phase = g.phase.Confirm()
+}
+
+func (g *Game) CancelAction() {
+	g.phase = g.phase.Cancel()
+}

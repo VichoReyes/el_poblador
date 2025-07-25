@@ -503,3 +503,11 @@ func (tc TileCoord) String() string {
 func (pc PathCoord) String() string {
 	return fmt.Sprintf("%s-%s", pc.From.String(), pc.To.String())
 }
+
+func (b *Board) SetSettlement(coord CrossCoord, playerName string) {
+	b.settlements[coord] = true
+}
+
+func (b *Board) SetRoad(coord PathCoord, playerName string) {
+	b.roads[coord] = true
+}
