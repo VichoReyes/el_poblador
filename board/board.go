@@ -55,7 +55,7 @@ type Tile struct {
 //		\______/
 //
 // where B is the terrain abbreviation and 2 is the dice number
-func (tile *Tile) RenderTile() [5]string {
+func (tile *Tile) RenderTile(isCursor bool) [5]string {
 	terrainAbbrev := tile.getTerrainAbbrev()
 
 	diceStr := ""
@@ -64,6 +64,9 @@ func (tile *Tile) RenderTile() [5]string {
 	}
 
 	code := tile.getTerrainColor()
+	if isCursor {
+		code = fmt.Sprintf("%s\033[48;5;15m", code)
+	}
 	endCode := "\033[0m"
 	lines := [5]string{
 		fmt.Sprintf("%s/‾‾‾‾‾‾\\%s", code, endCode),
@@ -220,8 +223,15 @@ func NewLegalBoard() *Board {
 	return board
 }
 
+func (b *Board) ValidCrossCoord() CrossCoord {
+	if coord, ok := NewCrossCoord(2, 4); ok {
+		return coord
+	}
+	panic("valid cross coord wrong")
+}
+
 // PrintBoard prints the game board made of ASCII hexagons
-func (b *Board) Print() []string {
+func (b *Board) Print(cursor interface{}) []string {
 	// there will be 31 lines (5 * 5 + 6 for the roads)
 	lines := make([]strings.Builder, 31)
 	sidePadding(lines)
@@ -230,7 +240,7 @@ func (b *Board) Print() []string {
 		for y := 0; y <= 10; y++ {
 			coord, valid := NewCrossCoord(x, y)
 			if valid {
-				renderCrossing(b, lines, coord)
+				renderCrossing(b, lines, coord, cursor)
 			}
 		}
 	}
@@ -246,12 +256,18 @@ func (b *Board) Print() []string {
 
 // takes responsibility for the crossing and whatever is to its right
 // right-up and right-down paths
-func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord) {
+func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cursor interface{}) {
 	// print crossing
 	midLine := coord.Y * 3
 	hasCity := board.settlements[coord]
+	hasCursor := false
+	if c, ok := cursor.(CrossCoord); ok && c == coord {
+		hasCursor = true
+	}
 	if hasCity {
 		lines[midLine].WriteString("▲▲▲")
+	} else if hasCursor {
+		lines[midLine].WriteString("\033[5;33m ○ \033[0m")
 	} else {
 		lines[midLine].WriteString("   ")
 	}
@@ -282,8 +298,12 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord) {
 		}
 		tileCoord, valid := NewTileCoord(coord.X, coord.Y)
 		if valid {
+			hasCursor := false
+			if c, ok := cursor.(TileCoord); ok && c == tileCoord {
+				hasCursor = true
+			}
 			tile := board.tiles[tileCoord]
-			renderedTile := tile.RenderTile()
+			renderedTile := tile.RenderTile(hasCursor)
 			lines[midLine-2].WriteString(renderedTile[0])
 			lines[midLine-1].WriteString(renderedTile[1])
 			lines[midLine].WriteString(renderedTile[2])

@@ -129,13 +129,18 @@ func TestNewDesertBoardTileCount(t *testing.T) {
 
 func TestTileRender(t *testing.T) {
 	tile := Tile{Terrain: Arcilla, DiceNumber: 5}
-	rendered := tile.RenderTile()
+	rendered1 := tile.RenderTile(false)
+	rendered2 := tile.RenderTile(true)
 
 	lengthsExpected := [5]int{8, 10, 10, 10, 8}
-	for i, line := range rendered {
-		actualLength := terminalLength(line)
-		if actualLength != lengthsExpected[i] {
-			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength)
+	for i := range rendered1 {
+		actualLength1 := terminalLength(rendered1[i])
+		if actualLength1 != lengthsExpected[i] {
+			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength1)
+		}
+		actualLength2 := terminalLength(rendered2[i])
+		if actualLength2 != lengthsExpected[i] {
+			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength2)
 		}
 	}
 }

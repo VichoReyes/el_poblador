@@ -21,7 +21,7 @@ func main() {
 
 	for i, tile := range tiles {
 		fmt.Printf("Tile %d (%s, dice: %d):\n", i+1, tile.Terrain.String(), tile.DiceNumber)
-		rendered := tile.RenderTile()
+		rendered := tile.RenderTile(false)
 		for i, line := range rendered {
 			if i == 0 || i == len(rendered)-1 {
 				fmt.Printf(" %s\n", line)
@@ -37,7 +37,7 @@ func main() {
 	fmt.Println()
 
 	board := board.NewChaoticBoard()
-	lines := board.Print()
+	lines := board.Print(nil)
 	for _, line := range lines {
 		fmt.Println(line)
 	}

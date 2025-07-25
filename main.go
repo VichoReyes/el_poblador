@@ -24,6 +24,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "up", "down", "left", "right":
+			m.game.MoveCursor(msg.String())
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width

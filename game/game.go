@@ -32,32 +32,44 @@ const (
 	OfferingTrade
 )
 
+type CursorTarget int
+
+const (
+	TargetCross CursorTarget = iota
+	TargetTile
+	TargetCard
+)
+
 // Meaningful zero value
 type Game struct {
 	board      *board.Board
 	players    []Player
 	playerTurn int
+	winner     *Player
 	gamePhase  GamePhase
 	turnPhase  TurnPhase
 	lastDice   [2]int
+
+	cursorTarget CursorTarget
+	cursorCross  board.CrossCoord
+	cursorTile   board.TileCoord
 }
 
 func (g *Game) Print(width, height int) string {
 	margin := lipgloss.NewStyle().Margin(1)
-	// Title text styled with bold.
-	titleText := lipgloss.NewStyle().Bold(true).Render("El Poblador - Bubble Tea Version")
 
-	// The title is placed in the center of the screen, with a margin below it.
-	renderedTitle := lipgloss.PlaceHorizontal(width, lipgloss.Center, titleText)
-
-	// Help text styled as faint.
-	helpText := lipgloss.NewStyle().Faint(true).Render("Press 'c' or 'l' to regenerate the board. Press 'q' to quit.")
-
-	// The help text is placed in the center of the screen.
-	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, helpText)
+	help := g.helpText(width)
 
 	// Board
-	boardLines := g.board.Print()
+	var boardLines []string
+	switch g.cursorTarget {
+	case TargetCross:
+		boardLines = g.board.Print(g.cursorCross)
+	case TargetTile:
+		boardLines = g.board.Print(g.cursorTile)
+	default:
+		boardLines = g.board.Print(nil)
+	}
 	boardContent := strings.Join(boardLines, "\n")
 
 	// players
@@ -71,7 +83,7 @@ func (g *Game) Print(width, height int) string {
 	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebar)
 
 	// Calculate the available space for the board.
-	availableHeight := height - lipgloss.Height(renderedTitle) - lipgloss.Height(renderedHelp)
+	availableHeight := height - lipgloss.Height(help)
 
 	// Main content is the board, centered in the available space.
 	mainContent := lipgloss.Place(width, availableHeight,
@@ -80,7 +92,39 @@ func (g *Game) Print(width, height int) string {
 		renderedPlayers,
 	)
 
-	return lipgloss.JoinVertical(lipgloss.Left, renderedTitle, mainContent, renderedHelp)
+	return lipgloss.JoinVertical(lipgloss.Left, mainContent, help)
+}
+
+func (g *Game) helpText(width int) string {
+	var text string
+	switch g.gamePhase {
+	case GameSetup:
+		text = "You shouldn't see this"
+	case GameInitialSettlements:
+		text = fmt.Sprintf(
+			"%s's turn. Place your initial settlements and roads on the board with 'enter'.",
+			g.players[g.playerTurn].Name,
+		)
+	case GamePlaying:
+		text = fmt.Sprintf("%s's turn. ", g.players[g.playerTurn].Name)
+		switch g.turnPhase {
+		case BeforeDice:
+			text += "Press 'd' to roll the dice."
+		case Robbing:
+			text += "Pick a tile to place the robber on."
+		case TurnMain:
+			text += "Press 'tab' to switch between the main actions, or 'n' to end your turn."
+		default:
+			panic("unknown turn phase")
+		}
+	case GameEnded:
+		text = fmt.Sprintf("Finished! %s wins! Press 'q' to quit.", g.winner.Name)
+	default:
+		panic("unknown game phase")
+	}
+	style := lipgloss.NewStyle().Faint(true)
+	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, style.Render(text))
+	return renderedHelp
 }
 
 func (g *Game) Start(playerNames []string) {
@@ -100,4 +144,24 @@ func (g *Game) Start(playerNames []string) {
 	})
 	g.board = board.NewLegalBoard()
 	g.gamePhase = GameInitialSettlements
+	g.cursorTarget = TargetCross
+	g.cursorCross = g.board.ValidCrossCoord()
+}
+
+func (g *Game) MoveCursor(direction string) {
+	var dest board.CrossCoord
+	var ok bool
+	switch direction {
+	case "up":
+		dest, ok = g.cursorCross.Up()
+	case "down":
+		dest, ok = g.cursorCross.Down()
+	case "left":
+		dest, ok = g.cursorCross.Left()
+	case "right":
+		dest, ok = g.cursorCross.Right()
+	}
+	if ok {
+		g.cursorCross = dest
+	}
 }

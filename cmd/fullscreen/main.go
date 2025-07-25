@@ -76,7 +76,7 @@ func (m model) View() string {
 	renderedHelp := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, helpText)
 
 	// Board
-	boardLines := m.board.Print()
+	boardLines := m.board.Print(nil)
 	boardContent := strings.Join(boardLines, "\n")
 
 	// players
