@@ -14,45 +14,19 @@ type Player struct {
 	color int // 8 bit color code
 }
 
-type GamePhase int
+type Phase interface {
+	Confirm() Phase
+	Cancel() Phase
+	MoveCursor(direction string)
+	CurrentCursor() interface{}
+	HelpText() string
+}
 
-const (
-	GameSetup GamePhase = iota
-	GameInitialSettlements
-	GamePlaying
-	GameEnded
-)
-
-type TurnPhase int
-
-const (
-	BeforeDice TurnPhase = iota
-	Robbing
-	TurnMain
-	OfferingTrade
-)
-
-type CursorTarget int
-
-const (
-	TargetCross CursorTarget = iota
-	TargetTile
-	TargetCard
-)
-
-// Meaningful zero value
 type Game struct {
-	board      *board.Board
-	players    []Player
-	playerTurn int
-	winner     *Player
-	gamePhase  GamePhase
-	turnPhase  TurnPhase
-	lastDice   [2]int
-
-	cursorTarget CursorTarget
-	cursorCross  board.CrossCoord
-	cursorTile   board.TileCoord
+	board    *board.Board
+	players  []Player
+	lastDice [2]int
+	phase    Phase
 }
 
 func (g *Game) Print(width, height int) string {
@@ -61,15 +35,7 @@ func (g *Game) Print(width, height int) string {
 	help := g.helpText(width)
 
 	// Board
-	var boardLines []string
-	switch g.cursorTarget {
-	case TargetCross:
-		boardLines = g.board.Print(g.cursorCross)
-	case TargetTile:
-		boardLines = g.board.Print(g.cursorTile)
-	default:
-		boardLines = g.board.Print(nil)
-	}
+	boardLines := g.board.Print(g.phase.CurrentCursor())
 	boardContent := strings.Join(boardLines, "\n")
 
 	// players
@@ -96,32 +62,7 @@ func (g *Game) Print(width, height int) string {
 }
 
 func (g *Game) helpText(width int) string {
-	var text string
-	switch g.gamePhase {
-	case GameSetup:
-		text = "You shouldn't see this"
-	case GameInitialSettlements:
-		text = fmt.Sprintf(
-			"%s's turn. Place your initial settlements and roads on the board with 'enter'.",
-			g.players[g.playerTurn].Name,
-		)
-	case GamePlaying:
-		text = fmt.Sprintf("%s's turn. ", g.players[g.playerTurn].Name)
-		switch g.turnPhase {
-		case BeforeDice:
-			text += "Press 'd' to roll the dice."
-		case Robbing:
-			text += "Pick a tile to place the robber on."
-		case TurnMain:
-			text += "Press 'tab' to switch between the main actions, or 'n' to end your turn."
-		default:
-			panic("unknown turn phase")
-		}
-	case GameEnded:
-		text = fmt.Sprintf("Finished! %s wins! Press 'q' to quit.", g.winner.Name)
-	default:
-		panic("unknown game phase")
-	}
+	text := g.phase.HelpText()
 	style := lipgloss.NewStyle().Faint(true)
 	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, style.Render(text))
 	return renderedHelp
@@ -130,9 +71,6 @@ func (g *Game) helpText(width int) string {
 func (g *Game) Start(playerNames []string) {
 	if len(playerNames) < 3 || len(playerNames) > 4 {
 		panic("Game must have 3-4 players")
-	}
-	if g.gamePhase != GameSetup {
-		panic("Cannot start a game that has already started")
 	}
 	colors := []int{20, 88, 165, 103} // blue, red, purple, white
 	g.players = make([]Player, len(playerNames))
@@ -143,25 +81,25 @@ func (g *Game) Start(playerNames []string) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
 	})
 	g.board = board.NewLegalBoard()
-	g.gamePhase = GameInitialSettlements
-	g.cursorTarget = TargetCross
-	g.cursorCross = g.board.ValidCrossCoord()
+	g.phase = PhaseInitialSettlements(g, 0)
+}
+
+func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossCoord, ok bool) {
+	switch direction {
+	case "up":
+		dest, ok = from.Up()
+	case "down":
+		dest, ok = from.Down()
+	case "left":
+		dest, ok = from.Left()
+	case "right":
+		dest, ok = from.Right()
+	default:
+		panic("unknown direction")
+	}
+	return dest, ok
 }
 
 func (g *Game) MoveCursor(direction string) {
-	var dest board.CrossCoord
-	var ok bool
-	switch direction {
-	case "up":
-		dest, ok = g.cursorCross.Up()
-	case "down":
-		dest, ok = g.cursorCross.Down()
-	case "left":
-		dest, ok = g.cursorCross.Left()
-	case "right":
-		dest, ok = g.cursorCross.Right()
-	}
-	if ok {
-		g.cursorCross = dest
-	}
+	g.phase.MoveCursor(direction)
 }
