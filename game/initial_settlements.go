@@ -71,7 +71,7 @@ func (p *phaseInitialSettlements) HelpText() string {
 	)
 }
 
-func (p *phaseInitialSettlements) CurrentCursor() interface{} {
+func (p *phaseInitialSettlements) BoardCursor() interface{} {
 	return p.cursorCross
 }
 
@@ -115,7 +115,7 @@ func (p *phaseInitialRoad) HelpText() string {
 	return fmt.Sprintf("%s's turn. Place your initial road connected to the settlement with 'enter'.", p.game.players[p.playerTurn].Name)
 }
 
-func (p *phaseInitialRoad) CurrentCursor() interface{} {
+func (p *phaseInitialRoad) BoardCursor() interface{} {
 	return p.cursorCross
 }
 

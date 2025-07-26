@@ -13,7 +13,7 @@ type Phase interface {
 	Confirm() Phase
 	Cancel() Phase
 	MoveCursor(direction string)
-	CurrentCursor() interface{}
+	BoardCursor() interface{}
 	HelpText() string
 }
 
@@ -30,7 +30,7 @@ func (g *Game) Print(width, height int) string {
 	help := g.helpText(width)
 
 	// Board
-	boardLines := g.board.Print(g.phase.CurrentCursor())
+	boardLines := g.board.Print(g.phase.BoardCursor())
 	boardContent := strings.Join(boardLines, "\n")
 
 	// players

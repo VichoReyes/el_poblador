@@ -12,7 +12,7 @@ type phaseWithOptions struct {
 	selected   int
 }
 
-func (p *phaseWithOptions) CurrentCursor() interface{} {
+func (p *phaseWithOptions) BoardCursor() interface{} {
 	return nil
 }
 
