@@ -1,6 +1,7 @@
 package board
 
 import (
+	"slices"
 	"testing"
 	"testing/quick"
 )
@@ -142,5 +143,58 @@ func TestTileRender(t *testing.T) {
 		if actualLength2 != lengthsExpected[i] {
 			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength2)
 		}
+	}
+}
+
+func TestAdjacentTilesBasic(t *testing.T) {
+	tests := []struct {
+		x, y          int
+		expectedCount int
+		expectedTiles []TileCoord
+	}{
+		{0, 2, 1, []TileCoord{{X: 0, Y: 3}}},
+		{0, 3, 1, []TileCoord{{X: 0, Y: 3}}},
+		{2, 4, 3, []TileCoord{{X: 1, Y: 4}, {X: 2, Y: 3}, {X: 2, Y: 5}}},
+		{2, 5, 3, []TileCoord{{X: 2, Y: 5}, {X: 1, Y: 4}, {X: 1, Y: 6}}},
+	}
+
+	for _, tt := range tests {
+		coord, _ := NewCrossCoord(tt.x, tt.y)
+		tiles := coord.AdjacentTiles()
+		if len(tiles) != tt.expectedCount {
+			t.Errorf("For coord (%d,%d): expected %d adjacent tiles, got %d",
+				tt.x, tt.y, tt.expectedCount, len(tiles))
+		}
+		if tt.expectedTiles != nil {
+			if !slices.Equal(tiles, tt.expectedTiles) {
+				t.Errorf("For coord (%d,%d): expected tiles %v, got %v",
+					tt.x, tt.y, tt.expectedTiles, tiles)
+			}
+		}
+	}
+}
+
+func TestAdjacentTilesFull(t *testing.T) {
+	// each tile should be seen 6 times
+	timesSeen := make(map[TileCoord]int)
+	for x := 0; x < 20; x++ {
+		for y := 0; y < 20; y++ {
+			coord, ok := NewCrossCoord(x, y)
+			if !ok {
+				continue
+			}
+			tiles := coord.AdjacentTiles()
+			for _, tile := range tiles {
+				timesSeen[tile]++
+			}
+		}
+	}
+	for tile, count := range timesSeen {
+		if count != 6 {
+			t.Errorf("Expected tile %v to be seen 6 times, got %d", tile, count)
+		}
+	}
+	if len(timesSeen) != 19 {
+		t.Errorf("Expected 19 tiles, got %d", len(timesSeen))
 	}
 }

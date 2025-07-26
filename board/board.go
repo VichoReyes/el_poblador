@@ -474,6 +474,30 @@ func (c CrossCoord) Neighbors() []CrossCoord {
 	return neighbors
 }
 
+func (c CrossCoord) AdjacentTiles() []TileCoord {
+	var potential []TileCoord
+	if (c.X+c.Y)%2 == 0 {
+		potential = []TileCoord{
+			{X: c.X - 1, Y: c.Y},
+			{X: c.X, Y: c.Y - 1},
+			{X: c.X, Y: c.Y + 1},
+		}
+	} else {
+		potential = []TileCoord{
+			{X: c.X, Y: c.Y},
+			{X: c.X - 1, Y: c.Y - 1},
+			{X: c.X - 1, Y: c.Y + 1},
+		}
+	}
+	neighbors := []TileCoord{}
+	for _, p := range potential {
+		if _, ok := NewTileCoord(p.X, p.Y); ok {
+			neighbors = append(neighbors, p)
+		}
+	}
+	return neighbors
+}
+
 // NewTileCoord creates a new tile coordinate and returns whether it is valid
 func NewTileCoord(x, y int) (TileCoord, bool) {
 	if (x+y)%2 == 0 {
