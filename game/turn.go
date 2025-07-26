@@ -5,22 +5,42 @@ import (
 	"math/rand/v2"
 )
 
-type DiceRollPhase struct {
+type phaseWithOptions struct {
 	game       *Game
 	playerTurn int
 	options    []string
 	selected   int
 }
 
+func (p *phaseWithOptions) CurrentCursor() interface{} {
+	return nil
+}
+
+func (p *phaseWithOptions) MoveCursor(direction string) {
+	switch direction {
+	case "up":
+		p.selected--
+	case "down":
+		p.selected++
+	}
+	p.selected = (p.selected + len(p.options)) % len(p.options)
+}
+
+type phaseDiceRoll struct {
+	phaseWithOptions
+}
+
 func PhaseDiceRoll(game *Game, playerTurn int) Phase {
-	return &DiceRollPhase{
-		game:       game,
-		playerTurn: playerTurn,
-		options:    []string{"Roll", "Play Knight"},
+	return &phaseDiceRoll{
+		phaseWithOptions: phaseWithOptions{
+			game:       game,
+			playerTurn: playerTurn,
+			options:    []string{"Roll", "Play Knight"},
+		},
 	}
 }
 
-func (p *DiceRollPhase) Confirm() Phase {
+func (p *phaseDiceRoll) Confirm() Phase {
 	switch p.selected {
 	case 0:
 		return rollDice(p.game, p.playerTurn)
@@ -49,36 +69,27 @@ func rollDice(game *Game, playerTurn int) Phase {
 	return PhaseIdle(game, playerTurn)
 }
 
-func (p *DiceRollPhase) Cancel() Phase {
+func (p *phaseDiceRoll) Cancel() Phase {
 	return p
 }
 
-func (p *DiceRollPhase) HelpText() string {
+func (p *phaseDiceRoll) HelpText() string {
 	return fmt.Sprintf("%s's turn. Time to roll the dice",
 		p.game.players[p.playerTurn].Name)
 }
 
-func (p *DiceRollPhase) CurrentCursor() interface{} {
-	return nil
-}
-
-func (p *DiceRollPhase) MoveCursor(direction string) {
-	switch direction {
-	case "up":
-		p.selected--
-	case "down":
-		p.selected++
-	}
-	p.selected = (p.selected + len(p.options)) % len(p.options)
-}
-
 type phaseIdle struct {
-	game       *Game
-	playerTurn int
+	phaseWithOptions
 }
 
 func PhaseIdle(game *Game, playerTurn int) Phase {
-	return &phaseIdle{game: game, playerTurn: playerTurn}
+	return &phaseIdle{
+		phaseWithOptions: phaseWithOptions{
+			game:       game,
+			playerTurn: playerTurn,
+			options:    []string{"Build", "Trade", "Play Development Card", "End Turn"},
+		},
+	}
 }
 
 func (p *phaseIdle) Confirm() Phase {
@@ -91,12 +102,4 @@ func (p *phaseIdle) Cancel() Phase {
 
 func (p *phaseIdle) HelpText() string {
 	return fmt.Sprintf("%s's turn. What do you want to do?", p.game.players[p.playerTurn].Name)
-}
-
-func (p *phaseIdle) CurrentCursor() interface{} {
-	return nil
-}
-
-func (p *phaseIdle) MoveCursor(direction string) {
-	// TODO
 }
