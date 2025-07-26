@@ -11,8 +11,8 @@ func TestInitialFlow(t *testing.T) {
 
 	// 2 rounds of placing settlements and roads
 	for i := 0; i < 2*len(game.players); i++ {
-		if game.phase == nil {
-			t.Fatalf("Phase is nil before initial flow is complete. Iteration %d", i)
+		if _, ok := game.phase.(*phaseInitialSettlements); !ok {
+			t.Fatalf("Phase is not initial settlements. Iteration %d", i)
 		}
 		// find a valid location and move the cursor there
 		coord, ok := findValidSettlementLocation(game)
@@ -22,8 +22,8 @@ func TestInitialFlow(t *testing.T) {
 		game.phase.(*phaseInitialSettlements).cursorCross = coord
 
 		game.ConfirmAction() // place settlement
-		if game.phase == nil {
-			t.Fatalf("Phase is nil before initial flow is complete. Iteration %d", i)
+		if _, ok := game.phase.(*phaseInitialRoad); !ok {
+			t.Fatalf("Phase is not initial road. Iteration %d", i)
 		}
 		game.ConfirmAction() // place road
 	}
