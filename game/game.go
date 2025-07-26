@@ -17,6 +17,11 @@ type Phase interface {
 	HelpText() string
 }
 
+type PhaseWithMenu interface {
+	Phase
+	Menu() string
+}
+
 type Game struct {
 	board    *board.Board
 	players  []Player
@@ -40,7 +45,11 @@ func (g *Game) Print(width, height int) string {
 	}
 	players := strings.Join(playerNames, "\n\n")
 	dice := "⚂ ⚄"
-	sidebar := margin.Render(lipgloss.JoinVertical(lipgloss.Left, dice, players))
+	var phaseSidebar string
+	if p, ok := g.phase.(PhaseWithMenu); ok {
+		phaseSidebar = p.Menu()
+	}
+	sidebar := margin.Render(lipgloss.JoinVertical(lipgloss.Left, dice, players, phaseSidebar))
 	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebar)
 
 	// Calculate the available space for the board.

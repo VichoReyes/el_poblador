@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand/v2"
+	"strings"
 )
 
 type phaseWithOptions struct {
@@ -14,6 +15,19 @@ type phaseWithOptions struct {
 
 func (p *phaseWithOptions) BoardCursor() interface{} {
 	return nil
+}
+
+func (p *phaseWithOptions) Menu() string {
+	paddedOptions := make([]string, len(p.options))
+	playerColor := p.game.players[p.playerTurn].color
+	for i, option := range p.options {
+		if i == p.selected {
+			paddedOptions[i] = fmt.Sprintf("\033[38;5;%dm>\033[0m %s", playerColor, option)
+		} else {
+			paddedOptions[i] = fmt.Sprintf(" %s", option)
+		}
+	}
+	return strings.Join(paddedOptions, "\n")
 }
 
 func (p *phaseWithOptions) MoveCursor(direction string) {
