@@ -20,7 +20,7 @@ func nextInitialPhase(game *Game, currentPlayer int, isFirstPair bool) Phase {
 		if nextPlayer >= 0 {
 			return PhaseInitialSettlements(game, nextPlayer, false)
 		} else {
-			return nil // TODO
+			return PhaseDiceRoll(game, 0)
 		}
 	}
 }
@@ -59,7 +59,16 @@ func (p *phaseInitialSettlements) Cancel() Phase {
 }
 
 func (p *phaseInitialSettlements) HelpText() string {
-	return fmt.Sprintf("%s's turn. Place your initial settlement on the board with 'enter'.", p.game.players[p.playerTurn].Name)
+	var num string
+	if p.isFirstPair {
+		num = "first"
+	} else {
+		num = "second"
+	}
+	return fmt.Sprintf("%s's turn. Place your %s settlement on the board with 'enter'.",
+		p.game.players[p.playerTurn].Name,
+		num,
+	)
 }
 
 func (p *phaseInitialSettlements) CurrentCursor() interface{} {

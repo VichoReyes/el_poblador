@@ -38,8 +38,8 @@ func TestInitialFlow(t *testing.T) {
 		t.Fatal("No resources found")
 	}
 
-	if game.phase != nil {
-		t.Fatal("Phase should be nil after initial flow is complete")
+	if _, ok := game.phase.(*DiceRollPhase); !ok {
+		t.Fatal("Phase should be dice roll after initial flow is complete")
 	}
 }
 
