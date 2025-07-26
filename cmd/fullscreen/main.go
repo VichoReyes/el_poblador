@@ -45,10 +45,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.board = board.NewChaoticBoard()
 			return m, nil
 
-		// The "l" key creates a legal board.
-		case "l":
-			m.board = board.NewLegalBoard()
-			return m, nil
 		}
 
 	// Is it a window resize?

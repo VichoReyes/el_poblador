@@ -129,17 +129,21 @@ func (tile *Tile) getTerrainColor() string {
 // Board represents the game board
 type Board struct {
 	tiles map[TileCoord]Tile
-	// TODO: store something, not just bools
-	roads       map[PathCoord]bool
-	settlements map[CrossCoord]bool
+	// roads and settlements are indexed by player id
+	roads        map[PathCoord]int
+	settlements  map[CrossCoord]int
+	playerRender func(int, string) string
 }
 
 // NewDesertBoard creates a new board of only desert tiles
 func NewDesertBoard() *Board {
 	board := &Board{
 		tiles:       make(map[TileCoord]Tile),
-		roads:       make(map[PathCoord]bool),
-		settlements: make(map[CrossCoord]bool),
+		roads:       make(map[PathCoord]int),
+		settlements: make(map[CrossCoord]int),
+		playerRender: func(_ int, content string) string {
+			return content
+		},
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -157,17 +161,21 @@ func NewDesertBoard() *Board {
 func NewChaoticBoard() *Board {
 	board := &Board{
 		tiles:       make(map[TileCoord]Tile),
-		roads:       make(map[PathCoord]bool),
-		settlements: make(map[CrossCoord]bool),
+		roads:       make(map[PathCoord]int),
+		settlements: make(map[CrossCoord]int),
+		playerRender: func(_ int, content string) string {
+			return content
+		},
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
 		for y := 0; y <= 10; y++ {
 			crossCoord, valid := NewCrossCoord(x, y)
 			if valid && rand.IntN(4) == 0 {
-				board.settlements[crossCoord] = true
+				playerId := rand.IntN(4)
+				board.settlements[crossCoord] = playerId
 				neighbors := crossCoord.Neighbors()
-				board.roads[NewPathCoord(crossCoord, neighbors[rand.IntN(len(neighbors))])] = true
+				board.roads[NewPathCoord(crossCoord, neighbors[rand.IntN(len(neighbors))])] = playerId
 			}
 			tileCoord, valid := NewTileCoord(x, y)
 			if valid {
@@ -183,7 +191,7 @@ func NewChaoticBoard() *Board {
 	return board
 }
 
-func NewLegalBoard() *Board {
+func NewLegalBoard(playerRender func(int, string) string) *Board {
 	diceNumbers := []int{2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12}
 	terrains := []TerrainType{
 		Bosque, Bosque, Bosque, Bosque,
@@ -200,9 +208,10 @@ func NewLegalBoard() *Board {
 		terrains[i], terrains[j] = terrains[j], terrains[i]
 	})
 	board := &Board{
-		tiles:       make(map[TileCoord]Tile),
-		roads:       make(map[PathCoord]bool),
-		settlements: make(map[CrossCoord]bool),
+		tiles:        make(map[TileCoord]Tile),
+		roads:        make(map[PathCoord]int),
+		settlements:  make(map[CrossCoord]int),
+		playerRender: playerRender,
 	}
 	for x := 0; x <= 5; x++ {
 		for y := 0; y <= 10; y++ {
@@ -259,15 +268,15 @@ func (b *Board) Print(cursor interface{}) []string {
 func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cursor interface{}) {
 	// print crossing
 	midLine := coord.Y * 3
-	hasCity := board.settlements[coord]
+	settlementOwner, hasSettlement := board.settlements[coord]
 	hasCursor := false
 	if c, ok := cursor.(CrossCoord); ok && c == coord {
 		hasCursor = true
 	}
-	if hasCity {
-		lines[midLine].WriteString("▲▲▲")
-	} else if hasCursor {
+	if hasCursor {
 		lines[midLine].WriteString("\033[5;33m ○ \033[0m")
+	} else if hasSettlement {
+		lines[midLine].WriteString(board.playerRender(settlementOwner, "▲▲▲"))
 	} else {
 		lines[midLine].WriteString("   ")
 	}
@@ -277,9 +286,10 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		up, valid := coord.Up()
 		if valid {
 			path := NewPathCoord(coord, up)
-			if board.roads[path] {
-				lines[midLine-2].WriteString("//")
-				lines[midLine-1].WriteString("//")
+			roadOwner, hasRoad := board.roads[path]
+			if hasRoad {
+				lines[midLine-2].WriteString(board.playerRender(roadOwner, "//"))
+				lines[midLine-1].WriteString(board.playerRender(roadOwner, "//"))
 			} else {
 				lines[midLine-2].WriteString("  ")
 				lines[midLine-1].WriteString("  ")
@@ -288,9 +298,10 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		down, valid := coord.Down()
 		if valid {
 			path := NewPathCoord(coord, down)
-			if board.roads[path] {
-				lines[midLine+1].WriteString("\\\\")
-				lines[midLine+2].WriteString("\\\\")
+			roadOwner, hasRoad := board.roads[path]
+			if hasRoad {
+				lines[midLine+1].WriteString(board.playerRender(roadOwner, "\\\\"))
+				lines[midLine+2].WriteString(board.playerRender(roadOwner, "\\\\"))
 			} else {
 				lines[midLine+1].WriteString("  ")
 				lines[midLine+2].WriteString("  ")
@@ -316,8 +327,9 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 			return
 		}
 		pathCoord := NewPathCoord(coord, right)
-		if board.roads[pathCoord] {
-			lines[midLine].WriteString(" ==== ")
+		roadOwner, hasRoad := board.roads[pathCoord]
+		if hasRoad {
+			lines[midLine].WriteString(board.playerRender(roadOwner, " ==== "))
 		} else {
 			lines[midLine].WriteString("      ")
 		}
@@ -505,25 +517,25 @@ func (pc PathCoord) String() string {
 }
 
 func (b *Board) CanPlaceSettlement(coord CrossCoord) bool {
-	if b.settlements[coord] {
+	if _, ok := b.settlements[coord]; ok {
 		return false
 	}
 	for _, neighbor := range coord.Neighbors() {
-		if b.settlements[neighbor] {
+		if _, ok := b.settlements[neighbor]; ok {
 			return false
 		}
 	}
 	return true
 }
 
-func (b *Board) SetSettlement(coord CrossCoord, playerName string) bool {
+func (b *Board) SetSettlement(coord CrossCoord, playerId int) bool {
 	if !b.CanPlaceSettlement(coord) {
 		return false
 	}
-	b.settlements[coord] = true
+	b.settlements[coord] = playerId
 	return true
 }
 
-func (b *Board) SetRoad(coord PathCoord, playerName string) {
-	b.roads[coord] = true
+func (b *Board) SetRoad(coord PathCoord, playerId int) {
+	b.roads[coord] = playerId
 }

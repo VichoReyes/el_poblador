@@ -38,7 +38,7 @@ func PhaseInitialSettlements(game *Game, playerTurn int, isFirstPair bool) Phase
 }
 
 func (p *phaseInitialSettlements) Confirm() Phase {
-	if !p.game.board.SetSettlement(p.cursorCross, p.game.players[p.playerTurn].Name) {
+	if !p.game.board.SetSettlement(p.cursorCross, p.playerTurn) {
 		return p
 	}
 	return PhaseInitialRoad(p.game, p.playerTurn, p.cursorCross, p.isFirstPair)
@@ -84,7 +84,7 @@ func PhaseInitialRoad(game *Game, playerTurn int, sourceCross board.CrossCoord, 
 
 func (p *phaseInitialRoad) Confirm() Phase {
 	roadCoord := board.NewPathCoord(p.sourceCross, p.cursorCross)
-	p.game.board.SetRoad(roadCoord, p.game.players[p.playerTurn].Name)
+	p.game.board.SetRoad(roadCoord, p.playerTurn)
 	return nextInitialPhase(p.game, p.playerTurn, p.isFirstPair)
 }
 

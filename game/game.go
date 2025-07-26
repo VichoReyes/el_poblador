@@ -80,7 +80,9 @@ func (g *Game) Start(playerNames []string) {
 	rand.Shuffle(len(g.players), func(i, j int) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
 	})
-	g.board = board.NewLegalBoard()
+	g.board = board.NewLegalBoard(func(playerId int, content string) string {
+		return fmt.Sprintf("\033[38;5;%dm%s\033[0m", g.players[playerId].color, content)
+	})
 	g.phase = PhaseInitialSettlements(g, 0, true)
 }
 
