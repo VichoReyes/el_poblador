@@ -160,7 +160,7 @@ func TestAdjacentTilesBasic(t *testing.T) {
 
 	for _, tt := range tests {
 		coord, _ := NewCrossCoord(tt.x, tt.y)
-		tiles := coord.AdjacentTiles()
+		tiles := coord.adjacentTileCoords()
 		if len(tiles) != tt.expectedCount {
 			t.Errorf("For coord (%d,%d): expected %d adjacent tiles, got %d",
 				tt.x, tt.y, tt.expectedCount, len(tiles))
@@ -183,7 +183,7 @@ func TestAdjacentTilesFull(t *testing.T) {
 			if !ok {
 				continue
 			}
-			tiles := coord.AdjacentTiles()
+			tiles := coord.adjacentTileCoords()
 			for _, tile := range tiles {
 				timesSeen[tile]++
 			}

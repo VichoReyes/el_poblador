@@ -28,6 +28,16 @@ func TestInitialFlow(t *testing.T) {
 		game.ConfirmAction() // place road
 	}
 
+	// there should be at least one resource
+	// perhaps this can fail with very low probability
+	resources := 0
+	for _, player := range game.players {
+		resources += player.TotalResources()
+	}
+	if resources == 0 {
+		t.Fatal("No resources found")
+	}
+
 	if game.phase != nil {
 		t.Fatal("Phase should be nil after initial flow is complete")
 	}

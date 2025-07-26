@@ -28,6 +28,15 @@ func (b *Board) CanPlaceSettlement(coord CrossCoord) bool {
 	return true
 }
 
+func (b *Board) AdjacentTiles(coord CrossCoord) []Tile {
+	tileCoords := coord.adjacentTileCoords()
+	tiles := make([]Tile, len(tileCoords))
+	for i, tileCoord := range tileCoords {
+		tiles[i] = b.tiles[tileCoord]
+	}
+	return tiles
+}
+
 func (b *Board) SetSettlement(coord CrossCoord, playerId int) bool {
 	if !b.CanPlaceSettlement(coord) {
 		return false

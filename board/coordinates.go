@@ -109,7 +109,7 @@ func (c CrossCoord) Neighbors() []CrossCoord {
 	return neighbors
 }
 
-func (c CrossCoord) AdjacentTiles() []TileCoord {
+func (c CrossCoord) adjacentTileCoords() []TileCoord {
 	var potential []TileCoord
 	if (c.X+c.Y)%2 == 0 {
 		potential = []TileCoord{

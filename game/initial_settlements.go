@@ -41,6 +41,16 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 	if !p.game.board.SetSettlement(p.cursorCross, p.playerTurn) {
 		return p
 	}
+	if !p.isFirstPair {
+		player := p.game.players[p.playerTurn]
+		adjacentTiles := p.game.board.AdjacentTiles(p.cursorCross)
+		for _, tile := range adjacentTiles {
+			resource, ok := tileResource(tile)
+			if ok {
+				player.AddResource(resource, 1)
+			}
+		}
+	}
 	return PhaseInitialRoad(p.game, p.playerTurn, p.cursorCross, p.isFirstPair)
 }
 
