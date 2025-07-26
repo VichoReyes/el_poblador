@@ -4,5 +4,5 @@ packages:
 tasks:
   - test: |
       cd el_poblador
-      go test -v ./board
+      go test -v ./...
       go run cmd/testboard/main.go
