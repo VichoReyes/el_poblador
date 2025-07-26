@@ -11,12 +11,12 @@ func main() {
 
 	// Test different tile types
 	tiles := []board.Tile{
-		{Terrain: board.Bosque, DiceNumber: 6},
-		{Terrain: board.Arcilla, DiceNumber: 8},
-		{Terrain: board.Montaña, DiceNumber: 12},
-		{Terrain: board.Plantación, DiceNumber: 4},
-		{Terrain: board.Pasto, DiceNumber: 10},
-		{Terrain: board.Desierto, DiceNumber: 0}, // Desert has no dice
+		{Terrain: board.TerrainWood, DiceNumber: 6},
+		{Terrain: board.TerrainBrick, DiceNumber: 8},
+		{Terrain: board.TerrainOre, DiceNumber: 12},
+		{Terrain: board.TerrainWheat, DiceNumber: 4},
+		{Terrain: board.TerrainSheep, DiceNumber: 10},
+		{Terrain: board.TerrainDesert, DiceNumber: 0}, // Desert has no dice
 	}
 
 	for i, tile := range tiles {

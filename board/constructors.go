@@ -17,7 +17,7 @@ func NewDesertBoard() *Board {
 		for y := 0; y <= 10; y++ {
 			coord, valid := NewTileCoord(x, y)
 			if valid {
-				board.tiles[coord] = Tile{Terrain: Desierto, DiceNumber: 0}
+				board.tiles[coord] = Tile{Terrain: TerrainDesert, DiceNumber: 0}
 			}
 		}
 	}
@@ -48,7 +48,7 @@ func NewChaoticBoard() *Board {
 			if valid {
 				terrain := TerrainType(rand.IntN(6))
 				dice := rand.IntN(11) + 2
-				if terrain == Desierto {
+				if terrain == TerrainDesert {
 					dice = 0
 				}
 				board.tiles[tileCoord] = Tile{Terrain: terrain, DiceNumber: dice}
@@ -61,12 +61,12 @@ func NewChaoticBoard() *Board {
 func NewLegalBoard(playerRender func(int, string) string) *Board {
 	diceNumbers := []int{2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12}
 	terrains := []TerrainType{
-		Bosque, Bosque, Bosque, Bosque,
-		Arcilla, Arcilla, Arcilla,
-		Montaña, Montaña, Montaña,
-		Plantación, Plantación, Plantación, Plantación,
-		Pasto, Pasto, Pasto, Pasto,
-		Desierto,
+		TerrainWood, TerrainWood, TerrainWood, TerrainWood,
+		TerrainBrick, TerrainBrick, TerrainBrick,
+		TerrainOre, TerrainOre, TerrainOre,
+		TerrainWheat, TerrainWheat, TerrainWheat, TerrainWheat,
+		TerrainSheep, TerrainSheep, TerrainSheep, TerrainSheep,
+		TerrainDesert,
 	}
 	rand.Shuffle(len(diceNumbers), func(i, j int) {
 		diceNumbers[i], diceNumbers[j] = diceNumbers[j], diceNumbers[i]
@@ -88,7 +88,7 @@ func NewLegalBoard(playerRender func(int, string) string) *Board {
 			}
 			terr := terrains[0]
 			terrains = terrains[1:]
-			if terr == Desierto {
+			if terr == TerrainDesert {
 				board.tiles[tileCoord] = Tile{Terrain: terr, DiceNumber: 0}
 			} else {
 				board.tiles[tileCoord] = Tile{Terrain: terr, DiceNumber: diceNumbers[0]}

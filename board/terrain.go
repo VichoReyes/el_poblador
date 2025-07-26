@@ -8,28 +8,28 @@ import (
 type TerrainType int
 
 const (
-	Bosque TerrainType = iota
-	Arcilla
-	Montaña
-	Plantación
-	Pasto
-	Desierto
+	TerrainWood TerrainType = iota
+	TerrainBrick
+	TerrainOre
+	TerrainWheat
+	TerrainSheep
+	TerrainDesert
 )
 
 // String returns the string representation of the terrain type
 func (t TerrainType) String() string {
 	switch t {
-	case Bosque:
+	case TerrainWood:
 		return "Bosque"
-	case Arcilla:
+	case TerrainBrick:
 		return "Arcilla"
-	case Montaña:
+	case TerrainOre:
 		return "Montaña"
-	case Plantación:
+	case TerrainWheat:
 		return "Plantación"
-	case Pasto:
+	case TerrainSheep:
 		return "Pasto"
-	case Desierto:
+	case TerrainDesert:
 		return "Desierto"
 	default:
 		return "Desconocido"
@@ -78,17 +78,17 @@ func (tile *Tile) RenderTile(isCursor bool) [5]string {
 // getTerrainAbbrev returns a short abbreviation for the terrain type
 func (tile *Tile) getTerrainAbbrev() string {
 	switch tile.Terrain {
-	case Bosque:
+	case TerrainWood:
 		return "BOSQ"
-	case Arcilla:
+	case TerrainBrick:
 		return "ARCI"
-	case Montaña:
+	case TerrainOre:
 		return "MONT"
-	case Plantación:
+	case TerrainWheat:
 		return "PLAN"
-	case Pasto:
+	case TerrainSheep:
 		return "PAST"
-	case Desierto:
+	case TerrainDesert:
 		return "DESI"
 	default:
 		return "????"
@@ -99,26 +99,57 @@ func (tile *Tile) getTerrainAbbrev() string {
 func (tile *Tile) getTerrainColor() string {
 	var colorNumber int
 	switch tile.Terrain {
-	case Bosque:
+	case TerrainWood:
 		// dark green
 		colorNumber = 2
-	case Arcilla:
+	case TerrainBrick:
 		// red
 		colorNumber = 1
-	case Montaña:
+	case TerrainOre:
 		// dark gray
 		colorNumber = 8
-	case Plantación:
+	case TerrainWheat:
 		// yellow
 		colorNumber = 11
-	case Pasto:
+	case TerrainSheep:
 		// green
 		colorNumber = 10
-	case Desierto:
+	case TerrainDesert:
 		// brown
 		colorNumber = 3
 	default:
 		colorNumber = 0
 	}
 	return fmt.Sprintf("\033[38;5;%dm", colorNumber)
+}
+
+type ResourceType string
+
+const (
+	ResourceOre   ResourceType = "Piedra"
+	ResourceWood  ResourceType = "Madera"
+	ResourceSheep ResourceType = "Lana"
+	ResourceWheat ResourceType = "Trigo"
+	ResourceBrick ResourceType = "Ladrillo"
+)
+
+func (r ResourceType) String() string {
+	return string(r)
+}
+
+func TileResource(t Tile) (ResourceType, bool) {
+	switch t.Terrain {
+	case TerrainOre:
+		return ResourceOre, true
+	case TerrainWood:
+		return ResourceWood, true
+	case TerrainSheep:
+		return ResourceSheep, true
+	case TerrainWheat:
+		return ResourceWheat, true
+	case TerrainBrick:
+		return ResourceBrick, true
+	default:
+		return "", false
+	}
 }

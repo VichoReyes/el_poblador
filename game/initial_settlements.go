@@ -45,9 +45,9 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 		player := p.game.players[p.playerTurn]
 		adjacentTiles := p.game.board.AdjacentTiles(p.cursorCross)
 		for _, tile := range adjacentTiles {
-			resource, ok := tileResource(tile)
+			resource, ok := board.TileResource(tile)
 			if ok {
-				player.AddResource(resource, 1)
+				player.AddResource(resource)
 			}
 		}
 	}

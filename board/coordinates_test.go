@@ -129,7 +129,7 @@ func TestNewDesertBoardTileCount(t *testing.T) {
 }
 
 func TestTileRender(t *testing.T) {
-	tile := Tile{Terrain: Arcilla, DiceNumber: 5}
+	tile := Tile{Terrain: TerrainBrick, DiceNumber: 5}
 	rendered1 := tile.RenderTile(false)
 	rendered2 := tile.RenderTile(true)
 

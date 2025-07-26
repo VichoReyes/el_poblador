@@ -45,6 +45,24 @@ func (b *Board) SetSettlement(coord CrossCoord, playerId int) bool {
 	return true
 }
 
+// GenerateResources generates the resources for a given sum
+// returns a map of player id to resources
+func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
+	resources := make(map[int][]ResourceType)
+	for crossCoord, playerId := range b.settlements {
+		adjacentTiles := b.AdjacentTiles(crossCoord)
+		for _, tile := range adjacentTiles {
+			if tile.DiceNumber == sum {
+				resource, ok := TileResource(tile)
+				if ok {
+					resources[playerId] = append(resources[playerId], resource)
+				}
+			}
+		}
+	}
+	return resources
+}
+
 func (b *Board) SetRoad(coord PathCoord, playerId int) {
 	b.roads[coord] = playerId
 }

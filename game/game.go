@@ -9,20 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type Player struct {
-	Name      string
-	color     int // 8 bit color code
-	resources map[ResourceType]int
-}
-
-func (p *Player) TotalResources() int {
-	total := 0
-	for _, amount := range p.resources {
-		total += amount
-	}
-	return total
-}
-
 type Phase interface {
 	Confirm() Phase
 	Cancel() Phase
@@ -84,7 +70,7 @@ func (g *Game) Start(playerNames []string) {
 	colors := []int{20, 88, 165, 103} // blue, red, purple, white
 	g.players = make([]Player, len(playerNames))
 	for i, name := range playerNames {
-		g.players[i] = Player{Name: name, color: colors[i], resources: make(map[ResourceType]int)}
+		g.players[i] = Player{Name: name, color: colors[i], resources: make(map[board.ResourceType]int)}
 	}
 	rand.Shuffle(len(g.players), func(i, j int) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
@@ -121,8 +107,4 @@ func (g *Game) ConfirmAction() {
 
 func (g *Game) CancelAction() {
 	g.phase = g.phase.Cancel()
-}
-
-func (p *Player) AddResource(t ResourceType, amount int) {
-	p.resources[t] += amount
 }
