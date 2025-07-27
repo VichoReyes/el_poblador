@@ -30,6 +30,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.game.ConfirmAction()
 		case "esc":
 			m.game.CancelAction()
+		case "d":
+			m.game.CycleDebugPlayer()
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width

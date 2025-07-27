@@ -1,6 +1,9 @@
 package game
 
-import "el_poblador/board"
+import (
+	"el_poblador/board"
+	"fmt"
+)
 
 type Player struct {
 	Name      string
@@ -18,4 +21,8 @@ func (p *Player) TotalResources() int {
 
 func (p *Player) AddResource(t board.ResourceType) {
 	p.resources[t] += 1
+}
+
+func (p *Player) Render(s string) string {
+	return fmt.Sprintf("\033[38;5;%dm%s\033[0m", p.color, s)
 }

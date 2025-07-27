@@ -4,12 +4,14 @@ import (
 	"el_poblador/board"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
 
 type Phase interface {
+	PlayerTurn() int
 	Confirm() Phase
 	Cancel() Phase
 	MoveCursor(direction string)
@@ -23,10 +25,11 @@ type PhaseWithMenu interface {
 }
 
 type Game struct {
-	board    *board.Board
-	players  []Player
-	lastDice [2]int
-	phase    Phase
+	board       *board.Board
+	players     []Player
+	lastDice    [2]int
+	phase       Phase
+	debugPlayer *int
 }
 
 func (g *Game) Print(width, height int) string {
@@ -34,22 +37,42 @@ func (g *Game) Print(width, height int) string {
 
 	help := g.helpText(width)
 
-	// Board
 	boardLines := g.board.Print(g.phase.BoardCursor())
 	boardContent := strings.Join(boardLines, "\n")
 
-	// players
-	playerNames := make([]string, len(g.players))
-	for i, player := range g.players {
-		playerNames[i] = fmt.Sprintf("\033[38;5;%dm %s \033[0m", player.color, player.Name)
+	var dice string
+	if g.lastDice[0] != 0 {
+		dice = fmt.Sprintf("Dice: %d (%d + %d)", g.lastDice[0]+g.lastDice[1], g.lastDice[0], g.lastDice[1])
+		dice = margin.Render(dice)
 	}
-	players := strings.Join(playerNames, "\n\n")
-	dice := "⚂ ⚄"
+
+	userPlayer := g.getUserPlayer()
+
+	var playerList []string
+	for i, player := range g.players {
+		if i == userPlayer {
+			continue
+		}
+		name := player.Render(player.Name)
+		info := player.Render(fmt.Sprintf("has %d resources", player.TotalResources()))
+		playerList = append(playerList, name, info)
+	}
+	otherPlayers := margin.Render(strings.Join(playerList, "\n"))
+
+	myPlayer := g.players[userPlayer]
+	var myResources []string
+	for resource, amount := range myPlayer.resources {
+		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, amount))
+	}
+	myResourcesStr := myPlayer.Render(strings.Join(myResources, "\n"))
+
 	var phaseSidebar string
 	if p, ok := g.phase.(PhaseWithMenu); ok {
-		phaseSidebar = p.Menu()
+		if userPlayer == g.phase.PlayerTurn() {
+			phaseSidebar = margin.Render(p.Menu())
+		}
 	}
-	sidebar := margin.Render(lipgloss.JoinVertical(lipgloss.Left, dice, players, phaseSidebar))
+	sidebar := lipgloss.JoinVertical(lipgloss.Left, dice, otherPlayers, myResourcesStr, phaseSidebar)
 	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebar)
 
 	// Calculate the available space for the board.
@@ -63,6 +86,13 @@ func (g *Game) Print(width, height int) string {
 	)
 
 	return lipgloss.JoinVertical(lipgloss.Left, mainContent, help)
+}
+
+func (g *Game) getUserPlayer() int {
+	if g.debugPlayer != nil {
+		return *g.debugPlayer
+	}
+	return g.phase.PlayerTurn()
 }
 
 func (g *Game) helpText(width int) string {
@@ -85,7 +115,7 @@ func (g *Game) Start(playerNames []string) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
 	})
 	g.board = board.NewLegalBoard(func(playerId int, content string) string {
-		return fmt.Sprintf("\033[38;5;%dm%s\033[0m", g.players[playerId].color, content)
+		return g.players[playerId].Render(content)
 	})
 	g.phase = PhaseInitialSettlements(g, 0, true)
 }
@@ -116,4 +146,16 @@ func (g *Game) ConfirmAction() {
 
 func (g *Game) CancelAction() {
 	g.phase = g.phase.Cancel()
+}
+
+func (g *Game) CycleDebugPlayer() {
+	if os.Getenv("DEBUG") == "" {
+		return
+	}
+	if g.debugPlayer == nil {
+		g.debugPlayer = new(int)
+		*g.debugPlayer = 0
+	} else {
+		*g.debugPlayer = (*g.debugPlayer + 1) % len(g.players)
+	}
 }

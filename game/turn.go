@@ -13,6 +13,10 @@ type phaseWithOptions struct {
 	selected   int
 }
 
+func (p *phaseWithOptions) PlayerTurn() int {
+	return p.playerTurn
+}
+
 func (p *phaseWithOptions) BoardCursor() interface{} {
 	return nil
 }
