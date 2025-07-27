@@ -148,6 +148,24 @@ func (g *Game) MoveCursor(direction string, requestPlayer *int) {
 	g.phase.MoveCursor(direction)
 }
 
+// Function for testing purposes: move the cursor to any valid settlement location
+func (g *Game) MoveCursorToPlaceSettlement() {
+	find := func() board.CrossCoord {
+		for x := 0; x <= 5; x++ {
+			for y := 0; y <= 10; y++ {
+				coord, valid := board.NewCrossCoord(x, y)
+				if valid && g.board.CanPlaceSettlement(coord) {
+					return coord
+				}
+			}
+		}
+		panic("no valid settlement location found")
+	}
+	if p, ok := g.phase.(*phaseInitialSettlements); ok {
+		p.cursorCross = find()
+	}
+}
+
 func (g *Game) ConfirmAction(requestPlayer *int) {
 	playerPerspective := g.playerPerspective(requestPlayer)
 	// for now simply ignore actions from other players
