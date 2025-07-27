@@ -3,6 +3,8 @@ package game
 import (
 	"el_poblador/board"
 	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Player struct {
@@ -24,5 +26,6 @@ func (p *Player) AddResource(t board.ResourceType) {
 }
 
 func (p *Player) Render(s string) string {
-	return fmt.Sprintf("\033[38;5;%dm%s\033[0m", p.color, s)
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
+	return style.Render(s)
 }

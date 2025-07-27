@@ -2,6 +2,8 @@ package board
 
 import (
 	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 // TerrainType represents the different types of terrain in Catan
@@ -60,17 +62,17 @@ func (tile *Tile) RenderTile(isCursor bool) [5]string {
 		diceStr = fmt.Sprintf("%d", tile.DiceNumber)
 	}
 
-	code := tile.getTerrainColor()
+	style := tile.getTerrainStyle()
 	if isCursor {
-		code = fmt.Sprintf("%s\033[48;5;15m", code)
+		style = style.Background(lipgloss.Color("15"))
 	}
-	endCode := "\033[0m"
+
 	lines := [5]string{
-		fmt.Sprintf("%s/‾‾‾‾‾‾\\%s", code, endCode),
-		fmt.Sprintf("%s/  %s  \\%s", code, terrainAbbrev, endCode),
-		fmt.Sprintf("%s    %2s    %s", code, diceStr, endCode),
-		fmt.Sprintf("%s\\        /%s", code, endCode),
-		fmt.Sprintf("%s\\______/%s", code, endCode),
+		style.Render("/‾‾‾‾‾‾\\"),
+		style.Render(fmt.Sprintf("/  %s  \\", terrainAbbrev)),
+		style.Render(fmt.Sprintf("    %2s    ", diceStr)),
+		style.Render("\\        /"),
+		style.Render("\\______/"),
 	}
 	return lines
 }
@@ -95,8 +97,8 @@ func (tile *Tile) getTerrainAbbrev() string {
 	}
 }
 
-// getTerrainColor returns the terminal 256 color code for the terrain color
-func (tile *Tile) getTerrainColor() string {
+// getTerrainStyle returns the lipgloss style for the terrain
+func (tile *Tile) getTerrainStyle() lipgloss.Style {
 	var colorNumber int
 	switch tile.Terrain {
 	case TerrainWood:
@@ -120,7 +122,7 @@ func (tile *Tile) getTerrainColor() string {
 	default:
 		colorNumber = 0
 	}
-	return fmt.Sprintf("\033[38;5;%dm", colorNumber)
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", colorNumber)))
 }
 
 type ResourceType string

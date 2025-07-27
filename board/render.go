@@ -2,6 +2,8 @@ package board
 
 import (
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 // PrintBoard prints the game board made of ASCII hexagons
@@ -39,7 +41,8 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		hasCursor = true
 	}
 	if hasCursor {
-		lines[midLine].WriteString("\033[5;33m ○ \033[0m")
+		style := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Blink(true)
+		lines[midLine].WriteString(style.Render(" ○ "))
 	} else if hasSettlement {
 		lines[midLine].WriteString(board.playerRender(settlementOwner, "▲▲▲"))
 	} else {
@@ -117,19 +120,4 @@ func sidePadding(lines []strings.Builder) {
 		}
 		lines[i].WriteString(strings.Repeat(" ", base))
 	}
-}
-
-func terminalLength(s string) int {
-	n := 0
-	skip := false
-	for _, c := range s {
-		if c == '\033' {
-			skip = true
-		} else if c == 'm' {
-			skip = false
-		} else if !skip {
-			n++
-		}
-	}
-	return n
 }

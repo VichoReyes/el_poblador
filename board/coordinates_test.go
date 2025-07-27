@@ -4,6 +4,8 @@ import (
 	"slices"
 	"testing"
 	"testing/quick"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestPathCoord(t *testing.T) {
@@ -135,11 +137,11 @@ func TestTileRender(t *testing.T) {
 
 	lengthsExpected := [5]int{8, 10, 10, 10, 8}
 	for i := range rendered1 {
-		actualLength1 := terminalLength(rendered1[i])
+		actualLength1 := lipgloss.Width(rendered1[i])
 		if actualLength1 != lengthsExpected[i] {
 			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength1)
 		}
-		actualLength2 := terminalLength(rendered2[i])
+		actualLength2 := lipgloss.Width(rendered2[i])
 		if actualLength2 != lengthsExpected[i] {
 			t.Errorf("Expected line %d to be %d characters long, got %d", i, lengthsExpected[i], actualLength2)
 		}
