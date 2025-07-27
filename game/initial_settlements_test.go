@@ -9,8 +9,14 @@ func TestInitialFlow(t *testing.T) {
 	game := &Game{}
 	game.Start([]string{"p1", "p2", "p3"})
 
+	expectedTurns := []int{0, 1, 2, 2, 1, 0}
+
 	// 2 rounds of placing settlements and roads
 	for i := 0; i < 2*len(game.players); i++ {
+		if game.playerTurn != expectedTurns[i] {
+			t.Fatalf("Wrong player turn. Expected %d, got %d. Iteration %d", expectedTurns[i], game.playerTurn, i)
+		}
+
 		if _, ok := game.phase.(*phaseInitialSettlements); !ok {
 			t.Fatalf("Phase is not initial settlements. Iteration %d", i)
 		}
@@ -26,6 +32,9 @@ func TestInitialFlow(t *testing.T) {
 			t.Fatalf("Phase is not initial road. Iteration %d", i)
 		}
 		game.ConfirmAction() // place road
+	}
+	if game.playerTurn != 0 {
+		t.Fatalf("Wrong player turn after initial flow. Expected %d, got %d", 0, game.playerTurn)
 	}
 
 	// there should be at least one resource
