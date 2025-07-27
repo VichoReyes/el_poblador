@@ -44,8 +44,10 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 	var dice string
 	if g.lastDice[0] != 0 {
 		dice = fmt.Sprintf("Dice: %d (%d + %d)", g.lastDice[0]+g.lastDice[1], g.lastDice[0], g.lastDice[1])
-		dice = margin.Render(dice)
+	} else {
+		dice = "Dice: not rolled yet"
 	}
+	dice = margin.Render(dice)
 
 	var playerList []string
 	for i, player := range g.players {
