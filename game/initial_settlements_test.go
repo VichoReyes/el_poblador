@@ -1,7 +1,6 @@
 package game
 
 import (
-	"el_poblador/board"
 	"testing"
 )
 
@@ -20,12 +19,7 @@ func TestInitialFlow(t *testing.T) {
 		if _, ok := game.phase.(*phaseInitialSettlements); !ok {
 			t.Fatalf("Phase is not initial settlements. Iteration %d", i)
 		}
-		// find a valid location and move the cursor there
-		coord, ok := findValidSettlementLocation(game)
-		if !ok {
-			t.Fatalf("Could not find a valid settlement location. Iteration %d", i)
-		}
-		game.phase.(*phaseInitialSettlements).cursorCross = coord
+		game.MoveCursorToPlaceSettlement()
 
 		game.ConfirmAction(nil) // place settlement
 		if _, ok := game.phase.(*phaseInitialRoad); !ok {
@@ -73,16 +67,4 @@ func TestPlaceSettlementOnExisting(t *testing.T) {
 	if _, ok := game.phase.(*phaseInitialSettlements); !ok {
 		t.Fatal("Should not be able to place a settlement on an existing one")
 	}
-}
-
-func findValidSettlementLocation(game *Game) (board.CrossCoord, bool) {
-	for x := 0; x <= 5; x++ {
-		for y := 0; y <= 10; y++ {
-			coord, valid := board.NewCrossCoord(x, y)
-			if valid && game.board.CanPlaceSettlement(coord) {
-				return coord, true
-			}
-		}
-	}
-	return board.CrossCoord{}, false
 }

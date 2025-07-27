@@ -23,12 +23,7 @@ func TestInitialSettlementsRender(t *testing.T) {
 		if _, ok := game.phase.(*phaseInitialSettlements); !ok {
 			t.Fatalf("Phase is not initial settlements. Iteration %d", i)
 		}
-		// find a valid location and move the cursor there
-		coord, ok := findValidSettlementLocation(game)
-		if !ok {
-			t.Fatalf("Could not find a valid settlement location. Iteration %d", i)
-		}
-		game.phase.(*phaseInitialSettlements).cursorCross = coord
+		game.MoveCursorToPlaceSettlement()
 
 		game.ConfirmAction(nil) // place settlement
 		if _, ok := game.phase.(*phaseInitialRoad); !ok {
