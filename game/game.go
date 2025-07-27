@@ -4,7 +4,6 @@ import (
 	"el_poblador/board"
 	"fmt"
 	"math/rand/v2"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -24,15 +23,17 @@ type PhaseWithMenu interface {
 }
 
 type Game struct {
-	board       *board.Board
-	players     []Player
-	lastDice    [2]int
-	phase       Phase
-	playerTurn  int
-	debugPlayer *int
+	board      *board.Board
+	players    []Player
+	lastDice   [2]int
+	phase      Phase
+	playerTurn int
 }
 
-func (g *Game) Print(width, height int) string {
+// requestPlayer is the player that the user is playing as.
+// If nil, the game will render from the perspective of the turn holder.
+func (g *Game) Print(width, height int, requestPlayer *int) string {
+	playerPerspective := g.playerPerspective(requestPlayer)
 	margin := lipgloss.NewStyle().Margin(1)
 
 	help := g.helpText(width)
@@ -46,29 +47,29 @@ func (g *Game) Print(width, height int) string {
 		dice = margin.Render(dice)
 	}
 
-	userPlayer := g.getUserPlayer()
-
 	var playerList []string
 	for i, player := range g.players {
-		if i == userPlayer {
-			continue
+		var name string
+		if i == playerPerspective {
+			name = fmt.Sprintf("%s (you)", player.Render(player.Name))
+		} else {
+			name = player.Render(player.Name)
 		}
-		name := player.Render(player.Name)
-		info := player.Render(fmt.Sprintf("has %d resources", player.TotalResources()))
+		info := player.Render(fmt.Sprintf(" has %d resources", player.TotalResources()))
 		playerList = append(playerList, name, info)
 	}
 	otherPlayers := margin.Render(strings.Join(playerList, "\n"))
 
-	myPlayer := g.players[userPlayer]
-	var myResources []string
+	myPlayer := g.players[playerPerspective]
+	myResources := []string{"Your resources:"}
 	for resource, amount := range myPlayer.resources {
 		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, amount))
 	}
-	myResourcesStr := myPlayer.Render(strings.Join(myResources, "\n"))
+	myResourcesStr := margin.Render(strings.Join(myResources, "\n"))
 
 	var phaseSidebar string
 	if p, ok := g.phase.(PhaseWithMenu); ok {
-		if userPlayer == g.playerTurn {
+		if playerPerspective == g.playerTurn {
 			phaseSidebar = margin.Render(p.Menu())
 		}
 	}
@@ -88,11 +89,12 @@ func (g *Game) Print(width, height int) string {
 	return lipgloss.JoinVertical(lipgloss.Left, mainContent, help)
 }
 
-func (g *Game) getUserPlayer() int {
-	if g.debugPlayer != nil {
-		return *g.debugPlayer
+func (g *Game) playerPerspective(requestPlayer *int) int {
+	if requestPlayer != nil && *requestPlayer < len(g.players) {
+		return *requestPlayer
+	} else {
+		return g.playerTurn
 	}
-	return g.playerTurn
 }
 
 func (g *Game) helpText(width int) string {
@@ -137,26 +139,29 @@ func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossC
 	return dest, ok
 }
 
-func (g *Game) MoveCursor(direction string) {
+func (g *Game) MoveCursor(direction string, requestPlayer *int) {
+	playerPerspective := g.playerPerspective(requestPlayer)
+	// for now simply ignore moves from other players
+	if playerPerspective != g.playerTurn {
+		return
+	}
 	g.phase.MoveCursor(direction)
 }
 
-func (g *Game) ConfirmAction() {
+func (g *Game) ConfirmAction(requestPlayer *int) {
+	playerPerspective := g.playerPerspective(requestPlayer)
+	// for now simply ignore actions from other players
+	if playerPerspective != g.playerTurn {
+		return
+	}
 	g.phase = g.phase.Confirm()
 }
 
-func (g *Game) CancelAction() {
-	g.phase = g.phase.Cancel()
-}
-
-func (g *Game) CycleDebugPlayer() {
-	if os.Getenv("DEBUG") == "" {
+func (g *Game) CancelAction(requestPlayer *int) {
+	playerPerspective := g.playerPerspective(requestPlayer)
+	// for now simply ignore actions from other players
+	if playerPerspective != g.playerTurn {
 		return
 	}
-	if g.debugPlayer == nil {
-		g.debugPlayer = new(int)
-		*g.debugPlayer = 0
-	} else {
-		*g.debugPlayer = (*g.debugPlayer + 1) % len(g.players)
-	}
+	g.phase = g.phase.Cancel()
 }

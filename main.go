@@ -9,9 +9,10 @@ import (
 )
 
 type model struct {
-	game   game.Game
-	width  int
-	height int
+	game       game.Game
+	width      int
+	height     int
+	userPlayer *int
 }
 
 func (m model) Init() tea.Cmd {
@@ -25,13 +26,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "up", "down", "left", "right":
-			m.game.MoveCursor(msg.String())
+			m.game.MoveCursor(msg.String(), m.userPlayer)
 		case "enter":
-			m.game.ConfirmAction()
+			m.game.ConfirmAction(m.userPlayer)
 		case "esc":
-			m.game.CancelAction()
-		case "d":
-			m.game.CycleDebugPlayer()
+			m.game.CancelAction(m.userPlayer)
+		// switch to specific player's perspective
+		case "1", "2", "3", "4":
+			player := int(msg.String()[0] - '1')
+			m.userPlayer = &player
+		// switch back to turn holder's perspective
+		case "0":
+			m.userPlayer = nil
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -42,7 +48,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return m.game.Print(m.width, m.height)
+	return m.game.Print(m.width, m.height, m.userPlayer)
 }
 
 func main() {
