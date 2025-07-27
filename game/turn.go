@@ -7,14 +7,9 @@ import (
 )
 
 type phaseWithOptions struct {
-	game       *Game
-	playerTurn int
-	options    []string
-	selected   int
-}
-
-func (p *phaseWithOptions) PlayerTurn() int {
-	return p.playerTurn
+	game     *Game
+	options  []string
+	selected int
 }
 
 func (p *phaseWithOptions) BoardCursor() interface{} {
@@ -23,10 +18,10 @@ func (p *phaseWithOptions) BoardCursor() interface{} {
 
 func (p *phaseWithOptions) Menu() string {
 	paddedOptions := make([]string, len(p.options))
-	playerColor := p.game.players[p.playerTurn].color
+	player := p.game.players[p.game.playerTurn]
 	for i, option := range p.options {
 		if i == p.selected {
-			paddedOptions[i] = fmt.Sprintf("\033[38;5;%dm>\033[0m %s", playerColor, option)
+			paddedOptions[i] = player.Render("> ") + option
 		} else {
 			paddedOptions[i] = fmt.Sprintf(" %s", option)
 		}
@@ -48,12 +43,11 @@ type phaseDiceRoll struct {
 	phaseWithOptions
 }
 
-func PhaseDiceRoll(game *Game, playerTurn int) Phase {
+func PhaseDiceRoll(game *Game) Phase {
 	return &phaseDiceRoll{
 		phaseWithOptions: phaseWithOptions{
-			game:       game,
-			playerTurn: playerTurn,
-			options:    []string{"Roll", "Play Knight"},
+			game:    game,
+			options: []string{"Roll", "Play Knight"},
 		},
 	}
 }
@@ -61,7 +55,7 @@ func PhaseDiceRoll(game *Game, playerTurn int) Phase {
 func (p *phaseDiceRoll) Confirm() Phase {
 	switch p.selected {
 	case 0:
-		return rollDice(p.game, p.playerTurn)
+		return rollDice(p.game)
 	case 1:
 		panic("Play Knight not implemented")
 	default:
@@ -69,14 +63,14 @@ func (p *phaseDiceRoll) Confirm() Phase {
 	}
 }
 
-func rollDice(game *Game, playerTurn int) Phase {
+func rollDice(game *Game) Phase {
 	game.lastDice = [2]int{rand.IntN(6) + 1, rand.IntN(6) + 1}
 	sum := game.lastDice[0] + game.lastDice[1]
 	if sum == 7 {
 		// TODO: discarding of > 7 cards
 		// also TODO: implement robber
 		// for now go to idle phase
-		return PhaseIdle(game, playerTurn)
+		return PhaseIdle(game)
 	}
 	generatedResources := game.board.GenerateResources(sum)
 	for player, resources := range generatedResources {
@@ -84,7 +78,7 @@ func rollDice(game *Game, playerTurn int) Phase {
 			game.players[player].AddResource(r)
 		}
 	}
-	return PhaseIdle(game, playerTurn)
+	return PhaseIdle(game)
 }
 
 func (p *phaseDiceRoll) Cancel() Phase {
@@ -92,20 +86,18 @@ func (p *phaseDiceRoll) Cancel() Phase {
 }
 
 func (p *phaseDiceRoll) HelpText() string {
-	return fmt.Sprintf("%s's turn. Time to roll the dice",
-		p.game.players[p.playerTurn].Name)
+	return "Time to roll the dice"
 }
 
 type phaseIdle struct {
 	phaseWithOptions
 }
 
-func PhaseIdle(game *Game, playerTurn int) Phase {
+func PhaseIdle(game *Game) Phase {
 	return &phaseIdle{
 		phaseWithOptions: phaseWithOptions{
-			game:       game,
-			playerTurn: playerTurn,
-			options:    []string{"Build", "Trade", "Play Development Card", "End Turn"},
+			game:    game,
+			options: []string{"Build", "Trade", "Play Development Card", "End Turn"},
 		},
 	}
 }
@@ -119,5 +111,5 @@ func (p *phaseIdle) Cancel() Phase {
 }
 
 func (p *phaseIdle) HelpText() string {
-	return fmt.Sprintf("%s's turn. What do you want to do?", p.game.players[p.playerTurn].Name)
+	return "What do you want to do?"
 }

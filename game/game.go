@@ -11,7 +11,6 @@ import (
 )
 
 type Phase interface {
-	PlayerTurn() int
 	Confirm() Phase
 	Cancel() Phase
 	MoveCursor(direction string)
@@ -29,6 +28,7 @@ type Game struct {
 	players     []Player
 	lastDice    [2]int
 	phase       Phase
+	playerTurn  int
 	debugPlayer *int
 }
 
@@ -68,7 +68,7 @@ func (g *Game) Print(width, height int) string {
 
 	var phaseSidebar string
 	if p, ok := g.phase.(PhaseWithMenu); ok {
-		if userPlayer == g.phase.PlayerTurn() {
+		if userPlayer == g.playerTurn {
 			phaseSidebar = margin.Render(p.Menu())
 		}
 	}
@@ -92,13 +92,13 @@ func (g *Game) getUserPlayer() int {
 	if g.debugPlayer != nil {
 		return *g.debugPlayer
 	}
-	return g.phase.PlayerTurn()
+	return g.playerTurn
 }
 
 func (g *Game) helpText(width int) string {
-	text := g.phase.HelpText()
-	style := lipgloss.NewStyle().Faint(true)
-	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, style.Render(text))
+	player := g.players[g.playerTurn]
+	help := fmt.Sprintf("%s's turn. %s", player.Render(player.Name), g.phase.HelpText())
+	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, help)
 	return renderedHelp
 }
 
@@ -117,7 +117,8 @@ func (g *Game) Start(playerNames []string) {
 	g.board = board.NewLegalBoard(func(playerId int, content string) string {
 		return g.players[playerId].Render(content)
 	})
-	g.phase = PhaseInitialSettlements(g, 0, true)
+	g.playerTurn = 0
+	g.phase = PhaseInitialSettlements(g, true)
 }
 
 func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossCoord, ok bool) {

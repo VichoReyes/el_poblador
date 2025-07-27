@@ -5,48 +5,43 @@ import (
 	"fmt"
 )
 
-func nextInitialPhase(game *Game, currentPlayer int, isFirstPair bool) Phase {
+func nextInitialPhase(game *Game, isFirstPair bool) Phase {
 	numPlayers := len(game.players)
 
 	if isFirstPair {
-		nextPlayer := currentPlayer + 1
-		if nextPlayer < numPlayers {
-			return PhaseInitialSettlements(game, nextPlayer, true)
+		if game.playerTurn == numPlayers-1 {
+			return PhaseInitialSettlements(game, false)
 		} else {
-			return PhaseInitialSettlements(game, numPlayers-1, false)
+			game.playerTurn++
+			return PhaseInitialSettlements(game, true)
 		}
 	} else {
-		nextPlayer := currentPlayer - 1
-		if nextPlayer >= 0 {
-			return PhaseInitialSettlements(game, nextPlayer, false)
+		if game.playerTurn == 0 {
+			return PhaseDiceRoll(game)
 		} else {
-			return PhaseDiceRoll(game, 0)
+			game.playerTurn--
+			return PhaseInitialSettlements(game, false)
 		}
 	}
 }
 
 type phaseInitialSettlements struct {
 	game        *Game
-	playerTurn  int
 	cursorCross board.CrossCoord
 	isFirstPair bool
 }
 
-func PhaseInitialSettlements(game *Game, playerTurn int, isFirstPair bool) Phase {
+func PhaseInitialSettlements(game *Game, isFirstPair bool) Phase {
 	cursorCross := game.board.ValidCrossCoord()
-	return &phaseInitialSettlements{game: game, playerTurn: playerTurn, cursorCross: cursorCross, isFirstPair: isFirstPair}
-}
-
-func (p *phaseInitialSettlements) PlayerTurn() int {
-	return p.playerTurn
+	return &phaseInitialSettlements{game: game, cursorCross: cursorCross, isFirstPair: isFirstPair}
 }
 
 func (p *phaseInitialSettlements) Confirm() Phase {
-	if !p.game.board.SetSettlement(p.cursorCross, p.playerTurn) {
+	if !p.game.board.SetSettlement(p.cursorCross, p.game.playerTurn) {
 		return p
 	}
 	if !p.isFirstPair {
-		player := p.game.players[p.playerTurn]
+		player := p.game.players[p.game.playerTurn]
 		adjacentTiles := p.game.board.AdjacentTiles(p.cursorCross)
 		for _, tile := range adjacentTiles {
 			resource, ok := board.TileResource(tile)
@@ -55,7 +50,7 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 			}
 		}
 	}
-	return PhaseInitialRoad(p.game, p.playerTurn, p.cursorCross, p.isFirstPair)
+	return PhaseInitialRoad(p.game, p.cursorCross, p.isFirstPair)
 }
 
 func (p *phaseInitialSettlements) Cancel() Phase {
@@ -69,10 +64,7 @@ func (p *phaseInitialSettlements) HelpText() string {
 	} else {
 		num = "second"
 	}
-	return fmt.Sprintf("%s's turn. Place your %s settlement on the board with 'enter'.",
-		p.game.players[p.playerTurn].Name,
-		num,
-	)
+	return fmt.Sprintf("Place your %s settlement on the board with 'enter'.", num)
 }
 
 func (p *phaseInitialSettlements) BoardCursor() interface{} {
@@ -89,38 +81,32 @@ func (p *phaseInitialSettlements) MoveCursor(direction string) {
 
 type phaseInitialRoad struct {
 	game        *Game
-	playerTurn  int
 	sourceCross board.CrossCoord
 	cursorCross board.CrossCoord
 	isFirstPair bool
 }
 
-func PhaseInitialRoad(game *Game, playerTurn int, sourceCross board.CrossCoord, isFirstPair bool) Phase {
+func PhaseInitialRoad(game *Game, sourceCross board.CrossCoord, isFirstPair bool) Phase {
 	return &phaseInitialRoad{
 		game:        game,
-		playerTurn:  playerTurn,
 		sourceCross: sourceCross,
 		cursorCross: sourceCross.Neighbors()[0],
 		isFirstPair: isFirstPair,
 	}
 }
 
-func (p *phaseInitialRoad) PlayerTurn() int {
-	return p.playerTurn
-}
-
 func (p *phaseInitialRoad) Confirm() Phase {
 	roadCoord := board.NewPathCoord(p.sourceCross, p.cursorCross)
-	p.game.board.SetRoad(roadCoord, p.playerTurn)
-	return nextInitialPhase(p.game, p.playerTurn, p.isFirstPair)
+	p.game.board.SetRoad(roadCoord, p.game.playerTurn)
+	return nextInitialPhase(p.game, p.isFirstPair)
 }
 
 func (p *phaseInitialRoad) Cancel() Phase {
-	return PhaseInitialSettlements(p.game, p.playerTurn, p.isFirstPair)
+	return PhaseInitialSettlements(p.game, p.isFirstPair)
 }
 
 func (p *phaseInitialRoad) HelpText() string {
-	return fmt.Sprintf("%s's turn. Place your initial road connected to the settlement with 'enter'.", p.game.players[p.playerTurn].Name)
+	return "Place a road connected to the settlement by selecting its direction."
 }
 
 func (p *phaseInitialRoad) BoardCursor() interface{} {
