@@ -103,7 +103,19 @@ func PhaseIdle(game *Game) Phase {
 }
 
 func (p *phaseIdle) Confirm() Phase {
-	return p
+	switch p.selected {
+	case 0: // Build
+		return PhaseBuilding(p.game, p)
+	case 1: // Trade
+		panic("Trade not implemented")
+	case 2: // Play Development Card
+		panic("Play Development Card not implemented")
+	case 3: // End Turn
+		// TODO: Implement turn ending logic
+		return p
+	default:
+		panic("Invalid option selected")
+	}
 }
 
 func (p *phaseIdle) Cancel() Phase {
@@ -112,4 +124,93 @@ func (p *phaseIdle) Cancel() Phase {
 
 func (p *phaseIdle) HelpText() string {
 	return "What do you want to do?"
+}
+
+type phaseBuilding struct {
+	phaseWithOptions
+	previousPhase Phase
+}
+
+func PhaseBuilding(game *Game, previousPhase Phase) Phase {
+	player := game.players[game.playerTurn]
+
+	// Build the list of available building options
+	var options []string
+
+	if player.CanBuildRoad() {
+		options = append(options, "Road (1 Wood, 1 Brick)")
+	} else {
+		options = append(options, "Road (1 Wood, 1 Brick) - Not enough resources")
+	}
+
+	if player.CanBuildSettlement() {
+		options = append(options, "Settlement (1 Wood, 1 Brick, 1 Wheat, 1 Sheep)")
+	} else {
+		options = append(options, "Settlement (1 Wood, 1 Brick, 1 Wheat, 1 Sheep) - Not enough resources")
+	}
+
+	if player.CanBuildCity() {
+		options = append(options, "City (2 Wheat, 3 Ore)")
+	} else {
+		options = append(options, "City (2 Wheat, 3 Ore) - Not enough resources")
+	}
+
+	if player.CanBuyDevelopmentCard() {
+		options = append(options, "Development Card (1 Wheat, 1 Ore, 1 Sheep)")
+	} else {
+		options = append(options, "Development Card (1 Wheat, 1 Ore, 1 Sheep) - Not enough resources")
+	}
+
+	options = append(options, "Cancel")
+
+	return &phaseBuilding{
+		phaseWithOptions: phaseWithOptions{
+			game:    game,
+			options: options,
+		},
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phaseBuilding) Confirm() Phase {
+	player := p.game.players[p.game.playerTurn]
+
+	switch p.selected {
+	case 0: // Road
+		if player.CanBuildRoad() {
+			// TODO: Implement road placement phase
+			panic("Road placement not implemented")
+		}
+		return p
+	case 1: // Settlement
+		if player.CanBuildSettlement() {
+			// TODO: Implement settlement placement phase
+			panic("Settlement placement not implemented")
+		}
+		return p
+	case 2: // City
+		if player.CanBuildCity() {
+			// TODO: Implement city placement phase
+			panic("City placement not implemented")
+		}
+		return p
+	case 3: // Development Card
+		if player.CanBuyDevelopmentCard() {
+			// TODO: Implement development card purchase
+			panic("Development card purchase not implemented")
+		}
+		return p
+	case 4: // Cancel
+		return p.previousPhase
+	default:
+		panic("Invalid option selected")
+	}
+}
+
+func (p *phaseBuilding) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phaseBuilding) HelpText() string {
+	return "Choose what to build"
 }

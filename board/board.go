@@ -66,3 +66,38 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 func (b *Board) SetRoad(coord PathCoord, playerId int) {
 	b.roads[coord] = playerId
 }
+
+// CanPlaceRoad checks if a road can be placed at the given path coordinate
+func (b *Board) CanPlaceRoad(coord PathCoord, playerId int) bool {
+	// Check if road already exists
+	if _, ok := b.roads[coord]; ok {
+		return false
+	}
+
+	// TODO: Check if player has a settlement/city adjacent to this road
+	// For now, allow any road placement
+	return true
+}
+
+// CanUpgradeToCity checks if a settlement can be upgraded to a city
+func (b *Board) CanUpgradeToCity(coord CrossCoord, playerId int) bool {
+	// Check if there's a settlement owned by this player
+	if owner, ok := b.settlements[coord]; !ok || owner != playerId {
+		return false
+	}
+
+	// TODO: Check if player has enough resources
+	// For now, allow any settlement upgrade
+	return true
+}
+
+// SetCity upgrades a settlement to a city
+func (b *Board) SetCity(coord CrossCoord, playerId int) bool {
+	if !b.CanUpgradeToCity(coord, playerId) {
+		return false
+	}
+	// For now, we'll use a negative player ID to represent cities
+	// TODO: Implement proper city representation
+	b.settlements[coord] = -playerId - 1
+	return true
+}
