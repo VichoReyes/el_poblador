@@ -76,7 +76,8 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 		}
 	}
 	sidebar := lipgloss.JoinVertical(lipgloss.Left, dice, otherPlayers, myResourcesStr, phaseSidebar)
-	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebar)
+	sidebarWithMinWidth := lipgloss.NewStyle().Width(26).Render(sidebar)
+	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebarWithMinWidth)
 
 	// Calculate the available space for the board.
 	availableHeight := height - lipgloss.Height(help)
