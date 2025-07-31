@@ -44,7 +44,12 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		style := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Blink(true)
 		lines[midLine].WriteString(style.Render(" ○ "))
 	} else if hasSettlement {
-		lines[midLine].WriteString(board.playerRender(settlementOwner, "▲▲▲"))
+		_, isCity := board.cityUpgrades[coord]
+		if isCity {
+			lines[midLine].WriteString(board.playerRender(settlementOwner, "███"))
+		} else {
+			lines[midLine].WriteString(board.playerRender(settlementOwner, "▲▲▲"))
+		}
 	} else {
 		lines[midLine].WriteString("   ")
 	}
