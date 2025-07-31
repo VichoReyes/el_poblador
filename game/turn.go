@@ -90,14 +90,20 @@ func (p *phaseDiceRoll) HelpText() string {
 
 type phaseIdle struct {
 	phaseWithOptions
+	notification string
 }
 
 func PhaseIdle(game *Game) Phase {
+	return PhaseIdleWithNotification(game, "")
+}
+
+func PhaseIdleWithNotification(game *Game, notification string) Phase {
 	return &phaseIdle{
 		phaseWithOptions: phaseWithOptions{
 			game:    game,
 			options: []string{"Build", "Trade", "Play Development Card", "End Turn"},
 		},
+		notification: notification,
 	}
 }
 
@@ -119,6 +125,9 @@ func (p *phaseIdle) Confirm() Phase {
 }
 
 func (p *phaseIdle) HelpText() string {
+	if p.notification != "" {
+		return p.notification + " Anything else?"
+	}
 	return "What do you want to do?"
 }
 
@@ -302,8 +311,8 @@ func (p *phaseRoadEnd) Confirm() Phase {
 	// Place the road on the board
 	p.game.board.SetRoad(pathCoord, playerId)
 
-	// Return to idle phase
-	return PhaseIdle(p.game)
+	// Return to idle phase with notification
+	return PhaseIdleWithNotification(p.game, "Road built!")
 }
 
 func (p *phaseRoadEnd) Cancel() Phase {
@@ -372,8 +381,8 @@ func (p *phaseSettlementPlacement) Confirm() Phase {
 	// Place the settlement on the board
 	p.game.board.SetSettlement(p.cursorCross, playerId)
 
-	// Return to idle phase
-	return PhaseIdle(p.game)
+	// Return to idle phase with notification
+	return PhaseIdleWithNotification(p.game, "Settlement built!")
 }
 
 func (p *phaseSettlementPlacement) Cancel() Phase {
