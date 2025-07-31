@@ -11,7 +11,6 @@ import (
 
 type Phase interface {
 	Confirm() Phase
-	Cancel() Phase
 	MoveCursor(direction string)
 	BoardCursor() interface{}
 	HelpText() string
@@ -20,6 +19,11 @@ type Phase interface {
 type PhaseWithMenu interface {
 	Phase
 	Menu() string
+}
+
+type PhaseCancelable interface {
+	Phase
+	Cancel() Phase
 }
 
 type Game struct {
@@ -184,7 +188,9 @@ func (g *Game) CancelAction(requestPlayer *int) {
 	if playerPerspective != g.playerTurn {
 		return
 	}
-	g.phase = g.phase.Cancel()
+	if p, ok := g.phase.(PhaseCancelable); ok {
+		g.phase = p.Cancel()
+	}
 }
 
 // GetCurrentPlayer returns the current player

@@ -53,10 +53,6 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 	return PhaseInitialRoad(p.game, p.cursorCross, p.isFirstPair)
 }
 
-func (p *phaseInitialSettlements) Cancel() Phase {
-	return p
-}
-
 func (p *phaseInitialSettlements) HelpText() string {
 	var num string
 	if p.isFirstPair {

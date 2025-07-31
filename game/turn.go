@@ -81,10 +81,6 @@ func rollDice(game *Game) Phase {
 	return PhaseIdle(game)
 }
 
-func (p *phaseDiceRoll) Cancel() Phase {
-	return p
-}
-
 func (p *phaseDiceRoll) HelpText() string {
 	return "Time to roll the dice"
 }
@@ -111,15 +107,12 @@ func (p *phaseIdle) Confirm() Phase {
 	case 2: // Play Development Card
 		panic("Play Development Card not implemented")
 	case 3: // End Turn
-		// TODO: Implement turn ending logic
-		return p
+		p.game.playerTurn++
+		p.game.playerTurn %= len(p.game.players)
+		return PhaseIdle(p.game)
 	default:
 		panic("Invalid option selected")
 	}
-}
-
-func (p *phaseIdle) Cancel() Phase {
-	return p
 }
 
 func (p *phaseIdle) HelpText() string {
