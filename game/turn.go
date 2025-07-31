@@ -222,6 +222,7 @@ type phaseRoadStart struct {
 	game          *Game
 	cursorCross   board.CrossCoord
 	previousPhase Phase
+	invalid       string
 }
 
 func PhaseRoadStart(game *Game, previousPhase Phase) Phase {
@@ -239,6 +240,7 @@ func (p *phaseRoadStart) Confirm() Phase {
 	if !p.game.board.HasRoadConnected(p.cursorCross, playerId) {
 		// Check if player has a settlement at this crossing
 		if !p.game.board.HasSettlementAt(p.cursorCross, playerId) {
+			p.invalid = "You must have a road or settlement connected to this crossing"
 			return p // Invalid selection, stay in same phase
 		}
 	}
@@ -250,7 +252,10 @@ func (p *phaseRoadStart) Cancel() Phase {
 }
 
 func (p *phaseRoadStart) HelpText() string {
-	return "Select the starting point for your road (must be connected to your existing road network or settlement)"
+	if p.invalid != "" {
+		return p.invalid
+	}
+	return "Select the starting point for your road"
 }
 
 func (p *phaseRoadStart) BoardCursor() interface{} {
@@ -270,6 +275,7 @@ type phaseRoadEnd struct {
 	startCross    board.CrossCoord
 	cursorCross   board.CrossCoord
 	previousPhase Phase
+	invalid       string
 }
 
 func PhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase) Phase {
@@ -291,24 +297,19 @@ func PhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase) 
 func (p *phaseRoadEnd) Confirm() Phase {
 	player := p.game.players[p.game.playerTurn]
 	playerId := p.game.playerTurn
-
-	// Create the path coordinate
 	pathCoord := board.NewPathCoord(p.startCross, p.cursorCross)
 
-	// Check if the road can be placed here
 	if !p.game.board.CanPlaceRoad(pathCoord, playerId) {
-		return p // Invalid selection, stay in same phase
+		p.invalid = "Can't build road here"
+		return p
 	}
 
-	// Consume resources and build the road
 	if !player.BuildRoad() {
-		return p // Not enough resources, stay in same phase
+		p.invalid = "Not enough resources"
+		return p
 	}
 
-	// Place the road on the board
 	p.game.board.SetRoad(pathCoord, playerId)
-
-	// Return to idle phase with notification
 	return PhaseIdleWithNotification(p.game, "Road built!")
 }
 
@@ -317,6 +318,9 @@ func (p *phaseRoadEnd) Cancel() Phase {
 }
 
 func (p *phaseRoadEnd) HelpText() string {
+	if p.invalid != "" {
+		return p.invalid
+	}
 	return "Select the ending point for your road"
 }
 
@@ -350,6 +354,7 @@ type phaseSettlementPlacement struct {
 	game          *Game
 	cursorCross   board.CrossCoord
 	previousPhase Phase
+	invalid       string
 }
 
 func PhaseSettlementPlacement(game *Game, previousPhase Phase) Phase {
@@ -365,20 +370,18 @@ func (p *phaseSettlementPlacement) Confirm() Phase {
 	player := p.game.players[p.game.playerTurn]
 	playerId := p.game.playerTurn
 
-	// Check if the settlement can be placed here
 	if !p.game.board.CanPlaceSettlementForPlayer(p.cursorCross, playerId) {
-		return p // Invalid selection, stay in same phase
+		p.invalid = "Can't build settlement here"
+		return p
 	}
 
-	// Consume resources and build the settlement
 	if !player.BuildSettlement() {
-		return p // Not enough resources, stay in same phase
+		p.invalid = "Not enough resources"
+		return p
 	}
 
-	// Place the settlement on the board
 	p.game.board.SetSettlement(p.cursorCross, playerId)
 
-	// Return to idle phase with notification
 	return PhaseIdleWithNotification(p.game, "Settlement built!")
 }
 
@@ -387,7 +390,10 @@ func (p *phaseSettlementPlacement) Cancel() Phase {
 }
 
 func (p *phaseSettlementPlacement) HelpText() string {
-	return "Select where to place your settlement (must be connected to your road network)"
+	if p.invalid != "" {
+		return p.invalid
+	}
+	return "Select where to place your settlement"
 }
 
 func (p *phaseSettlementPlacement) BoardCursor() interface{} {
@@ -406,6 +412,7 @@ type phaseCityPlacement struct {
 	game          *Game
 	cursorCross   board.CrossCoord
 	previousPhase Phase
+	invalid       string
 }
 
 func PhaseCityPlacement(game *Game, previousPhase Phase) Phase {
@@ -421,20 +428,18 @@ func (p *phaseCityPlacement) Confirm() Phase {
 	player := p.game.players[p.game.playerTurn]
 	playerId := p.game.playerTurn
 
-	// Check if the city can be placed here (upgrade existing settlement)
 	if !p.game.board.CanUpgradeToCity(p.cursorCross, playerId) {
-		return p // Invalid selection, stay in same phase
+		p.invalid = "Can't upgrade to city here"
+		return p
 	}
 
-	// Consume resources and build the city
 	if !player.BuildCity() {
-		return p // Not enough resources, stay in same phase
+		p.invalid = "Not enough resources"
+		return p
 	}
 
-	// Upgrade the settlement to a city on the board
 	p.game.board.UpgradeToCity(p.cursorCross, playerId)
 
-	// Return to idle phase with notification
 	return PhaseIdleWithNotification(p.game, "City built!")
 }
 
@@ -443,6 +448,9 @@ func (p *phaseCityPlacement) Cancel() Phase {
 }
 
 func (p *phaseCityPlacement) HelpText() string {
+	if p.invalid != "" {
+		return p.invalid
+	}
 	return "Select a settlement to upgrade to a city"
 }
 
