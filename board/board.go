@@ -6,6 +6,7 @@ type Board struct {
 	// roads and settlements are indexed by player id
 	roads        map[PathCoord]int
 	settlements  map[CrossCoord]int
+	cityUpgrades map[CrossCoord]int // tracks which settlements have been upgraded to cities
 	playerRender func(int, string) string
 }
 
@@ -49,6 +50,8 @@ func (b *Board) SetSettlement(coord CrossCoord, playerId int) bool {
 // returns a map of player id to resources
 func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 	resources := make(map[int][]ResourceType)
+
+	// First, generate resources for settlements (1 resource each)
 	for crossCoord, playerId := range b.settlements {
 		adjacentTiles := b.AdjacentTiles(crossCoord)
 		for _, tile := range adjacentTiles {
@@ -60,6 +63,20 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 			}
 		}
 	}
+
+	// Then, generate additional resources for cities (1 more resource each)
+	for crossCoord, playerId := range b.cityUpgrades {
+		adjacentTiles := b.AdjacentTiles(crossCoord)
+		for _, tile := range adjacentTiles {
+			if tile.DiceNumber == sum {
+				resource, ok := TileResource(tile)
+				if ok {
+					resources[playerId] = append(resources[playerId], resource)
+				}
+			}
+		}
+	}
+
 	return resources
 }
 
@@ -122,4 +139,36 @@ func (b *Board) CanPlaceSettlementForPlayer(cross CrossCoord, playerId int) bool
 
 	// Then check if the player has a road connected to this crossing
 	return b.HasRoadConnected(cross, playerId)
+}
+
+// CanUpgradeToCity checks if a settlement can be upgraded to a city
+func (b *Board) CanUpgradeToCity(coord CrossCoord, playerId int) bool {
+	// Check if there's a settlement owned by this player
+	if settlementPlayerId, ok := b.settlements[coord]; !ok || settlementPlayerId != playerId {
+		return false
+	}
+
+	// Check if it's already been upgraded to a city
+	if _, ok := b.cityUpgrades[coord]; ok {
+		return false
+	}
+
+	return true
+}
+
+// UpgradeToCity upgrades a settlement to a city
+func (b *Board) UpgradeToCity(coord CrossCoord, playerId int) bool {
+	if !b.CanUpgradeToCity(coord, playerId) {
+		return false
+	}
+	b.cityUpgrades[coord] = playerId
+	return true
+}
+
+// HasCityAt checks if a player has a city at a specific crossing
+func (b *Board) HasCityAt(cross CrossCoord, playerId int) bool {
+	if cityPlayerId, ok := b.cityUpgrades[cross]; ok {
+		return cityPlayerId == playerId
+	}
+	return false
 }

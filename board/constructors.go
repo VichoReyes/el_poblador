@@ -5,9 +5,10 @@ import "math/rand/v2"
 // NewDesertBoard creates a new board of only desert tiles
 func NewDesertBoard() *Board {
 	board := &Board{
-		tiles:       make(map[TileCoord]Tile),
-		roads:       make(map[PathCoord]int),
-		settlements: make(map[CrossCoord]int),
+		tiles:        make(map[TileCoord]Tile),
+		roads:        make(map[PathCoord]int),
+		settlements:  make(map[CrossCoord]int),
+		cityUpgrades: make(map[CrossCoord]int),
 		playerRender: func(_ int, content string) string {
 			return content
 		},
@@ -27,9 +28,10 @@ func NewDesertBoard() *Board {
 // NewChaoticBoard creates a new board with random tiles
 func NewChaoticBoard() *Board {
 	board := &Board{
-		tiles:       make(map[TileCoord]Tile),
-		roads:       make(map[PathCoord]int),
-		settlements: make(map[CrossCoord]int),
+		tiles:        make(map[TileCoord]Tile),
+		roads:        make(map[PathCoord]int),
+		settlements:  make(map[CrossCoord]int),
+		cityUpgrades: make(map[CrossCoord]int),
 		playerRender: func(_ int, content string) string {
 			return content
 		},
@@ -78,6 +80,7 @@ func NewLegalBoard(playerRender func(int, string) string) *Board {
 		tiles:        make(map[TileCoord]Tile),
 		roads:        make(map[PathCoord]int),
 		settlements:  make(map[CrossCoord]int),
+		cityUpgrades: make(map[CrossCoord]int),
 		playerRender: playerRender,
 	}
 	for x := 0; x <= 5; x++ {

@@ -194,8 +194,7 @@ func (p *phaseBuilding) Confirm() Phase {
 		return p
 	case 2: // City
 		if player.CanBuildCity() {
-			// TODO: Implement city placement phase
-			panic("City placement not implemented")
+			return PhaseCityPlacement(p.game, p)
 		}
 		return p
 	case 3: // Development Card
@@ -398,6 +397,62 @@ func (p *phaseSettlementPlacement) BoardCursor() interface{} {
 }
 
 func (p *phaseSettlementPlacement) MoveCursor(direction string) {
+	dest, ok := moveCrossCursor(p.cursorCross, direction)
+	if !ok {
+		return
+	}
+	p.cursorCross = dest
+}
+
+type phaseCityPlacement struct {
+	game          *Game
+	cursorCross   board.CrossCoord
+	previousPhase Phase
+}
+
+func PhaseCityPlacement(game *Game, previousPhase Phase) Phase {
+	cursorCross := game.board.ValidCrossCoord()
+	return &phaseCityPlacement{
+		game:          game,
+		cursorCross:   cursorCross,
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phaseCityPlacement) Confirm() Phase {
+	player := p.game.players[p.game.playerTurn]
+	playerId := p.game.playerTurn
+
+	// Check if the city can be placed here (upgrade existing settlement)
+	if !p.game.board.CanUpgradeToCity(p.cursorCross, playerId) {
+		return p // Invalid selection, stay in same phase
+	}
+
+	// Consume resources and build the city
+	if !player.BuildCity() {
+		return p // Not enough resources, stay in same phase
+	}
+
+	// Upgrade the settlement to a city on the board
+	p.game.board.UpgradeToCity(p.cursorCross, playerId)
+
+	// Return to idle phase with notification
+	return PhaseIdleWithNotification(p.game, "City built!")
+}
+
+func (p *phaseCityPlacement) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phaseCityPlacement) HelpText() string {
+	return "Select a settlement to upgrade to a city"
+}
+
+func (p *phaseCityPlacement) BoardCursor() interface{} {
+	return p.cursorCross
+}
+
+func (p *phaseCityPlacement) MoveCursor(direction string) {
 	dest, ok := moveCrossCursor(p.cursorCross, direction)
 	if !ok {
 		return

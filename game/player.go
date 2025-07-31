@@ -105,6 +105,15 @@ func (p *Player) BuildSettlement() bool {
 	return p.ConsumeResources(required)
 }
 
+// BuildCity consumes resources and builds a city
+func (p *Player) BuildCity() bool {
+	required := map[board.ResourceType]int{
+		board.ResourceWheat: 2,
+		board.ResourceOre:   3,
+	}
+	return p.ConsumeResources(required)
+}
+
 func (p *Player) Render(s string) string {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
 	return style.Render(s)
