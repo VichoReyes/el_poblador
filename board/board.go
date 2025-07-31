@@ -164,11 +164,3 @@ func (b *Board) UpgradeToCity(coord CrossCoord, playerId int) bool {
 	b.cityUpgrades[coord] = playerId
 	return true
 }
-
-// HasCityAt checks if a player has a city at a specific crossing
-func (b *Board) HasCityAt(cross CrossCoord, playerId int) bool {
-	if cityPlayerId, ok := b.cityUpgrades[cross]; ok {
-		return cityPlayerId == playerId
-	}
-	return false
-}
