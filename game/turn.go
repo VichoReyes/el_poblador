@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type phaseWithOptions struct {
@@ -129,32 +131,33 @@ func PhaseBuilding(game *Game, previousPhase Phase) Phase {
 
 	// Build the list of available building options
 	var options []string
+	strikethrough := lipgloss.NewStyle().Strikethrough(true)
 
 	if player.CanBuildRoad() {
-		options = append(options, "Road (1 Wood, 1 Brick)")
+		options = append(options, "Road")
 	} else {
-		options = append(options, "Road (1 Wood, 1 Brick) - Not enough resources")
+		options = append(options, strikethrough.Render("Road"))
 	}
 
 	if player.CanBuildSettlement() {
-		options = append(options, "Settlement (1 Wood, 1 Brick, 1 Wheat, 1 Sheep)")
+		options = append(options, "Settlement")
 	} else {
-		options = append(options, "Settlement (1 Wood, 1 Brick, 1 Wheat, 1 Sheep) - Not enough resources")
+		options = append(options, strikethrough.Render("Settlement"))
 	}
 
 	if player.CanBuildCity() {
-		options = append(options, "City (2 Wheat, 3 Ore)")
+		options = append(options, "City")
 	} else {
-		options = append(options, "City (2 Wheat, 3 Ore) - Not enough resources")
+		options = append(options, strikethrough.Render("City"))
 	}
 
 	if player.CanBuyDevelopmentCard() {
-		options = append(options, "Development Card (1 Wheat, 1 Ore, 1 Sheep)")
+		options = append(options, "Development Card")
 	} else {
-		options = append(options, "Development Card (1 Wheat, 1 Ore, 1 Sheep) - Not enough resources")
+		options = append(options, strikethrough.Render("Development Card"))
 	}
 
-	options = append(options, "Cancel")
+	options = append(options, "Cancel (or 'esc')")
 
 	return &phaseBuilding{
 		phaseWithOptions: phaseWithOptions{
