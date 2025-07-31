@@ -275,12 +275,10 @@ type phaseRoadEnd struct {
 func PhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase) Phase {
 	// Start with the first neighbor of the start cross
 	neighbors := startCross.Neighbors()
-	var cursorCross board.CrossCoord
-	if len(neighbors) > 0 {
-		cursorCross = neighbors[0]
-	} else {
-		cursorCross = startCross // fallback, though this shouldn't happen
+	if len(neighbors) == 0 {
+		panic("No neighbors found for start cross")
 	}
+	cursorCross := neighbors[0]
 
 	return &phaseRoadEnd{
 		game:          game,
@@ -332,13 +330,13 @@ func (p *phaseRoadEnd) MoveCursor(direction string) {
 
 	switch direction {
 	case "up":
-		dest, ok = p.cursorCross.Up()
+		dest, ok = p.startCross.Up()
 	case "down":
-		dest, ok = p.cursorCross.Down()
+		dest, ok = p.startCross.Down()
 	case "left":
-		dest, ok = p.cursorCross.Left()
+		dest, ok = p.startCross.Left()
 	case "right":
-		dest, ok = p.cursorCross.Right()
+		dest, ok = p.startCross.Right()
 	default:
 		return
 	}
