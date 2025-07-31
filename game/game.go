@@ -192,24 +192,3 @@ func (g *Game) CancelAction(requestPlayer *int) {
 		g.phase = p.Cancel()
 	}
 }
-
-// GetCurrentPlayer returns the current player
-func (g *Game) GetCurrentPlayer() *Player {
-	return &g.players[g.playerTurn]
-}
-
-// GetCurrentPhase returns the current phase
-func (g *Game) GetCurrentPhase() Phase {
-	return g.phase
-}
-
-// IsPhaseBuilding checks if the current phase is a building phase
-func (g *Game) IsPhaseBuilding() bool {
-	_, ok := g.phase.(*phaseBuilding)
-	return ok
-}
-
-// GetPlayerCount returns the number of players in the game
-func (g *Game) GetPlayerCount() int {
-	return len(g.players)
-}
