@@ -135,6 +135,8 @@ const (
 	ResourceBrick ResourceType = "Ladrillo"
 )
 
+var RESOURCE_TYPES = []ResourceType{ResourceOre, ResourceWood, ResourceSheep, ResourceWheat, ResourceBrick}
+
 func (r ResourceType) String() string {
 	return string(r)
 }

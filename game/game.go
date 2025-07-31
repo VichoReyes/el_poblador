@@ -68,8 +68,8 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 
 	myPlayer := g.players[playerPerspective]
 	myResources := []string{"Your resources:"}
-	for resource, amount := range myPlayer.resources {
-		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, amount))
+	for _, resource := range board.RESOURCE_TYPES {
+		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, myPlayer.resources[resource]))
 	}
 	myResourcesStr := margin.Render(strings.Join(myResources, "\n"))
 
