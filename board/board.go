@@ -112,3 +112,14 @@ func (b *Board) HasSettlementAt(cross CrossCoord, playerId int) bool {
 	}
 	return false
 }
+
+// CanPlaceSettlementForPlayer checks if a player can place a settlement at a specific crossing
+func (b *Board) CanPlaceSettlementForPlayer(cross CrossCoord, playerId int) bool {
+	// First check if the basic placement rules are satisfied
+	if !b.CanPlaceSettlement(cross) {
+		return false
+	}
+
+	// Then check if the player has a road connected to this crossing
+	return b.HasRoadConnected(cross, playerId)
+}

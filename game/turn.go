@@ -180,8 +180,7 @@ func (p *phaseBuilding) Confirm() Phase {
 		return p
 	case 1: // Settlement
 		if player.CanBuildSettlement() {
-			// TODO: Implement settlement placement phase
-			panic("Settlement placement not implemented")
+			return PhaseSettlementPlacement(p.game, p)
 		}
 		return p
 	case 2: // City
@@ -339,4 +338,60 @@ func (p *phaseRoadEnd) MoveCursor(direction string) {
 	if ok {
 		p.cursorCross = dest
 	}
+}
+
+type phaseSettlementPlacement struct {
+	game          *Game
+	cursorCross   board.CrossCoord
+	previousPhase Phase
+}
+
+func PhaseSettlementPlacement(game *Game, previousPhase Phase) Phase {
+	cursorCross := game.board.ValidCrossCoord()
+	return &phaseSettlementPlacement{
+		game:          game,
+		cursorCross:   cursorCross,
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phaseSettlementPlacement) Confirm() Phase {
+	player := p.game.players[p.game.playerTurn]
+	playerId := p.game.playerTurn
+
+	// Check if the settlement can be placed here
+	if !p.game.board.CanPlaceSettlementForPlayer(p.cursorCross, playerId) {
+		return p // Invalid selection, stay in same phase
+	}
+
+	// Consume resources and build the settlement
+	if !player.BuildSettlement() {
+		return p // Not enough resources, stay in same phase
+	}
+
+	// Place the settlement on the board
+	p.game.board.SetSettlement(p.cursorCross, playerId)
+
+	// Return to idle phase
+	return PhaseIdle(p.game)
+}
+
+func (p *phaseSettlementPlacement) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phaseSettlementPlacement) HelpText() string {
+	return "Select where to place your settlement (must be connected to your road network)"
+}
+
+func (p *phaseSettlementPlacement) BoardCursor() interface{} {
+	return p.cursorCross
+}
+
+func (p *phaseSettlementPlacement) MoveCursor(direction string) {
+	dest, ok := moveCrossCursor(p.cursorCross, direction)
+	if !ok {
+		return
+	}
+	p.cursorCross = dest
 }

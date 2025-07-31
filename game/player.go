@@ -94,6 +94,17 @@ func (p *Player) BuildRoad() bool {
 	return p.ConsumeResources(required)
 }
 
+// BuildSettlement consumes resources and builds a settlement
+func (p *Player) BuildSettlement() bool {
+	required := map[board.ResourceType]int{
+		board.ResourceWood:  1,
+		board.ResourceBrick: 1,
+		board.ResourceWheat: 1,
+		board.ResourceSheep: 1,
+	}
+	return p.ConsumeResources(required)
+}
+
 func (p *Player) Render(s string) string {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
 	return style.Render(s)
