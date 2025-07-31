@@ -85,6 +85,15 @@ func (p *Player) CanBuyDevelopmentCard() bool {
 	return p.HasResources(required)
 }
 
+// BuildRoad consumes resources and builds a road
+func (p *Player) BuildRoad() bool {
+	required := map[board.ResourceType]int{
+		board.ResourceWood:  1,
+		board.ResourceBrick: 1,
+	}
+	return p.ConsumeResources(required)
+}
+
 func (p *Player) Render(s string) string {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
 	return style.Render(s)

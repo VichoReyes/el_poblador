@@ -1,6 +1,7 @@
 package game
 
 import (
+	"el_poblador/board"
 	"fmt"
 	"math/rand/v2"
 	"strings"
@@ -174,8 +175,7 @@ func (p *phaseBuilding) Confirm() Phase {
 	switch p.selected {
 	case 0: // Road
 		if player.CanBuildRoad() {
-			// TODO: Implement road placement phase
-			panic("Road placement not implemented")
+			return PhaseRoadStart(p.game, p)
 		}
 		return p
 	case 1: // Settlement
@@ -209,4 +209,134 @@ func (p *phaseBuilding) Cancel() Phase {
 
 func (p *phaseBuilding) HelpText() string {
 	return "Choose what to build"
+}
+
+type phaseRoadStart struct {
+	game          *Game
+	cursorCross   board.CrossCoord
+	previousPhase Phase
+}
+
+func PhaseRoadStart(game *Game, previousPhase Phase) Phase {
+	cursorCross := game.board.ValidCrossCoord()
+	return &phaseRoadStart{
+		game:          game,
+		cursorCross:   cursorCross,
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phaseRoadStart) Confirm() Phase {
+	// Check if player has a road or settlement connected to this crossing
+	playerId := p.game.playerTurn
+	if !p.game.board.HasRoadConnected(p.cursorCross, playerId) {
+		// Check if player has a settlement at this crossing
+		if !p.game.board.HasSettlementAt(p.cursorCross, playerId) {
+			return p // Invalid selection, stay in same phase
+		}
+	}
+	return PhaseRoadEnd(p.game, p.cursorCross, p.previousPhase)
+}
+
+func (p *phaseRoadStart) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phaseRoadStart) HelpText() string {
+	return "Select the starting point for your road (must be connected to your existing road network or settlement)"
+}
+
+func (p *phaseRoadStart) BoardCursor() interface{} {
+	return p.cursorCross
+}
+
+func (p *phaseRoadStart) MoveCursor(direction string) {
+	dest, ok := moveCrossCursor(p.cursorCross, direction)
+	if !ok {
+		return
+	}
+	p.cursorCross = dest
+}
+
+type phaseRoadEnd struct {
+	game          *Game
+	startCross    board.CrossCoord
+	cursorCross   board.CrossCoord
+	previousPhase Phase
+}
+
+func PhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase) Phase {
+	// Start with the first neighbor of the start cross
+	neighbors := startCross.Neighbors()
+	var cursorCross board.CrossCoord
+	if len(neighbors) > 0 {
+		cursorCross = neighbors[0]
+	} else {
+		cursorCross = startCross // fallback, though this shouldn't happen
+	}
+
+	return &phaseRoadEnd{
+		game:          game,
+		startCross:    startCross,
+		cursorCross:   cursorCross,
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phaseRoadEnd) Confirm() Phase {
+	player := p.game.players[p.game.playerTurn]
+	playerId := p.game.playerTurn
+
+	// Create the path coordinate
+	pathCoord := board.NewPathCoord(p.startCross, p.cursorCross)
+
+	// Check if the road can be placed here
+	if !p.game.board.CanPlaceRoad(pathCoord, playerId) {
+		return p // Invalid selection, stay in same phase
+	}
+
+	// Consume resources and build the road
+	if !player.BuildRoad() {
+		return p // Not enough resources, stay in same phase
+	}
+
+	// Place the road on the board
+	p.game.board.SetRoad(pathCoord, playerId)
+
+	// Return to idle phase
+	return PhaseIdle(p.game)
+}
+
+func (p *phaseRoadEnd) Cancel() Phase {
+	return PhaseRoadStart(p.game, p.previousPhase)
+}
+
+func (p *phaseRoadEnd) HelpText() string {
+	return "Select the ending point for your road"
+}
+
+func (p *phaseRoadEnd) BoardCursor() interface{} {
+	return p.cursorCross
+}
+
+func (p *phaseRoadEnd) MoveCursor(direction string) {
+	var dest board.CrossCoord
+	var ok bool
+
+	switch direction {
+	case "up":
+		dest, ok = p.cursorCross.Up()
+	case "down":
+		dest, ok = p.cursorCross.Down()
+	case "left":
+		dest, ok = p.cursorCross.Left()
+	case "right":
+		dest, ok = p.cursorCross.Right()
+	default:
+		return
+	}
+
+	if ok {
+		p.cursorCross = dest
+	}
 }

@@ -66,3 +66,49 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 func (b *Board) SetRoad(coord PathCoord, playerId int) {
 	b.roads[coord] = playerId
 }
+
+// HasRoadConnected checks if a player has a road connected to a specific crossing
+func (b *Board) HasRoadConnected(cross CrossCoord, playerId int) bool {
+	neighbors := cross.Neighbors()
+	for _, neighbor := range neighbors {
+		pathCoord := NewPathCoord(cross, neighbor)
+		if roadPlayerId, exists := b.roads[pathCoord]; exists && roadPlayerId == playerId {
+			return true
+		}
+	}
+	return false
+}
+
+// CanPlaceRoad checks if a road can be placed at the given path coordinate
+func (b *Board) CanPlaceRoad(coord PathCoord, playerId int) bool {
+	// Check if road already exists
+	if _, ok := b.roads[coord]; ok {
+		return false
+	}
+
+	// Check if player has a settlement/city at one of the endpoints
+	if settlementPlayerId, ok := b.settlements[coord.From]; ok && settlementPlayerId == playerId {
+		return true
+	}
+	if settlementPlayerId, ok := b.settlements[coord.To]; ok && settlementPlayerId == playerId {
+		return true
+	}
+
+	// Check if player has a road connected to one of the endpoints
+	if b.HasRoadConnected(coord.From, playerId) {
+		return true
+	}
+	if b.HasRoadConnected(coord.To, playerId) {
+		return true
+	}
+
+	return false
+}
+
+// HasSettlementAt checks if a player has a settlement at a specific crossing
+func (b *Board) HasSettlementAt(cross CrossCoord, playerId int) bool {
+	if settlementPlayerId, ok := b.settlements[cross]; ok {
+		return settlementPlayerId == playerId
+	}
+	return false
+}
