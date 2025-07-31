@@ -118,7 +118,7 @@ func (p *phaseIdle) Confirm() Phase {
 	case 3: // End Turn
 		p.game.playerTurn++
 		p.game.playerTurn %= len(p.game.players)
-		return PhaseIdle(p.game)
+		return PhaseDiceRoll(p.game)
 	default:
 		panic("Invalid option selected")
 	}
