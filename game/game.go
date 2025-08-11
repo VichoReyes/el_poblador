@@ -27,11 +27,12 @@ type PhaseCancelable interface {
 }
 
 type Game struct {
-	board      *board.Board
-	players    []Player
-	lastDice   [2]int
-	phase      Phase
-	playerTurn int
+	board       *board.Board
+	players     []Player
+	lastDice    [2]int
+	phase       Phase
+	playerTurn  int
+	devCardDeck []DevCard
 }
 
 // requestPlayer is the player that the user is playing as.
@@ -128,6 +129,7 @@ func (g *Game) Start(playerNames []string) {
 	})
 	g.playerTurn = 0
 	g.phase = PhaseInitialSettlements(g, true)
+	g.devCardDeck = shuffleDevCards()
 }
 
 func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossCoord, ok bool) {
