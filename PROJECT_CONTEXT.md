@@ -3,10 +3,14 @@
 ## Project Overview
 El Poblador is a Go implementation of the Catan board game, featuring a hexagonal board, turn-based gameplay, and various game phases.
 
+## Tasks
+Things to be done can be found in TASKS.md. As you complete tasks, remove them from this file. Emphasis on _remove_, not "put in a completed section".
+If the completion of a task uncoverered a new task to be added, add it. You may put some small guidelines to provide continuity.
+
 ## Project Structure
 - **`board/`** - Board representation, coordinates, rendering, and terrain
 - **`game/`** - Core game logic, phases, players, and turn management
-- **`cmd/`** - Command-line applications for testing and fullscreen display
+- **`cmd/`** - Command-line applications for testing
 
 ## Key Files
 - **`.build.yml`** - Build manifest containing commands to verify the project works
@@ -35,6 +39,11 @@ go run cmd/fullscreen/main.go
 2. Run the verification commands from `.build.yml`
 3. Check for any markdown files in relevant package directories for additional context
 4. Ensure tests pass and applications run correctly
+
+## Development Guidelines
+- **Interface Design**: Avoid adding methods to interfaces if they won't really be necessary for most implementations
+- **Simplicity**: Prefer simple, static implementations over complex dynamic ones to reduce bugs
+- **Testing**: Write tests for new functionality to ensure reliability
 
 ## Testing Strategy
 - Tests are located alongside source files with `_test.go` suffix
