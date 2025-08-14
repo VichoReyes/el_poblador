@@ -8,9 +8,11 @@ import (
 )
 
 type Player struct {
-	Name      string
-	color     int // 8 bit color code
-	resources map[board.ResourceType]int
+	Name           string
+	color          int // 8 bit color code
+	resources      map[board.ResourceType]int
+	hiddenDevCards []DevCard
+	playedDevCards []DevCard
 }
 
 func (p *Player) TotalResources() int {
@@ -83,6 +85,45 @@ func (p *Player) CanBuyDevelopmentCard() bool {
 		board.ResourceSheep: 1,
 	}
 	return p.HasResources(required)
+}
+
+// BuyDevelopmentCard consumes resources and returns true if successful
+func (p *Player) BuyDevelopmentCard() bool {
+	required := map[board.ResourceType]int{
+		board.ResourceWheat: 1,
+		board.ResourceOre:   1,
+		board.ResourceSheep: 1,
+	}
+	return p.ConsumeResources(required)
+}
+
+// GetHiddenDevCards returns the player's hidden development cards
+func (p *Player) GetHiddenDevCards() []DevCard {
+	return p.hiddenDevCards
+}
+
+// GetPlayedDevCards returns the player's played development cards
+func (p *Player) GetPlayedDevCards() []DevCard {
+	return p.playedDevCards
+}
+
+// PlayDevCard moves a card from hidden to played deck
+func (p *Player) PlayDevCard(card DevCard) bool {
+	for i, hiddenCard := range p.hiddenDevCards {
+		if hiddenCard == card {
+			// Remove from hidden deck
+			p.hiddenDevCards = append(p.hiddenDevCards[:i], p.hiddenDevCards[i+1:]...)
+			// Add to played deck
+			p.playedDevCards = append(p.playedDevCards, card)
+			return true
+		}
+	}
+	return false
+}
+
+// TotalDevCards returns the total number of development cards the player has
+func (p *Player) TotalDevCards() int {
+	return len(p.hiddenDevCards) + len(p.playedDevCards)
 }
 
 // BuildRoad consumes resources and builds a road

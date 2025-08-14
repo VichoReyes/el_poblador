@@ -62,7 +62,7 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 		} else {
 			name = player.Render(player.Name)
 		}
-		info := player.Render(fmt.Sprintf(" has %d resources", player.TotalResources()))
+		info := player.Render(fmt.Sprintf(" has %d resources, %d dev cards", player.TotalResources(), player.TotalDevCards()))
 		playerList = append(playerList, name, info)
 	}
 	otherPlayers := margin.Render(strings.Join(playerList, "\n"))
@@ -72,6 +72,7 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 	for _, resource := range board.RESOURCE_TYPES {
 		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, myPlayer.resources[resource]))
 	}
+	myResources = append(myResources, fmt.Sprintf("Dev Cards: %d", myPlayer.TotalDevCards()))
 	myResourcesStr := margin.Render(strings.Join(myResources, "\n"))
 
 	var phaseSidebar string
@@ -119,7 +120,13 @@ func (g *Game) Start(playerNames []string) {
 	colors := []int{20, 88, 165, 103} // blue, red, purple, white
 	g.players = make([]Player, len(playerNames))
 	for i, name := range playerNames {
-		g.players[i] = Player{Name: name, color: colors[i], resources: make(map[board.ResourceType]int)}
+		g.players[i] = Player{
+			Name:           name,
+			color:          colors[i],
+			resources:      make(map[board.ResourceType]int),
+			hiddenDevCards: make([]DevCard, 0),
+			playedDevCards: make([]DevCard, 0),
+		}
 	}
 	rand.Shuffle(len(g.players), func(i, j int) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
@@ -193,4 +200,15 @@ func (g *Game) CancelAction(requestPlayer *int) {
 	if p, ok := g.phase.(PhaseCancelable); ok {
 		g.phase = p.Cancel()
 	}
+}
+
+// DrawDevelopmentCard draws a card from the development card deck
+func (g *Game) DrawDevelopmentCard() *DevCard {
+	if len(g.devCardDeck) == 0 {
+		return nil
+	}
+
+	card := g.devCardDeck[len(g.devCardDeck)-1]
+	g.devCardDeck = g.devCardDeck[:len(g.devCardDeck)-1]
+	return &card
 }

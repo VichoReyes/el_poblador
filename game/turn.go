@@ -199,8 +199,12 @@ func (p *phaseBuilding) Confirm() Phase {
 		return p
 	case 3: // Development Card
 		if player.CanBuyDevelopmentCard() {
-			// TODO: Implement development card purchase
-			panic("Development card purchase not implemented")
+			if player.BuyDevelopmentCard() {
+				if card := p.game.DrawDevelopmentCard(); card != nil {
+					player.hiddenDevCards = append(player.hiddenDevCards, *card)
+					return p.previousPhase
+				}
+			}
 		}
 		return p
 	case 4: // Cancel
