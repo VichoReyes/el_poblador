@@ -60,7 +60,17 @@ func (p *phaseDiceRoll) Confirm() Phase {
 	case 0:
 		return rollDice(p.game)
 	case 1:
-		panic("Play Knight not implemented")
+		// Play Knight card
+		player := p.game.players[p.game.playerTurn]
+		if player.HasKnightCard() {
+			// TODO: Implement robber mechanics - for now just play the card
+			if player.PlayDevCard(DevCardKnight) {
+				// Return to idle phase with notification
+				return PhaseIdleWithNotification(p.game, "Knight card played! Robber mechanics coming soon...")
+			}
+		}
+		// If no knight card available, stay in same phase
+		return p
 	default:
 		panic("Invalid option selected")
 	}
@@ -114,7 +124,7 @@ func (p *phaseIdle) Confirm() Phase {
 	case 1: // Trade
 		panic("Trade not implemented")
 	case 2: // Play Development Card
-		panic("Play Development Card not implemented")
+		return PhasePlayDevelopmentCard(p.game, p)
 	case 3: // End Turn
 		p.game.playerTurn++
 		p.game.playerTurn %= len(p.game.players)
@@ -417,6 +427,59 @@ type phaseCityPlacement struct {
 	cursorCross   board.CrossCoord
 	previousPhase Phase
 	invalid       string
+}
+
+type phasePlayDevelopmentCard struct {
+	phaseWithOptions
+	previousPhase Phase
+}
+
+func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
+	player := game.players[game.playerTurn]
+
+	// Build options based on available development cards
+	var options []string
+
+	// Add available development card options
+	if player.HasKnightCard() {
+		options = append(options, "Knight")
+	}
+	// TODO: Add other development card types as they're implemented
+
+	// Always add cancel option
+	options = append(options, "Cancel")
+
+	return &phasePlayDevelopmentCard{
+		phaseWithOptions: phaseWithOptions{
+			game:    game,
+			options: options,
+		},
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phasePlayDevelopmentCard) Confirm() Phase {
+	player := p.game.players[p.game.playerTurn]
+
+	switch p.selected {
+	case 0: // Knight (if available)
+		if player.HasKnightCard() {
+			if player.PlayDevCard(DevCardKnight) {
+				return PhaseIdleWithNotification(p.game, "Knight card played! Robber mechanics coming soon...")
+			}
+		}
+		return p
+	default: // Cancel or invalid
+		return p.previousPhase
+	}
+}
+
+func (p *phasePlayDevelopmentCard) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phasePlayDevelopmentCard) HelpText() string {
+	return "Choose a development card to play"
 }
 
 func PhaseCityPlacement(game *Game, previousPhase Phase) Phase {

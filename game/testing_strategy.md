@@ -2,12 +2,7 @@
 
 ## Current Testing Approach
 
-The game package currently uses Go's standard testing framework with tests located alongside source files (`*_test.go`). Tests focus on:
-
-- Game initialization and setup
-- Turn progression through phases
-- Player actions and state changes
-- Game flow validation
+The game package currently uses Go's standard testing framework with tests located alongside source files (`*_test.go`).
 
 ## Current Testing Problems
 
@@ -38,12 +33,12 @@ The game package currently uses Go's standard testing framework with tests locat
 - Create test suites for different game components (phases, players, game state)
 - Use table-driven tests for similar test scenarios
 
-### 3. **Test Helper Functions**
+### 2. **Test Helper Functions**
 - Create helper functions for common game setups
 - Implement test fixtures for different game states
 - Build utilities for validating game state consistency
 
-### 4. **Phase Testing Improvements**
+### 3. **Phase Testing Improvements**
 - Test each phase in isolation
 - Create phase-specific test utilities
 - Test phase transitions with various input conditions
