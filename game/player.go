@@ -97,26 +97,6 @@ func (p *Player) BuyDevelopmentCard() bool {
 	return p.ConsumeResources(required)
 }
 
-// GetHiddenDevCards returns the player's hidden development cards
-func (p *Player) GetHiddenDevCards() []DevCard {
-	return p.hiddenDevCards
-}
-
-// GetPlayedDevCards returns the player's played development cards
-func (p *Player) GetPlayedDevCards() []DevCard {
-	return p.playedDevCards
-}
-
-// HasKnightCard checks if the player has a knight card available to play
-func (p *Player) HasKnightCard() bool {
-	for _, card := range p.hiddenDevCards {
-		if card == DevCardKnight {
-			return true
-		}
-	}
-	return false
-}
-
 // PlayDevCard moves a card from hidden to played deck
 func (p *Player) PlayDevCard(card DevCard) bool {
 	for i, hiddenCard := range p.hiddenDevCards {

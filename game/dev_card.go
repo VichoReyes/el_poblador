@@ -12,6 +12,11 @@ const (
 	DevCardVictoryPoint DevCard = "Victory Point"
 )
 
+func (d DevCard) String() string {
+	// TODO: Localize
+	return string(d)
+}
+
 func shuffleDevCards() []DevCard {
 	unshuffled := []DevCard{}
 

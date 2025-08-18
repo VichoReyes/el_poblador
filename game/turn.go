@@ -62,18 +62,129 @@ func (p *phaseDiceRoll) Confirm() Phase {
 	case 1:
 		// Play Knight card
 		player := p.game.players[p.game.playerTurn]
-		if player.HasKnightCard() {
-			// TODO: Implement robber mechanics - for now just play the card
-			if player.PlayDevCard(DevCardKnight) {
-				// Return to idle phase with notification
-				return PhaseIdleWithNotification(p.game, "Knight card played! Robber mechanics coming soon...")
-			}
+		if player.PlayDevCard(DevCardKnight) {
+			return PhasePlaceRobber(p.game, p)
 		}
-		// If no knight card available, stay in same phase
 		return p
 	default:
 		panic("Invalid option selected")
 	}
+}
+
+type phasePlaceRobber struct {
+	game         *Game
+	tileCoord    board.TileCoord
+	continuation Phase
+}
+
+func PhasePlaceRobber(game *Game, continuation Phase) Phase {
+	return &phasePlaceRobber{
+		game:         game,
+		continuation: continuation,
+	}
+}
+
+func (p *phasePlaceRobber) BoardCursor() interface{} {
+	return p.tileCoord
+}
+
+func (p *phasePlaceRobber) MoveCursor(direction string) {
+	dest, ok := moveTileCursor(p.tileCoord, direction)
+	if !ok {
+		return
+	}
+	p.tileCoord = dest
+}
+
+func moveTileCursor(tileCoord board.TileCoord, direction string) (board.TileCoord, bool) {
+	switch direction {
+	case "up":
+		return tileCoord.Up()
+	case "down":
+		return tileCoord.Down()
+	case "left":
+		return tileCoord.Left()
+	case "right":
+		return tileCoord.Right()
+	default:
+		return tileCoord, false
+	}
+}
+
+func (p *phasePlaceRobber) HelpText() string {
+	return "Select a tile to place the robber on"
+}
+
+func (p *phasePlaceRobber) Confirm() Phase {
+	playerIds := p.game.board.PlaceRobber(p.tileCoord)
+	var stealablePlayers []Player
+	for _, playerId := range playerIds {
+		p := p.game.players[playerId]
+		if p.TotalResources() > 0 {
+			stealablePlayers = append(stealablePlayers, p)
+		}
+	}
+	if len(stealablePlayers) == 0 { // no one to steal from? skip
+		return p.continuation
+	}
+	return &phaseStealCard{
+		game:             p.game,
+		continuation:     p.continuation,
+		stealablePlayers: stealablePlayers,
+	}
+}
+
+type phaseStealCard struct {
+	game             *Game
+	continuation     Phase
+	stealablePlayers []Player
+	selected         int
+}
+
+func (p *phaseStealCard) BoardCursor() interface{} {
+	return nil
+}
+
+func (p *phaseStealCard) MoveCursor(direction string) {
+	switch direction {
+	case "up":
+		p.selected--
+	case "down":
+		p.selected++
+	}
+	p.selected = (p.selected + len(p.stealablePlayers)) % len(p.stealablePlayers)
+}
+
+func (p *phaseStealCard) HelpText() string {
+	return "Select a player to steal from"
+}
+
+func (p *phaseStealCard) Confirm() Phase {
+	player := p.stealablePlayers[p.selected]
+	var resourcePool []board.ResourceType
+	for resType, count := range player.resources {
+		for i := 0; i < count; i++ {
+			resourcePool = append(resourcePool, resType)
+		}
+	}
+	if len(resourcePool) > 0 {
+		selectedResource := resourcePool[rand.IntN(len(resourcePool))]
+		player.resources[selectedResource] -= 1
+		p.game.players[p.game.playerTurn].AddResource(selectedResource)
+	}
+	return p.continuation
+}
+
+func (p *phaseStealCard) Menu() string {
+	var paddedOptions []string
+	for i, player := range p.stealablePlayers {
+		if i == p.selected {
+			paddedOptions = append(paddedOptions, "> "+player.Render(player.Name))
+		} else {
+			paddedOptions = append(paddedOptions, player.Render(" "+player.Name))
+		}
+	}
+	return strings.Join(paddedOptions, "\n")
 }
 
 func rollDice(game *Game) Phase {
@@ -440,13 +551,10 @@ func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
 	// Build options based on available development cards
 	var options []string
 
-	// Add available development card options
-	if player.HasKnightCard() {
-		options = append(options, "Knight")
+	for _, card := range player.hiddenDevCards {
+		options = append(options, card.String())
 	}
-	// TODO: Add other development card types as they're implemented
 
-	// Always add cancel option
 	options = append(options, "Cancel")
 
 	return &phasePlayDevelopmentCard{
@@ -460,17 +568,29 @@ func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
 
 func (p *phasePlayDevelopmentCard) Confirm() Phase {
 	player := p.game.players[p.game.playerTurn]
-
-	switch p.selected {
-	case 0: // Knight (if available)
-		if player.HasKnightCard() {
-			if player.PlayDevCard(DevCardKnight) {
-				return PhaseIdleWithNotification(p.game, "Knight card played! Robber mechanics coming soon...")
-			}
-		}
-		return p
-	default: // Cancel or invalid
+	numCards := len(player.hiddenDevCards)
+	if p.selected == numCards {
 		return p.previousPhase
+	}
+	card := player.hiddenDevCards[p.selected]
+
+	switch card {
+	case DevCardKnight:
+		player.PlayDevCard(card)
+		return PhasePlaceRobber(p.game, PhaseIdle(p.game))
+	case DevCardRoadBuilding:
+		// TODO: Implement road building without paying
+		return p.previousPhase
+	case DevCardMonopoly:
+		// TODO: Implement monopoly phase
+		return p.previousPhase
+	case DevCardYearOfPlenty:
+		// TODO: Implement year of plenty phase
+		return p.previousPhase
+	case DevCardVictoryPoint:
+		return p.previousPhase
+	default:
+		panic("This card does not exist")
 	}
 }
 

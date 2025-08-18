@@ -84,6 +84,22 @@ func (c CrossCoord) Right() (CrossCoord, bool) {
 	return NewCrossCoord(c.X+1, c.Y)
 }
 
+func (c TileCoord) Up() (TileCoord, bool) {
+	return NewTileCoord(c.X, c.Y-2)
+}
+
+func (c TileCoord) Down() (TileCoord, bool) {
+	return NewTileCoord(c.X, c.Y+2)
+}
+
+func (c TileCoord) Left() (TileCoord, bool) {
+	return NewTileCoord(c.X-1, c.Y)
+}
+
+func (c TileCoord) Right() (TileCoord, bool) {
+	return NewTileCoord(c.X+1, c.Y)
+}
+
 func (c CrossCoord) Neighbors() []CrossCoord {
 	// TODO: use Up, Down, Left, Right methods
 	var potential []CrossCoord

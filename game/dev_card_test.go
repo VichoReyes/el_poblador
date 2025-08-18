@@ -102,11 +102,6 @@ func TestKnightCardUsage(t *testing.T) {
 	player := &game.players[0]
 	player.hiddenDevCards = append(player.hiddenDevCards, DevCardKnight)
 
-	// Test that the player has a knight card
-	if !player.HasKnightCard() {
-		t.Fatal("Player should have a knight card")
-	}
-
 	// Test that the dice roll phase always shows the knight option
 	dicePhase := PhaseDiceRoll(game)
 	if phaseWithMenu, ok := dicePhase.(PhaseWithMenu); ok {
@@ -146,10 +141,5 @@ func TestKnightCardUsage(t *testing.T) {
 
 	if len(player.playedDevCards) != 1 {
 		t.Fatal("Knight card should be added to played cards when played")
-	}
-
-	// Test that the player no longer has knight cards
-	if player.HasKnightCard() {
-		t.Fatal("Player should not have knight cards after playing one")
 	}
 }

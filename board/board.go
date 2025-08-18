@@ -1,5 +1,7 @@
 package board
 
+import "slices"
+
 // Board represents the game board
 type Board struct {
 	tiles map[TileCoord]Tile
@@ -8,6 +10,20 @@ type Board struct {
 	settlements  map[CrossCoord]int
 	cityUpgrades map[CrossCoord]int // tracks which settlements have been upgraded to cities
 	playerRender func(int, string) string
+	robber       TileCoord
+}
+
+// SetRobber sets the robber to the given tile coordinate
+// also returns the player ids of the players that can be stolen from
+func (b *Board) PlaceRobber(coord TileCoord) []int {
+	b.robber = coord
+	playerIds := make([]int, 0)
+	for settlement, playerId := range b.settlements {
+		if slices.Contains(settlement.adjacentTileCoords(), coord) {
+			playerIds = append(playerIds, playerId)
+		}
+	}
+	return playerIds
 }
 
 func (b *Board) ValidCrossCoord() CrossCoord {
