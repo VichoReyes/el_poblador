@@ -93,11 +93,11 @@ func (c TileCoord) Down() (TileCoord, bool) {
 }
 
 func (c TileCoord) Left() (TileCoord, bool) {
-	return NewTileCoord(c.X-1, c.Y)
+	return NewTileCoord(c.X-1, c.Y-1)
 }
 
 func (c TileCoord) Right() (TileCoord, bool) {
-	return NewTileCoord(c.X+1, c.Y)
+	return NewTileCoord(c.X+1, c.Y+1)
 }
 
 func (c CrossCoord) Neighbors() []CrossCoord {
