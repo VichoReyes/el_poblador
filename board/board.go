@@ -195,3 +195,25 @@ func (b *Board) UpgradeToCity(coord CrossCoord, playerId int) bool {
 	b.cityUpgrades[coord] = playerId
 	return true
 }
+
+// CountSettlements counts the number of settlements owned by a player
+func (b *Board) CountSettlements(playerId int) int {
+	count := 0
+	for _, owner := range b.settlements {
+		if owner == playerId {
+			count++
+		}
+	}
+	return count
+}
+
+// CountCities counts the number of cities owned by a player
+func (b *Board) CountCities(playerId int) int {
+	count := 0
+	for _, owner := range b.cityUpgrades {
+		if owner == playerId {
+			count++
+		}
+	}
+	return count
+}

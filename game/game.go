@@ -62,7 +62,8 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 		} else {
 			name = player.Render(player.Name)
 		}
-		info := player.Render(fmt.Sprintf(" has %d resources, %d dev cards", player.TotalResources(), player.TotalDevCards()))
+		visiblePoints := player.VisibleVictoryPoints(g)
+		info := player.Render(fmt.Sprintf(" has %d resources, %d dev cards, %d points", player.TotalResources(), player.TotalDevCards(), visiblePoints))
 		playerList = append(playerList, name, info)
 	}
 	otherPlayers := margin.Render(strings.Join(playerList, "\n"))
@@ -73,6 +74,7 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, myPlayer.resources[resource]))
 	}
 	myResources = append(myResources, fmt.Sprintf("Dev Cards: %d", myPlayer.TotalDevCards()))
+	myResources = append(myResources, fmt.Sprintf("Victory Points: %d", myPlayer.VictoryPoints(g)))
 	myResourcesStr := margin.Render(strings.Join(myResources, "\n"))
 
 	var phaseSidebar string
@@ -211,4 +213,25 @@ func (g *Game) DrawDevelopmentCard() *DevCard {
 	card := g.devCardDeck[len(g.devCardDeck)-1]
 	g.devCardDeck = g.devCardDeck[:len(g.devCardDeck)-1]
 	return &card
+}
+
+// getPlayerID returns the player ID for a given player, or -1 if not found
+func (g *Game) getPlayerID(player *Player) int {
+	for i := range g.players {
+		if &g.players[i] == player {
+			return i
+		}
+	}
+	return -1
+}
+
+// CheckGameEnd checks if any player has won and returns the winner, or nil if game continues
+func (g *Game) CheckGameEnd() *Player {
+	for i := range g.players {
+		player := &g.players[i]
+		if player.VictoryPoints(g) >= 10 {
+			return player
+		}
+	}
+	return nil
 }

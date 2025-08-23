@@ -331,6 +331,12 @@ func (p *phaseBuilding) Confirm() Phase {
 			if player.BuyDevelopmentCard() {
 				if card := p.game.DrawDevelopmentCard(); card != nil {
 					player.hiddenDevCards = append(player.hiddenDevCards, *card)
+					
+					// Check for game end after buying development card (in case it's a victory point card)
+					if winner := p.game.CheckGameEnd(); winner != nil {
+						return PhaseGameEnd(p.game, winner)
+					}
+					
 					return p.previousPhase
 				}
 			}
@@ -574,6 +580,11 @@ func (p *phaseSettlementPlacement) Confirm() Phase {
 
 	p.game.board.SetSettlement(p.cursorCross, playerId)
 
+	// Check for game end after building settlement
+	if winner := p.game.CheckGameEnd(); winner != nil {
+		return PhaseGameEnd(p.game, winner)
+	}
+
 	return PhaseIdleWithNotification(p.game, "Settlement built!")
 }
 
@@ -693,6 +704,11 @@ func (p *phaseCityPlacement) Confirm() Phase {
 	}
 
 	p.game.board.UpgradeToCity(p.cursorCross, playerId)
+
+	// Check for game end after building city
+	if winner := p.game.CheckGameEnd(); winner != nil {
+		return PhaseGameEnd(p.game, winner)
+	}
 
 	return PhaseIdleWithNotification(p.game, "City built!")
 }
@@ -833,5 +849,55 @@ func (p *phaseYearOfPlenty) HelpText() string {
 		return "Select first resource to gain from the bank"
 	}
 	return fmt.Sprintf("Selected: %s. Select second resource to gain from the bank", p.selectedResources[0])
+}
+
+type phaseGameEnd struct {
+	game   *Game
+	winner *Player
+}
+
+func PhaseGameEnd(game *Game, winner *Player) Phase {
+	return &phaseGameEnd{
+		game:   game,
+		winner: winner,
+	}
+}
+
+func (p *phaseGameEnd) Confirm() Phase {
+	// Game is over, stay in this phase
+	return p
+}
+
+func (p *phaseGameEnd) MoveCursor(direction string) {
+	// No cursor movement in game end phase
+}
+
+func (p *phaseGameEnd) BoardCursor() interface{} {
+	return nil
+}
+
+func (p *phaseGameEnd) Menu() string {
+	lines := []string{
+		fmt.Sprintf("🎉 GAME OVER! 🎉"),
+		"",
+		fmt.Sprintf("%s WINS!", p.winner.Render(p.winner.Name)),
+		"",
+		"Final Scores:",
+	}
+	
+	for _, player := range p.game.players {
+		points := player.VictoryPoints(p.game)
+		marker := "  "
+		if &player == p.winner {
+			marker = "🏆"
+		}
+		lines = append(lines, fmt.Sprintf("%s %s: %d points", marker, player.Render(player.Name), points))
+	}
+	
+	return strings.Join(lines, "\n")
+}
+
+func (p *phaseGameEnd) HelpText() string {
+	return fmt.Sprintf("Game complete! %s reached 10 victory points!", p.winner.Render(p.winner.Name))
 }
 

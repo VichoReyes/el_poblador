@@ -50,6 +50,12 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 			}
 		}
 	}
+	
+	// Check for game end after building initial settlement (unlikely but for completeness)
+	if winner := p.game.CheckGameEnd(); winner != nil {
+		return PhaseGameEnd(p.game, winner)
+	}
+	
 	return PhaseInitialRoad(p.game, p.cursorCross, p.isFirstPair)
 }
 
