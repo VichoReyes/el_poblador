@@ -346,14 +346,28 @@ type phaseRoadStart struct {
 	cursorCross   board.CrossCoord
 	previousPhase Phase
 	invalid       string
+	isFree        bool
+	continuation  Phase
+	helpPrefix    string
 }
 
 func PhaseRoadStart(game *Game, previousPhase Phase) Phase {
+	return PhaseRoadStartWithOptions(game, previousPhase, false, nil, "")
+}
+
+func PhaseRoadStartWithOptions(game *Game, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
 	cursorCross := game.board.ValidCrossCoord()
+	finalContinuation := continuation
+	if finalContinuation == nil {
+		finalContinuation = previousPhase
+	}
 	return &phaseRoadStart{
 		game:          game,
 		cursorCross:   cursorCross,
 		previousPhase: previousPhase,
+		isFree:        isFree,
+		continuation:  finalContinuation,
+		helpPrefix:    helpPrefix,
 	}
 }
 
@@ -367,7 +381,7 @@ func (p *phaseRoadStart) Confirm() Phase {
 			return p // Invalid selection, stay in same phase
 		}
 	}
-	return PhaseRoadEnd(p.game, p.cursorCross, p.previousPhase)
+	return PhaseRoadEndWithOptions(p.game, p.cursorCross, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
 }
 
 func (p *phaseRoadStart) Cancel() Phase {
@@ -377,6 +391,9 @@ func (p *phaseRoadStart) Cancel() Phase {
 func (p *phaseRoadStart) HelpText() string {
 	if p.invalid != "" {
 		return p.invalid
+	}
+	if p.helpPrefix != "" {
+		return fmt.Sprintf("Select the starting point for your %s road", p.helpPrefix)
 	}
 	return "Select the starting point for your road"
 }
@@ -399,26 +416,41 @@ type phaseRoadEnd struct {
 	cursorCross   board.CrossCoord
 	previousPhase Phase
 	invalid       string
+	isFree        bool
+	continuation  Phase
+	helpPrefix    string
 }
 
 func PhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase) Phase {
+	return PhaseRoadEndWithOptions(game, startCross, previousPhase, false, nil, "")
+}
+
+func PhaseRoadEndWithOptions(game *Game, startCross board.CrossCoord, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
 	// Start with the first neighbor of the start cross
 	neighbors := startCross.Neighbors()
 	if len(neighbors) == 0 {
 		panic("No neighbors found for start cross")
 	}
 	cursorCross := neighbors[0]
+	
+	finalContinuation := continuation
+	if finalContinuation == nil {
+		finalContinuation = previousPhase
+	}
 
 	return &phaseRoadEnd{
 		game:          game,
 		startCross:    startCross,
 		cursorCross:   cursorCross,
 		previousPhase: previousPhase,
+		isFree:        isFree,
+		continuation:  finalContinuation,
+		helpPrefix:    helpPrefix,
 	}
 }
 
 func (p *phaseRoadEnd) Confirm() Phase {
-	player := p.game.players[p.game.playerTurn]
+	player := &p.game.players[p.game.playerTurn]
 	playerId := p.game.playerTurn
 	pathCoord := board.NewPathCoord(p.startCross, p.cursorCross)
 
@@ -427,22 +459,41 @@ func (p *phaseRoadEnd) Confirm() Phase {
 		return p
 	}
 
-	if !player.BuildRoad() {
-		p.invalid = "Not enough resources"
-		return p
+	if !p.isFree {
+		if !player.BuildRoad() {
+			p.invalid = "Not enough resources"
+			return p
+		}
 	}
 
 	p.game.board.SetRoad(pathCoord, playerId)
-	return PhaseIdleWithNotification(p.game, "Road built!")
+	
+	message := "Road built!"
+	if p.isFree {
+		if p.helpPrefix != "" {
+			message = fmt.Sprintf("%s road built!", strings.Title(p.helpPrefix))
+		} else {
+			message = "Free road built!"
+		}
+	}
+	
+	if p.continuation == nil {
+		return PhaseIdleWithNotification(p.game, message)
+	} else {
+		return p.continuation
+	}
 }
 
 func (p *phaseRoadEnd) Cancel() Phase {
-	return PhaseRoadStart(p.game, p.previousPhase)
+	return PhaseRoadStartWithOptions(p.game, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
 }
 
 func (p *phaseRoadEnd) HelpText() string {
 	if p.invalid != "" {
 		return p.invalid
+	}
+	if p.helpPrefix != "" {
+		return fmt.Sprintf("Select the ending point for your %s road", p.helpPrefix)
 	}
 	return "Select the ending point for your road"
 }
@@ -565,7 +616,7 @@ func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phasePlayDevelopmentCard) Confirm() Phase {
-	player := p.game.players[p.game.playerTurn]
+	player := &p.game.players[p.game.playerTurn]
 	numCards := len(player.hiddenDevCards)
 	if p.selected == numCards {
 		return p.previousPhase
@@ -577,14 +628,16 @@ func (p *phasePlayDevelopmentCard) Confirm() Phase {
 		player.PlayDevCard(card)
 		return PhasePlaceRobber(p.game, PhaseIdle(p.game))
 	case DevCardRoadBuilding:
-		// TODO: Implement road building without paying
-		return p.previousPhase
+		player.PlayDevCard(card)
+		// First free road - continuation will be second free road
+		secondRoadPhase := PhaseRoadStartWithOptions(p.game, PhaseIdle(p.game), true, PhaseIdleWithNotification(p.game, "Two free roads built!"), "second free")
+		return PhaseRoadStartWithOptions(p.game, PhaseIdle(p.game), true, secondRoadPhase, "first free")
 	case DevCardMonopoly:
-		// TODO: Implement monopoly phase
-		return p.previousPhase
+		player.PlayDevCard(card)
+		return PhaseMonopoly(p.game, PhaseIdle(p.game))
 	case DevCardYearOfPlenty:
-		// TODO: Implement year of plenty phase
-		return p.previousPhase
+		player.PlayDevCard(card)
+		return PhaseYearOfPlenty(p.game, PhaseIdle(p.game))
 	case DevCardVictoryPoint:
 		return p.previousPhase
 	default:
@@ -650,3 +703,119 @@ func (p *phaseCityPlacement) MoveCursor(direction string) {
 	}
 	p.cursorCross = dest
 }
+
+
+type phaseMonopoly struct {
+	phaseWithOptions
+	previousPhase Phase
+}
+
+func PhaseMonopoly(game *Game, previousPhase Phase) Phase {
+	resourceOptions := make([]string, len(board.RESOURCE_TYPES))
+	for i, resourceType := range board.RESOURCE_TYPES {
+		resourceOptions[i] = string(resourceType)
+	}
+	resourceOptions = append(resourceOptions, "Cancel")
+
+	return &phaseMonopoly{
+		phaseWithOptions: phaseWithOptions{
+			game:    game,
+			options: resourceOptions,
+		},
+		previousPhase: previousPhase,
+	}
+}
+
+func (p *phaseMonopoly) Confirm() Phase {
+	if p.selected == len(board.RESOURCE_TYPES) {
+		return p.previousPhase
+	}
+
+	selectedResource := board.RESOURCE_TYPES[p.selected]
+	currentPlayer := p.game.players[p.game.playerTurn]
+
+	totalCollected := 0
+	for i, player := range p.game.players {
+		if i != p.game.playerTurn {
+			count := player.resources[selectedResource]
+			if count > 0 {
+				player.resources[selectedResource] = 0
+				totalCollected += count
+			}
+		}
+	}
+
+	if totalCollected > 0 {
+		currentPlayer.resources[selectedResource] += totalCollected
+		return PhaseIdleWithNotification(p.game, fmt.Sprintf("Collected %d %s from other players!", totalCollected, selectedResource))
+	} else {
+		return PhaseIdleWithNotification(p.game, "No resources collected - nobody had any!")
+	}
+}
+
+func (p *phaseMonopoly) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phaseMonopoly) HelpText() string {
+	return "Select a resource type to collect from all players"
+}
+
+type phaseYearOfPlenty struct {
+	phaseWithOptions
+	previousPhase   Phase
+	selectedCount   int
+	selectedResources [2]board.ResourceType
+}
+
+func PhaseYearOfPlenty(game *Game, previousPhase Phase) Phase {
+	resourceOptions := make([]string, len(board.RESOURCE_TYPES))
+	for i, resourceType := range board.RESOURCE_TYPES {
+		resourceOptions[i] = string(resourceType)
+	}
+	resourceOptions = append(resourceOptions, "Cancel")
+
+	return &phaseYearOfPlenty{
+		phaseWithOptions: phaseWithOptions{
+			game:    game,
+			options: resourceOptions,
+		},
+		previousPhase: previousPhase,
+		selectedCount: 0,
+	}
+}
+
+func (p *phaseYearOfPlenty) Confirm() Phase {
+	if p.selected == len(board.RESOURCE_TYPES) {
+		return p.previousPhase
+	}
+
+	selectedResource := board.RESOURCE_TYPES[p.selected]
+	p.selectedResources[p.selectedCount] = selectedResource
+	p.selectedCount++
+
+	if p.selectedCount < 2 {
+		// Still need to select more resources
+		return p
+	}
+
+	// Both resources selected, give them to the player
+	currentPlayer := &p.game.players[p.game.playerTurn]
+	for _, resource := range p.selectedResources {
+		currentPlayer.AddResource(resource)
+	}
+
+	return PhaseIdleWithNotification(p.game, fmt.Sprintf("Gained %s and %s from the bank!", p.selectedResources[0], p.selectedResources[1]))
+}
+
+func (p *phaseYearOfPlenty) Cancel() Phase {
+	return p.previousPhase
+}
+
+func (p *phaseYearOfPlenty) HelpText() string {
+	if p.selectedCount == 0 {
+		return "Select first resource to gain from the bank"
+	}
+	return fmt.Sprintf("Selected: %s. Select second resource to gain from the bank", p.selectedResources[0])
+}
+

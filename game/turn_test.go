@@ -18,7 +18,7 @@ func TestBuildingPhase(t *testing.T) {
 
 	// Should be in idle phase now
 	if _, ok := game.phase.(*phaseIdle); !ok {
-		t.Fatal("Should be in idle phase after dice roll")
+		t.Fatalf("Should be in idle phase after dice roll, got: %T", game.phase)
 	}
 
 	// Select "Build" option (it's already the first option, so no need to move cursor)

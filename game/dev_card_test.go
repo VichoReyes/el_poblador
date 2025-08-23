@@ -143,3 +143,209 @@ func TestKnightCardUsage(t *testing.T) {
 		t.Fatal("Knight card should be added to played cards when played")
 	}
 }
+
+func TestMonopolyCard(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"Alice", "Bob", "Charlie"})
+
+	// Give Alice a monopoly card
+	game.players[0].hiddenDevCards = []DevCard{DevCardMonopoly}
+
+
+	// Give players some resources  
+	game.players[0].AddResource(board.ResourceWheat) // Alice (current player)
+	game.players[1].AddResource(board.ResourceWheat) // Bob
+	game.players[1].AddResource(board.ResourceWheat) // Bob (2 total)
+	game.players[2].AddResource(board.ResourceWheat) // Charlie
+	game.players[2].AddResource(board.ResourceOre)   // Charlie (different resource)
+
+	// Create development card phase and select monopoly
+	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
+	devCardPhaseImpl := devCardPhase.(*phasePlayDevelopmentCard)
+	
+	devCardPhaseImpl.selected = 0 // First card is monopoly
+
+	// Execute dev card phase - should play monopoly card and transition to monopoly phase
+	monopolyPhase := devCardPhaseImpl.Confirm()
+
+	// Verify we got monopoly phase
+	monopolyPhaseImpl, ok := monopolyPhase.(*phaseMonopoly)
+	if !ok {
+		t.Fatal("Should transition to monopoly phase")
+	}
+
+	// Record initial state
+	initialAliceWheat := game.players[0].resources[board.ResourceWheat]
+	initialBobWheat := game.players[1].resources[board.ResourceWheat]
+	initialCharlieWheat := game.players[2].resources[board.ResourceWheat]
+
+	// Find wheat option index
+	wheatIndex := -1
+	for i, resourceType := range board.RESOURCE_TYPES {
+		if resourceType == board.ResourceWheat {
+			wheatIndex = i
+			break
+		}
+	}
+	if wheatIndex == -1 {
+		t.Fatal("Could not find wheat in resource types")
+	}
+
+	// Set selection to wheat and execute monopoly
+	monopolyPhaseImpl.selected = wheatIndex
+	nextPhase := monopolyPhaseImpl.Confirm()
+
+	// Verify Alice collected all wheat
+	expectedAliceWheat := initialAliceWheat + initialBobWheat + initialCharlieWheat
+	if game.players[0].resources[board.ResourceWheat] != expectedAliceWheat {
+		t.Errorf("Alice should have %d wheat, got %d", expectedAliceWheat, game.players[0].resources[board.ResourceWheat])
+	}
+
+	// Verify other players lost their wheat
+	if game.players[1].resources[board.ResourceWheat] != 0 {
+		t.Error("Bob should have no wheat after monopoly")
+	}
+	if game.players[2].resources[board.ResourceWheat] != 0 {
+		t.Error("Charlie should have no wheat after monopoly")
+	}
+
+	// Verify the monopoly card was played
+	if len(game.players[0].hiddenDevCards) != 0 {
+		t.Errorf("Monopoly card should be removed from hidden cards, hidden count: %d, cards: %v", len(game.players[0].hiddenDevCards), game.players[0].hiddenDevCards)
+	}
+	if len(game.players[0].playedDevCards) != 1 {
+		t.Errorf("Monopoly card should be added to played cards, played count: %d, cards: %v", len(game.players[0].playedDevCards), game.players[0].playedDevCards)
+	}
+
+	// Verify we return to idle phase with notification
+	if _, ok := nextPhase.(*phaseIdle); !ok {
+		t.Error("Monopoly should return to idle phase")
+	}
+}
+
+func TestYearOfPlentyCard(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"Alice", "Bob", "Charlie"})
+
+	// Give Alice a year of plenty card
+	game.players[0].hiddenDevCards = []DevCard{DevCardYearOfPlenty}
+
+	// Record initial resource counts
+	initialWheat := game.players[0].resources[board.ResourceWheat]
+	initialOre := game.players[0].resources[board.ResourceOre]
+
+	// Create development card phase and select year of plenty
+	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
+	devCardPhaseImpl := devCardPhase.(*phasePlayDevelopmentCard)
+	devCardPhaseImpl.selected = 0 // First card is year of plenty
+
+	// Execute dev card phase - should play card and transition to year of plenty phase
+	yearOfPlentyPhase := devCardPhaseImpl.Confirm()
+
+	// Verify we got year of plenty phase
+	yearOfPlentyPhaseImpl, ok := yearOfPlentyPhase.(*phaseYearOfPlenty)
+	if !ok {
+		t.Fatal("Should transition to year of plenty phase")
+	}
+
+	// Verify the card was played
+	if len(game.players[0].hiddenDevCards) != 0 {
+		t.Error("Year of Plenty card should be removed from hidden cards")
+	}
+	if len(game.players[0].playedDevCards) != 1 {
+		t.Error("Year of Plenty card should be added to played cards")
+	}
+
+	// Find wheat and ore indices
+	wheatIndex := -1
+	oreIndex := -1
+	for i, resourceType := range board.RESOURCE_TYPES {
+		if resourceType == board.ResourceWheat {
+			wheatIndex = i
+		} else if resourceType == board.ResourceOre {
+			oreIndex = i
+		}
+	}
+	if wheatIndex == -1 || oreIndex == -1 {
+		t.Fatal("Could not find wheat or ore in resource types")
+	}
+
+	// Select first resource (wheat)
+	yearOfPlentyPhaseImpl.selected = wheatIndex
+	phase2 := yearOfPlentyPhaseImpl.Confirm()
+
+	// Should still be in year of plenty phase waiting for second resource
+	yearOfPlentyPhaseImpl2, ok := phase2.(*phaseYearOfPlenty)
+	if !ok {
+		t.Fatal("Should still be in year of plenty phase after first selection")
+	}
+
+	// Verify help text shows what was selected
+	helpText := yearOfPlentyPhaseImpl2.HelpText()
+	if !strings.Contains(helpText, "Trigo") { // Wheat in Spanish
+		t.Errorf("Help text should show selected wheat, got: %s", helpText)
+	}
+
+	// Select second resource (ore)
+	yearOfPlentyPhaseImpl2.selected = oreIndex
+	finalPhase := yearOfPlentyPhaseImpl2.Confirm()
+
+	// Should transition to idle phase
+	if _, ok := finalPhase.(*phaseIdle); !ok {
+		t.Error("Should return to idle phase after selecting both resources")
+	}
+
+	// Verify player received both resources
+	finalWheat := game.players[0].resources[board.ResourceWheat]
+	finalOre := game.players[0].resources[board.ResourceOre]
+
+	if finalWheat != initialWheat+1 {
+		t.Errorf("Player should have gained 1 wheat, got %d, expected %d", finalWheat, initialWheat+1)
+	}
+	if finalOre != initialOre+1 {
+		t.Errorf("Player should have gained 1 ore, got %d, expected %d", finalOre, initialOre+1)
+	}
+}
+
+func TestRoadBuildingCard(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"Alice", "Bob", "Charlie"})
+
+	// Give Alice a road building card
+	game.players[0].hiddenDevCards = []DevCard{DevCardRoadBuilding}
+
+	// Create development card phase and select road building
+	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
+	devCardPhaseImpl := devCardPhase.(*phasePlayDevelopmentCard)
+	devCardPhaseImpl.selected = 0 // First card is road building
+
+	// Execute dev card phase - should play card and transition to road building phase
+	roadBuildingPhase := devCardPhaseImpl.Confirm()
+
+	// Verify we got road start phase (for free road building)
+	roadStartPhaseImpl, ok := roadBuildingPhase.(*phaseRoadStart)
+	if !ok {
+		t.Fatal("Should transition to road start phase for road building")
+	}
+
+	// Verify the card was played
+	if len(game.players[0].hiddenDevCards) != 0 {
+		t.Error("Road Building card should be removed from hidden cards")
+	}
+	if len(game.players[0].playedDevCards) != 1 {
+		t.Error("Road Building card should be added to played cards")
+	}
+
+	// Verify help text indicates first free road
+	helpText := roadStartPhaseImpl.HelpText()
+	if !strings.Contains(helpText, "first") {
+		t.Errorf("Help text should indicate first road, got: %s", helpText)
+	}
+	if !strings.Contains(helpText, "free") {
+		t.Errorf("Help text should indicate free road, got: %s", helpText)
+	}
+
+	// Note: Full road placement testing would require setting up the board with valid positions
+	// which is complex and would involve placing initial settlements first.
+	// The basic card playing mechanism is tested above.
+}
