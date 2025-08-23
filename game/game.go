@@ -141,21 +141,6 @@ func (g *Game) Start(playerNames []string) {
 	g.devCardDeck = shuffleDevCards()
 }
 
-func moveCrossCursor(from board.CrossCoord, direction string) (dest board.CrossCoord, ok bool) {
-	switch direction {
-	case "up":
-		dest, ok = from.Up()
-	case "down":
-		dest, ok = from.Down()
-	case "left":
-		dest, ok = from.Left()
-	case "right":
-		dest, ok = from.Right()
-	default:
-		panic("unknown direction")
-	}
-	return dest, ok
-}
 
 func (g *Game) MoveCursor(direction string, requestPlayer *int) {
 	playerPerspective := g.playerPerspective(requestPlayer)
