@@ -69,8 +69,13 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 
 	// First, generate resources for settlements (1 resource each)
 	for crossCoord, playerId := range b.settlements {
-		adjacentTiles := b.AdjacentTiles(crossCoord)
-		for _, tile := range adjacentTiles {
+		tileCoords := crossCoord.adjacentTileCoords()
+		for _, tileCoord := range tileCoords {
+			// Skip resource generation if robber is on this tile
+			if tileCoord == b.robber {
+				continue
+			}
+			tile := b.tiles[tileCoord]
 			if tile.DiceNumber == sum {
 				resource, ok := TileResource(tile)
 				if ok {
@@ -82,8 +87,13 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 
 	// Then, generate additional resources for cities (1 more resource each)
 	for crossCoord, playerId := range b.cityUpgrades {
-		adjacentTiles := b.AdjacentTiles(crossCoord)
-		for _, tile := range adjacentTiles {
+		tileCoords := crossCoord.adjacentTileCoords()
+		for _, tileCoord := range tileCoords {
+			// Skip resource generation if robber is on this tile
+			if tileCoord == b.robber {
+				continue
+			}
+			tile := b.tiles[tileCoord]
 			if tile.DiceNumber == sum {
 				resource, ok := TileResource(tile)
 				if ok {

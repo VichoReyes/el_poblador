@@ -2,18 +2,23 @@
 
 ## Future Tasks
 
-### Implement Robber Mechanics
+### ✅ Robber Mechanics - COMPLETED
 
-**Description**: Implement the robber mechanics that are triggered when a player rolls a 7 or plays a knight card.
+**Description**: Robber mechanics have been fully implemented.
 
 **Current State**: 
-- Knight functionality is implemented and ready
-- Phase continuation system is in place
-- Robber mechanics are not yet implemented
+- ✅ Knight functionality is implemented and triggers robber placement
+- ✅ Phase continuation system is in place
+- ✅ `phasePlaceRobber` and `phaseStealCard` phases are implemented
+- ✅ Board robber placement logic (`PlaceRobber` method) works
+- ✅ Comprehensive tests for robber flow exist
+- ✅ Rolling a 7 now triggers robber placement (updated `rollDice` in `game/turn.go:195`)
+- ✅ Robber blocks resource generation on its tile (updated `GenerateResources` in `board/board.go:67`)
+- ❌ Card discarding when players have >7 cards after rolling 7 is not implemented
 
-**Suggested Approach**: 
-Use the existing phase continuation system to handle robber phases and return to the appropriate continuation phase after robbery resolution.
-Notice how the Phase's BoardCursor can be used to render a cursor on the tiles of the map when selecting a tile to place the robber.
+**Implementation Details**:
+- Fixed `rollDice` function to call `PhasePlaceRobber` when rolling 7
+- Modified `GenerateResources` to skip tiles occupied by robber
+- Added comprehensive tests in `board/robber_blocking_test.go`
 
-**Estimated Complexity**: Medium
-**Priority**: High (next major feature to implement)
+**Remaining Work**: Card discarding for >7 cards requires new phase infrastructure
