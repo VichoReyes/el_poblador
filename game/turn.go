@@ -75,6 +75,7 @@ type phasePlaceRobber struct {
 	game         *Game
 	tileCoord    board.TileCoord
 	continuation Phase
+	invalid      string
 }
 
 func PhasePlaceRobber(game *Game, continuation Phase) Phase {
@@ -112,10 +113,19 @@ func moveTileCursor(tileCoord board.TileCoord, direction string) (board.TileCoor
 }
 
 func (p *phasePlaceRobber) HelpText() string {
+	if p.invalid != "" {
+		return p.invalid
+	}
 	return "Select a tile to place the robber on"
 }
 
 func (p *phasePlaceRobber) Confirm() Phase {
+	// Check if trying to place robber on the same tile it's already on
+	if p.tileCoord == p.game.board.GetRobber() {
+		p.invalid = "Robber cannot be moved to the same tile it's already on"
+		return p
+	}
+	
 	playerIds := p.game.board.PlaceRobber(p.tileCoord)
 	var stealablePlayers []Player
 	for _, playerId := range playerIds {

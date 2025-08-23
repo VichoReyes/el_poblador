@@ -9,7 +9,17 @@ If the completion of a task uncoverered a new task to be added, add it. You may 
 
 ## Project Structure
 - **`board/`** - Board representation, coordinates, rendering, and terrain
-- **`game/`** - Core game logic, phases, players, and turn management
+  - `board.go` - Core Board struct with tiles, roads, settlements, cities, and robber
+  - `coordinates.go` - TileCoord, CrossCoord, PathCoord coordinate systems
+  - `terrain.go` - Tile types and resource generation
+  - `render.go` - Board visualization
+  - `robber_*.go` - Robber placement and blocking mechanics
+- **`game/`** - Core game logic, phases, players, and turn management  
+  - `game.go` - Main Game struct and game loop
+  - `turn.go` - All game phases (dice roll, building, robber placement, etc.)
+  - `player.go` - Player resources, development cards, and actions
+  - `dev_card.go` - Development card types and effects
+  - `initial_settlements.go` - Game setup phase
 - **`cmd/`** - Command-line applications for testing
 
 ## Key Files
@@ -49,6 +59,44 @@ go run cmd/fullscreen/main.go
 - Tests are located alongside source files with `_test.go` suffix
 - Use `go test -v ./...` to run all tests
 - Test applications (`cmd/testboard/main.go`, `cmd/fullscreen/main.go`) help verify functionality
+
+## Architecture Patterns
+
+### Game Phase System
+The game uses a phase-based architecture where all game states implement the `Phase` interface:
+- `Phase` - Base interface with `Confirm()`, `MoveCursor()`, `BoardCursor()`, `HelpText()`
+- `PhaseWithMenu` - Phases that show selection menus (extends Phase)
+- `PhaseCancelable` - Phases that can be cancelled (extends Phase)
+
+Key phases include:
+- `phaseDiceRoll` - Start of turn (roll dice or play Knight)
+- `phasePlaceRobber` - Place robber after rolling 7 or playing Knight card
+- `phaseStealCard` - Select player to steal from after robber placement
+- `phaseIdle` - Main turn menu (build, trade, play dev cards, end turn)
+- `phaseBuilding` - Building selection submenu
+- Various placement phases (`phaseRoadStart`, `phaseSettlementPlacement`, etc.)
+
+### Coordinate System
+- **TileCoord** - Hexagonal tiles, odd sum (x+y) coordinates
+- **CrossCoord** - Intersection points where settlements/cities are placed
+- **PathCoord** - Edges between crosses where roads are placed
+
+### Robber Mechanics
+- Stored as `TileCoord` in `Board.robber`
+- `PlaceRobber(coord)` moves robber and returns adjacent stealable player IDs
+- `GetRobber()` returns current robber position
+- **Rule**: Cannot place robber on the same tile it's already on (enforced in `phasePlaceRobber.Confirm()`)
+
+### Resource Generation
+- `Board.GenerateResources(sum)` returns `map[int][]ResourceType` (player ID -> resources)
+- Tiles with robber are skipped during resource generation
+- Settlements get 1 resource, cities get 2 resources per matching tile
+
+### Development Cards
+- Stored in `Player.hiddenDevCards` (playable) and `Player.playedDevCards`
+- Knight cards trigger robber placement phase
+- Road Building gives 2 free roads
+- Monopoly and Year of Plenty have dedicated phases
 
 ## Package-Specific Context
 When working on specific packages, always check for markdown files in the package directory that may contain:

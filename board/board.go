@@ -13,6 +13,11 @@ type Board struct {
 	robber       TileCoord
 }
 
+// GetRobber returns the current robber position
+func (b *Board) GetRobber() TileCoord {
+	return b.robber
+}
+
 // SetRobber sets the robber to the given tile coordinate
 // also returns the player ids of the players that can be stolen from
 func (b *Board) PlaceRobber(coord TileCoord) []int {

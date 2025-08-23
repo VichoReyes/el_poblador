@@ -153,3 +153,38 @@ func TestMoveTileCursorHelpers(t *testing.T) {
 		t.Fatalf("down move should return to start, got %v from %v", d, u)
 	}
 }
+
+func TestRobberCannotBePlacedOnSameTile(t *testing.T) {
+	g := &Game{}
+	g.Start([]string{"A", "B", "C"})
+
+	// Place robber on initial tile
+	initialTile, ok := board.NewTileCoord(2, 3)
+	if !ok {
+		t.Fatal("expected valid tile coordinate (2,3)")
+	}
+	
+	g.board.PlaceRobber(initialTile)
+	
+	// Create a place robber phase and set cursor to the same tile
+	phase := PhasePlaceRobber(g, PhaseIdle(g)).(*phasePlaceRobber)
+	phase.tileCoord = initialTile
+	
+	// Try to confirm placement on same tile
+	newPhase := phase.Confirm()
+	
+	// Should still be in place robber phase with error message
+	if prPhase, ok := newPhase.(*phasePlaceRobber); !ok {
+		t.Fatalf("expected to stay in phasePlaceRobber, got %T", newPhase)
+	} else if prPhase.invalid == "" {
+		t.Fatal("expected invalid message when trying to place robber on same tile")
+	} else if prPhase.invalid != "Robber cannot be moved to the same tile it's already on" {
+		t.Fatalf("expected specific error message, got: %s", prPhase.invalid)
+	}
+	
+	// Verify robber didn't move
+	currentPos := g.board.GetRobber()
+	if currentPos != initialTile {
+		t.Fatalf("robber should not have moved from %v, but got %v", initialTile, currentPos)
+	}
+}

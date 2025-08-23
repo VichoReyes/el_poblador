@@ -77,3 +77,21 @@ func TestPlaceRobberReturnsAdjacentPlayerIds_Multiple(t *testing.T) {
 		t.Fatalf("expected players {0,1}, got %v", ids)
 	}
 }
+
+func TestGetRobberReturnsCurrentPosition(t *testing.T) {
+	b := NewDesertBoard()
+
+	// Place robber on a specific tile
+	tile, ok := NewTileCoord(2, 3)
+	if !ok {
+		t.Fatal("expected valid tile coordinate (2,3)")
+	}
+
+	b.PlaceRobber(tile)
+	
+	// Verify GetRobber returns the same position
+	currentPos := b.GetRobber()
+	if currentPos != tile {
+		t.Fatalf("expected robber position %v, got %v", tile, currentPos)
+	}
+}
