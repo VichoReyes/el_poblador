@@ -41,10 +41,11 @@
 
 **Key Fixes**: 
 1. Fixed critical pointer issue in `PhasePlayDevelopmentCard.Confirm()` - changed from `player := p.game.players[p.game.playerTurn]` to `player := &p.game.players[p.game.playerTurn]` to ensure card state changes persist.
-2. **Road Building Refactor**: Instead of duplicating road building logic, enhanced existing phases with:
-   - `PhaseRoadStartWithOptions()` and `PhaseRoadEndWithOptions()` - accept `isFree`, `continuation`, and `helpPrefix` parameters
-   - Free road building: skips resource cost when `isFree=true`
-   - Continuation support: first road leads to second road phase, second road leads to completion
+2. **Road Building Refactor**: Instead of duplicating road building logic, enhanced existing phases with clean public APIs:
+   - `PhaseRoadStart(game, previousPhase)` - for regular road building (pays resources)
+   - `PhaseRoadBuilding(game)` - for dev card road building (free, places 2 roads)
+   - Internal implementation uses shared `newPhaseRoadStart()` and `newPhaseRoadEnd()` functions
+   - Free road building: skips resource cost and chains first → second road → completion
    - Help text customization: shows "first free road" vs "second free road"
 
 **Tests Added**:

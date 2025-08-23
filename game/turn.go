@@ -351,11 +351,19 @@ type phaseRoadStart struct {
 	helpPrefix    string
 }
 
+// Phase for building a road by paying for it
 func PhaseRoadStart(game *Game, previousPhase Phase) Phase {
-	return PhaseRoadStartWithOptions(game, previousPhase, false, nil, "")
+	return newPhaseRoadStart(game, previousPhase, false, nil, "")
 }
 
-func PhaseRoadStartWithOptions(game *Game, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
+// Phase for building two roads by using a development card
+func PhaseRoadBuilding(game *Game) Phase {
+	// First free road - continuation will be second free road
+	secondRoadPhase := newPhaseRoadStart(game, PhaseIdle(game), true, PhaseIdleWithNotification(game, "Two free roads built!"), "second free")
+	return newPhaseRoadStart(game, PhaseIdle(game), true, secondRoadPhase, "first free")
+}
+
+func newPhaseRoadStart(game *Game, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
 	cursorCross := game.board.ValidCrossCoord()
 	finalContinuation := continuation
 	if finalContinuation == nil {
@@ -381,7 +389,7 @@ func (p *phaseRoadStart) Confirm() Phase {
 			return p // Invalid selection, stay in same phase
 		}
 	}
-	return PhaseRoadEndWithOptions(p.game, p.cursorCross, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
+	return newPhaseRoadEnd(p.game, p.cursorCross, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
 }
 
 func (p *phaseRoadStart) Cancel() Phase {
@@ -422,10 +430,10 @@ type phaseRoadEnd struct {
 }
 
 func PhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase) Phase {
-	return PhaseRoadEndWithOptions(game, startCross, previousPhase, false, nil, "")
+	return newPhaseRoadEnd(game, startCross, previousPhase, false, nil, "")
 }
 
-func PhaseRoadEndWithOptions(game *Game, startCross board.CrossCoord, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
+func newPhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
 	// Start with the first neighbor of the start cross
 	neighbors := startCross.Neighbors()
 	if len(neighbors) == 0 {
@@ -485,7 +493,7 @@ func (p *phaseRoadEnd) Confirm() Phase {
 }
 
 func (p *phaseRoadEnd) Cancel() Phase {
-	return PhaseRoadStartWithOptions(p.game, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
+	return newPhaseRoadStart(p.game, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
 }
 
 func (p *phaseRoadEnd) HelpText() string {
@@ -629,9 +637,7 @@ func (p *phasePlayDevelopmentCard) Confirm() Phase {
 		return PhasePlaceRobber(p.game, PhaseIdle(p.game))
 	case DevCardRoadBuilding:
 		player.PlayDevCard(card)
-		// First free road - continuation will be second free road
-		secondRoadPhase := PhaseRoadStartWithOptions(p.game, PhaseIdle(p.game), true, PhaseIdleWithNotification(p.game, "Two free roads built!"), "second free")
-		return PhaseRoadStartWithOptions(p.game, PhaseIdle(p.game), true, secondRoadPhase, "first free")
+		return PhaseRoadBuilding(p.game)
 	case DevCardMonopoly:
 		player.PlayDevCard(card)
 		return PhaseMonopoly(p.game, PhaseIdle(p.game))
