@@ -58,6 +58,10 @@ func (p *phaseRoadStart) Confirm() Phase {
 }
 
 func (p *phaseRoadStart) Cancel() Phase {
+	// Don't allow cancelling free roads (from development cards)
+	if p.isFree {
+		return p
+	}
 	return p.previousPhase
 }
 
@@ -158,6 +162,10 @@ func (p *phaseRoadEnd) Confirm() Phase {
 }
 
 func (p *phaseRoadEnd) Cancel() Phase {
+	// Don't allow cancelling free roads (from development cards)
+	if p.isFree {
+		return p
+	}
 	return newPhaseRoadStart(p.game, p.previousPhase, p.isFree, p.continuation, p.helpPrefix)
 }
 

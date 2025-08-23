@@ -115,9 +115,6 @@ func (p *phaseMonopoly) Confirm() Phase {
 	}
 }
 
-func (p *phaseMonopoly) Cancel() Phase {
-	return p.previousPhase
-}
 
 func (p *phaseMonopoly) HelpText() string {
 	return "Select a resource type to collect from all players"
@@ -170,9 +167,6 @@ func (p *phaseYearOfPlenty) Confirm() Phase {
 	return PhaseIdleWithNotification(p.game, fmt.Sprintf("Gained %s and %s from the bank!", p.selectedResources[0], p.selectedResources[1]))
 }
 
-func (p *phaseYearOfPlenty) Cancel() Phase {
-	return p.previousPhase
-}
 
 func (p *phaseYearOfPlenty) HelpText() string {
 	if p.selectedCount == 0 {
