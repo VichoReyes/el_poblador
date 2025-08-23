@@ -38,6 +38,13 @@ func (b *Board) ValidCrossCoord() CrossCoord {
 	panic("valid cross coord wrong")
 }
 
+func (b *Board) ValidTileCoord() TileCoord {
+	if coord, ok := NewTileCoord(1, 2); ok {
+		return coord
+	}
+	panic("valid tile coord wrong")
+}
+
 func (b *Board) CanPlaceSettlement(coord CrossCoord) bool {
 	if _, ok := b.settlements[coord]; ok {
 		return false

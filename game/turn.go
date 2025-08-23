@@ -81,6 +81,7 @@ type phasePlaceRobber struct {
 func PhasePlaceRobber(game *Game, continuation Phase) Phase {
 	return &phasePlaceRobber{
 		game:         game,
+		tileCoord:    game.board.ValidTileCoord(),
 		continuation: continuation,
 	}
 }
