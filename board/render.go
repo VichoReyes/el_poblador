@@ -87,7 +87,8 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 				hasCursor = true
 			}
 			tile := board.tiles[tileCoord]
-			renderedTile := tile.RenderTile(hasCursor)
+			hasRobber := board.robber == tileCoord
+			renderedTile := tile.RenderTile(hasCursor, hasRobber)
 			lines[midLine-2].WriteString(renderedTile[0])
 			lines[midLine-1].WriteString(renderedTile[1])
 			lines[midLine].WriteString(renderedTile[2])

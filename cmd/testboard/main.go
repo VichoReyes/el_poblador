@@ -21,7 +21,12 @@ func main() {
 
 	for i, tile := range tiles {
 		fmt.Printf("Tile %d (%s, dice: %d):\n", i+1, tile.Terrain.String(), tile.DiceNumber)
-		rendered := tile.RenderTile(false)
+		// Test robber rendering on tile 3 (Ore, dice 12)
+		hasRobber := (i == 2)
+		if hasRobber {
+			fmt.Printf("  (with robber)\n")
+		}
+		rendered := tile.RenderTile(false, hasRobber)
 		for i, line := range rendered {
 			if i == 0 || i == len(rendered)-1 {
 				fmt.Printf(" %s\n", line)
@@ -36,8 +41,16 @@ func main() {
 	fmt.Println("Testing board printing functionality:")
 	fmt.Println()
 
-	board := board.NewChaoticBoard()
-	lines := board.Print(nil)
+	boardInstance := board.NewChaoticBoard()
+	
+	// Place robber on a tile to test robber rendering
+	robberCoord, valid := board.NewTileCoord(1, 2)
+	if valid {
+		boardInstance.PlaceRobber(robberCoord)
+		fmt.Printf("Robber placed on the board for testing\n\n")
+	}
+	
+	lines := boardInstance.Print(nil)
 	for _, line := range lines {
 		fmt.Println(line)
 	}

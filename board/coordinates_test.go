@@ -132,8 +132,8 @@ func TestNewDesertBoardTileCount(t *testing.T) {
 
 func TestTileRender(t *testing.T) {
 	tile := Tile{Terrain: TerrainBrick, DiceNumber: 5}
-	rendered1 := tile.RenderTile(false)
-	rendered2 := tile.RenderTile(true)
+	rendered1 := tile.RenderTile(false, false)
+	rendered2 := tile.RenderTile(true, false)
 
 	lengthsExpected := [5]int{8, 10, 10, 10, 8}
 	for i := range rendered1 {

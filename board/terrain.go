@@ -50,11 +50,11 @@ type Tile struct {
 //		/‾‾‾‾‾‾\
 //		/  B  \
 //	    2
-//		\      /
+//		\  R  /
 //		\______/
 //
-// where B is the terrain abbreviation and 2 is the dice number
-func (tile *Tile) RenderTile(isCursor bool) [5]string {
+// where B is the terrain abbreviation, 2 is the dice number, and R is the robber indicator
+func (tile *Tile) RenderTile(isCursor bool, hasRobber bool) [5]string {
 	terrainAbbrev := tile.getTerrainAbbrev()
 
 	diceStr := ""
@@ -67,11 +67,16 @@ func (tile *Tile) RenderTile(isCursor bool) [5]string {
 		style = style.Background(lipgloss.Color("15"))
 	}
 
+	infoLine := "\\        /"
+	if hasRobber {
+		infoLine = "\\  ROB  /"
+	}
+
 	lines := [5]string{
 		style.Render("/‾‾‾‾‾‾\\"),
 		style.Render(fmt.Sprintf("/  %s  \\", terrainAbbrev)),
 		style.Render(fmt.Sprintf("    %2s    ", diceStr)),
-		style.Render("\\        /"),
+		style.Render(infoLine),
 		style.Render("\\______/"),
 	}
 	return lines
