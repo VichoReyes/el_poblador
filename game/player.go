@@ -174,61 +174,6 @@ func (p *Player) VictoryPoints(game *Game) int {
 	return points
 }
 
-// VictoryPointsForPlayerID calculates victory points for a specific player ID
-func (g *Game) VictoryPointsForPlayerID(playerID int) int {
-	if playerID < 0 || playerID >= len(g.players) {
-		return 0
-	}
-	
-	player := &g.players[playerID]
-	points := 0
-	
-	// Count victory point development cards (both hidden and played)
-	for _, card := range player.hiddenDevCards {
-		if card == DevCardVictoryPoint {
-			points++
-		}
-	}
-	for _, card := range player.playedDevCards {
-		if card == DevCardVictoryPoint {
-			points++
-		}
-	}
-	
-	// Count settlements and cities on the board
-	// Settlements are worth 1 point each
-	points += g.board.CountSettlements(playerID)
-	// Cities replace settlements, so they're worth 2 points total (not additional 2)
-	// But in this codebase cities are stored separately from settlements, so count cities as 1 additional point
-	points += g.board.CountCities(playerID)
-	
-	return points
-}
-
-// VisibleVictoryPoints calculates only the publicly visible victory points (no hidden dev cards)
-func (p *Player) VisibleVictoryPoints(game *Game) int {
-	points := 0
-	
-	// Count only played victory point development cards
-	for _, card := range p.playedDevCards {
-		if card == DevCardVictoryPoint {
-			points++
-		}
-	}
-	
-	// Count settlements and cities on the board
-	playerID := game.getPlayerID(p)
-	if playerID != -1 {
-		// Settlements are worth 1 point each
-		points += game.board.CountSettlements(playerID)
-		// Cities replace settlements, so they're worth 2 points total (not additional 2)
-		// But in this codebase cities are stored separately from settlements, so count cities as 1 additional point
-		points += game.board.CountCities(playerID)
-	}
-	
-	return points
-}
-
 func (p *Player) Render(s string) string {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
 	return style.Render(s)

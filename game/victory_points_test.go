@@ -83,11 +83,6 @@ func TestPlayerVisibleVictoryPointsHidesDevCards(t *testing.T) {
 	if points := player.VictoryPoints(g); points != 2 {
 		t.Fatalf("expected 2 total victory points, got %d", points)
 	}
-
-	// Visible victory points should be 1 (hidden dev card not counted)
-	if points := player.VisibleVictoryPoints(g); points != 1 {
-		t.Fatalf("expected 1 visible victory point, got %d", points)
-	}
 }
 
 func TestPlayerVisibleVictoryPointsShowsPlayedDevCards(t *testing.T) {
@@ -103,11 +98,6 @@ func TestPlayerVisibleVictoryPointsShowsPlayedDevCards(t *testing.T) {
 	// Total victory points should be 2
 	if points := player.VictoryPoints(g); points != 2 {
 		t.Fatalf("expected 2 total victory points, got %d", points)
-	}
-
-	// Visible victory points should be 1 (only played dev card counted)
-	if points := player.VisibleVictoryPoints(g); points != 1 {
-		t.Fatalf("expected 1 visible victory point, got %d", points)
 	}
 }
 

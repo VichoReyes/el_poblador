@@ -62,8 +62,7 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 		} else {
 			name = player.Render(player.Name)
 		}
-		visiblePoints := player.VisibleVictoryPoints(g)
-		info := player.Render(fmt.Sprintf(" has %d resources, %d dev cards, %d points", player.TotalResources(), player.TotalDevCards(), visiblePoints))
+		info := player.Render(fmt.Sprintf(" has %d resources, %d dev cards", player.TotalResources(), player.TotalDevCards()))
 		playerList = append(playerList, name, info)
 	}
 	otherPlayers := margin.Render(strings.Join(playerList, "\n"))
