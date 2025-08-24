@@ -6,6 +6,7 @@ import (
 
 type phaseDiceRoll struct {
 	phaseWithOptions
+	invalid string
 }
 
 func PhaseDiceRoll(game *Game) Phase {
@@ -27,6 +28,7 @@ func (p *phaseDiceRoll) Confirm() Phase {
 		if player.PlayDevCard(DevCardKnight) {
 			return PhasePlaceRobber(p.game, p)
 		}
+		p.invalid = "You don't have a Knight card"
 		return p
 	default:
 		panic("Invalid option selected")
@@ -34,6 +36,9 @@ func (p *phaseDiceRoll) Confirm() Phase {
 }
 
 func (p *phaseDiceRoll) HelpText() string {
+	if p.invalid != "" {
+		return p.invalid
+	}
 	return "Time to roll the dice"
 }
 
