@@ -18,28 +18,26 @@ type phaseRoadStart struct {
 
 // Phase for building a road by paying for it
 func PhaseRoadStart(game *Game, previousPhase Phase) Phase {
-	return newPhaseRoadStart(game, previousPhase, false, nil, "")
+	end := PhaseIdleWithNotification(game, "Road Built!")
+	return newPhaseRoadStart(game, previousPhase, false, end, "")
 }
 
 // Phase for building two roads by using a development card
 func PhaseRoadBuilding(game *Game) Phase {
 	// First free road - continuation will be second free road
-	secondRoadPhase := newPhaseRoadStart(game, PhaseIdle(game), true, PhaseIdleWithNotification(game, "Two free roads built!"), "second free")
-	return newPhaseRoadStart(game, PhaseIdle(game), true, secondRoadPhase, "first free")
+	end := PhaseIdleWithNotification(game, "Two free roads built!")
+	second := newPhaseRoadStart(game, PhaseIdle(game), true, end, "second free")
+	return newPhaseRoadStart(game, PhaseIdle(game), true, second, "first free")
 }
 
 func newPhaseRoadStart(game *Game, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
 	cursorCross := game.board.ValidCrossCoord()
-	finalContinuation := continuation
-	if finalContinuation == nil {
-		finalContinuation = previousPhase
-	}
 	return &phaseRoadStart{
 		game:          game,
 		cursorCross:   cursorCross,
 		previousPhase: previousPhase,
 		isFree:        isFree,
-		continuation:  finalContinuation,
+		continuation:  continuation,
 		helpPrefix:    helpPrefix,
 	}
 }

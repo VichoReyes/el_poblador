@@ -58,3 +58,84 @@ func TestBuildingPhase(t *testing.T) {
 		t.Fatal("Should be back in idle phase after canceling")
 	}
 }
+
+func TestRoadPurchase(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"p1", "p2", "p3"})
+
+	// Directly set up a settlement for the current player to connect roads to
+	playerId := game.playerTurn
+	settlementCoord, _ := board.NewCrossCoord(2, 3)
+	game.board.SetSettlement(settlementCoord, playerId)
+
+	game.phase = PhaseIdle(game)
+
+	// Give the player enough resources to build a road
+	player := &game.players[game.playerTurn]
+	player.AddResource(board.ResourceWood)
+	player.AddResource(board.ResourceBrick)
+
+	// Select "Build" option (first option in idle phase)
+	game.ConfirmAction(nil)
+	
+	// Should be in building phase now
+	if _, ok := game.phase.(*phaseBuilding); !ok {
+		t.Fatalf("Should be in building phase after selecting Build, got: %T", game.phase)
+	}
+
+	// Select "Road" option (first option in building phase)  
+	game.ConfirmAction(nil)
+
+	// Should be in road start phase
+	roadStartPhase, ok := game.phase.(*phaseRoadStart)
+	if !ok {
+		t.Fatalf("Should be in road start phase after selecting Road, got: %T", game.phase)
+	}
+
+	// Set cursor to the settlement position
+	roadStartPhase.cursorCross = settlementCoord
+
+	// Confirm road start position
+	game.ConfirmAction(nil)
+
+	// Should be in road end phase
+	roadEndPhase, ok := game.phase.(*phaseRoadEnd)
+	if !ok {
+		t.Fatalf("Should be in road end phase after confirming start, got: %T", game.phase)
+	}
+
+	// Find a valid neighbor for the road end
+	neighbors := settlementCoord.Neighbors()
+	found := false
+	for _, neighbor := range neighbors {
+		pathCoord := board.NewPathCoord(settlementCoord, neighbor)
+		if game.board.CanPlaceRoad(pathCoord, playerId) {
+			roadEndPhase.cursorCross = neighbor
+			found = true
+			break
+		}
+	}
+	
+	if !found {
+		t.Fatal("No valid neighbor found to complete road placement")
+	}
+	
+	// Confirm road end position to complete the road purchase
+	game.ConfirmAction(nil)
+
+	// Verify the road was actually built by checking:
+	// 1. Resources were consumed (player should no longer be able to build another road)
+	// 2. The path can no longer be placed (because a road is there)
+	pathCoord := board.NewPathCoord(settlementCoord, roadEndPhase.cursorCross)
+	if player.CanBuildRoad() {
+		t.Fatal("Resources were not consumed - player can still build roads")
+	}
+	if game.board.CanPlaceRoad(pathCoord, playerId) {
+		t.Fatal("Road was not built - path is still available")
+	}
+
+	// BUG: This should be idle phase but currently returns to building phase
+	if _, ok := game.phase.(*phaseIdle); !ok {
+		t.Fatalf("Should be in idle phase after building road, got: %T", game.phase)
+	}
+}
