@@ -82,7 +82,8 @@ func (p *phaseIdle) Confirm() Phase {
 	case 0: // Build
 		return PhaseBuilding(p.game, p)
 	case 1: // Trade
-		panic("Trade not implemented")
+		p.notification = "Trade not yet implemented."
+		return p
 	case 2: // Play Development Card
 		return PhasePlayDevelopmentCard(p.game, p)
 	case 3: // End Turn
