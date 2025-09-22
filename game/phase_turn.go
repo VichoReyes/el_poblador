@@ -24,7 +24,7 @@ func (p *phaseDiceRoll) Confirm() Phase {
 		return rollDice(p.game)
 	case 1:
 		// Play Knight card
-		player := p.game.players[p.game.playerTurn]
+		player := &p.game.players[p.game.playerTurn]
 		if player.PlayDevCard(DevCardKnight) {
 			return PhasePlaceRobber(p.game, p)
 		}

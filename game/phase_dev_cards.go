@@ -11,7 +11,7 @@ type phasePlayDevelopmentCard struct {
 }
 
 func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
-	player := game.players[game.playerTurn]
+	player := &game.players[game.playerTurn]
 
 	// Build options based on available development cards
 	var options []string

@@ -41,7 +41,7 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 		return p
 	}
 	if !p.isFirstPair {
-		player := p.game.players[p.game.playerTurn]
+		player := &p.game.players[p.game.playerTurn]
 		adjacentTiles := p.game.board.AdjacentTiles(p.cursorCross)
 		for _, tile := range adjacentTiles {
 			resource, ok := board.TileResource(tile)

@@ -10,7 +10,7 @@ type phaseBuilding struct {
 }
 
 func PhaseBuilding(game *Game, previousPhase Phase) Phase {
-	player := game.players[game.playerTurn]
+	player := &game.players[game.playerTurn]
 
 	// Build the list of available building options
 	var options []string
@@ -118,7 +118,7 @@ func PhaseSettlementPlacement(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phaseSettlementPlacement) Confirm() Phase {
-	player := p.game.players[p.game.playerTurn]
+	player := &p.game.players[p.game.playerTurn]
 	playerId := p.game.playerTurn
 
 	if !p.game.board.CanPlaceSettlementForPlayer(p.cursorCross, playerId) {
@@ -181,7 +181,7 @@ func PhaseCityPlacement(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phaseCityPlacement) Confirm() Phase {
-	player := p.game.players[p.game.playerTurn]
+	player := &p.game.players[p.game.playerTurn]
 	playerId := p.game.playerTurn
 
 	if !p.game.board.CanUpgradeToCity(p.cursorCross, playerId) {

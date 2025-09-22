@@ -396,3 +396,43 @@ func TestBuyDevelopmentCardThroughBuildingPhase(t *testing.T) {
 		t.Error("Player should not be able to buy another development card after consuming resources")
 	}
 }
+
+func TestPlayKnightCardThroughDiceRollPhase(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"Alice", "Bob", "Charlie"})
+
+	// Give Alice a knight card
+	player := &game.players[0]
+	player.hiddenDevCards = append(player.hiddenDevCards, DevCardKnight)
+
+	// Record initial state
+	initialHiddenCards := len(player.hiddenDevCards)
+	initialPlayedCards := len(player.playedDevCards)
+
+	// Create dice roll phase
+	diceRollPhase := PhaseDiceRoll(game)
+	diceRollPhaseImpl := diceRollPhase.(*phaseDiceRoll)
+
+	// Select knight card option (index 1)
+	diceRollPhaseImpl.selected = 1
+
+	// Confirm playing the knight card
+	nextPhase := diceRollPhaseImpl.Confirm()
+
+	// Should transition to robber placement phase
+	if _, ok := nextPhase.(*phasePlaceRobber); !ok {
+		t.Error("Should transition to robber placement phase after playing knight")
+	}
+
+	// Check that the knight card was actually played (moved from hidden to played)
+	finalHiddenCards := game.players[0].TotalDevCards() - len(game.players[0].playedDevCards) // hidden cards
+	finalPlayedCards := len(game.players[0].playedDevCards)
+
+	if finalHiddenCards != initialHiddenCards-1 {
+		t.Errorf("Player should have lost 1 hidden development card, got %d, expected %d", finalHiddenCards, initialHiddenCards-1)
+	}
+
+	if finalPlayedCards != initialPlayedCards+1 {
+		t.Errorf("Player should have gained 1 played development card, got %d, expected %d", finalPlayedCards, initialPlayedCards+1)
+	}
+}

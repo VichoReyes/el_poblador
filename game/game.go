@@ -109,7 +109,7 @@ func (g *Game) playerPerspective(requestPlayer *int) int {
 }
 
 func (g *Game) helpText(width int) string {
-	player := g.players[g.playerTurn]
+	player := &g.players[g.playerTurn]
 	help := fmt.Sprintf("%s's turn. %s", player.Render(player.Name), g.phase.HelpText())
 	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, help)
 	return renderedHelp
