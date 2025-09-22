@@ -349,3 +349,50 @@ func TestRoadBuildingCard(t *testing.T) {
 	// which is complex and would involve placing initial settlements first.
 	// The basic card playing mechanism is tested above.
 }
+
+func TestBuyDevelopmentCardThroughBuildingPhase(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"Alice", "Bob", "Charlie"})
+
+	// Give Alice enough resources to buy a development card
+	player := &game.players[0]
+	player.AddResource(board.ResourceWheat)
+	player.AddResource(board.ResourceOre)
+	player.AddResource(board.ResourceSheep)
+
+	// Record initial state
+	initialDeckSize := len(game.devCardDeck)
+	initialPlayerCards := player.TotalDevCards()
+
+	// Create building phase
+	buildingPhase := PhaseBuilding(game, PhaseIdle(game))
+	buildingPhaseImpl := buildingPhase.(*phaseBuilding)
+
+	// Select development card option (index 3)
+	buildingPhaseImpl.selected = 3
+
+	// Confirm the purchase
+	nextPhase := buildingPhaseImpl.Confirm()
+
+	// Should return to previous phase (idle)
+	if _, ok := nextPhase.(*phaseIdle); !ok {
+		t.Error("Should return to idle phase after buying development card")
+	}
+
+	// Check that the development card was actually added to the player
+	finalPlayerCards := game.players[0].TotalDevCards() // Use game.players[0] to get the actual player
+	if finalPlayerCards != initialPlayerCards+1 {
+		t.Errorf("Player should have gained 1 development card, got %d, expected %d", finalPlayerCards, initialPlayerCards+1)
+	}
+
+	// Check that the deck size decreased
+	finalDeckSize := len(game.devCardDeck)
+	if finalDeckSize != initialDeckSize-1 {
+		t.Errorf("Deck size should decrease by 1, got %d, expected %d", finalDeckSize, initialDeckSize-1)
+	}
+
+	// Check that resources were consumed
+	if player.CanBuyDevelopmentCard() {
+		t.Error("Player should not be able to buy another development card after consuming resources")
+	}
+}

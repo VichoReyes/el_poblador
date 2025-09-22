@@ -52,7 +52,7 @@ func PhaseBuilding(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phaseBuilding) Confirm() Phase {
-	player := p.game.players[p.game.playerTurn]
+	player := &p.game.players[p.game.playerTurn]
 
 	switch p.selected {
 	case 0: // Road
