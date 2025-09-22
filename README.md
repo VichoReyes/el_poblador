@@ -4,6 +4,20 @@ A terminal-based implementation of Settlers of Catan in Go.
 
 ![game screenshot](screenshot.png)
 
+## Installation
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/VichoReyes/el_poblador/releases):
+
+```bash
+wget https://github.com/VichoReyes/el_poblador/releases/latest/download/el-poblador-linux-amd64
+chmod +x el-poblador-linux-amd64
+./el-poblador-linux-amd64 player1 player2 player3
+# or you can add it to PATH
+sudo cp el-poblador-linux-amd64 /usr/local/bin/el-poblador
+```
+
+Another option is cloning the repo and building from source. Or using `go install`. Or making an AUR package. Go wild.
+
 ## Running the Project
 
 ### Main Game
