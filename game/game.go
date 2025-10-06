@@ -27,9 +27,9 @@ type PhaseCancelable interface {
 }
 
 func (g *Game) LogAction(action string) {
-	g.actionLog = append(g.actionLog, action)
+	g.actionLog = append([]string{action}, g.actionLog...)
 	if len(g.actionLog) > 15 {
-		g.actionLog = g.actionLog[1:]
+		g.actionLog = g.actionLog[:15]
 	}
 }
 

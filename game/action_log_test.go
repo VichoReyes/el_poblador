@@ -17,12 +17,12 @@ func TestActionLogBasicFunctionality(t *testing.T) {
 		t.Errorf("Expected 2 actions, got %d", len(game.actionLog))
 	}
 
-	if game.actionLog[0] != "Test action 1" {
-		t.Errorf("Expected first action 'Test action 1', got '%s'", game.actionLog[0])
+	if game.actionLog[0] != "Test action 2" {
+		t.Errorf("Expected first action 'Test action 2' (most recent), got '%s'", game.actionLog[0])
 	}
 
-	if game.actionLog[1] != "Test action 2" {
-		t.Errorf("Expected second action 'Test action 2', got '%s'", game.actionLog[1])
+	if game.actionLog[1] != "Test action 1" {
+		t.Errorf("Expected second action 'Test action 1' (oldest), got '%s'", game.actionLog[1])
 	}
 }
 
@@ -39,13 +39,13 @@ func TestActionLogMaxLength(t *testing.T) {
 		t.Errorf("Expected log length to be capped at 15, got %d", len(game.actionLog))
 	}
 
-	// The oldest actions should be removed
-	if game.actionLog[0] != "Action 6" {
-		t.Errorf("Expected first action 'Action 6', got '%s'", game.actionLog[0])
+	// Newest should be at index 0, oldest at index 14
+	if game.actionLog[0] != "Action 0" {
+		t.Errorf("Expected first action 'Action 0' (most recent), got '%s'", game.actionLog[0])
 	}
 
-	if game.actionLog[14] != "Action 0" {
-		t.Errorf("Expected last action 'Action 0', got '%s'", game.actionLog[14])
+	if game.actionLog[14] != "Action 6" {
+		t.Errorf("Expected last action 'Action 6' (oldest), got '%s'", game.actionLog[14])
 	}
 }
 
