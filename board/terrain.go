@@ -69,7 +69,7 @@ func (tile *Tile) RenderTile(isCursor bool, hasRobber bool) [5]string {
 
 	infoLine := "\\        /"
 	if hasRobber {
-		infoLine = "\\  ROB  /"
+		infoLine = "\\  ROB   /"
 	}
 
 	lines := [5]string{
