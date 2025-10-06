@@ -2,6 +2,7 @@ package game
 
 import (
 	"el_poblador/board"
+	"fmt"
 	"math/rand/v2"
 	"strings"
 )
@@ -48,6 +49,10 @@ func (p *phasePlaceRobber) Confirm() Phase {
 	}
 	
 	playerIds := p.game.board.PlaceRobber(p.tileCoord)
+
+	currentPlayer := &p.game.players[p.game.playerTurn]
+	p.game.LogAction(fmt.Sprintf("%s moved the robber", currentPlayer.RenderName()))
+
 	var stealablePlayers []Player
 	for _, playerId := range playerIds {
 		p := p.game.players[playerId]
@@ -102,6 +107,9 @@ func (p *phaseStealCard) Confirm() Phase {
 		selectedResource := resourcePool[rand.IntN(len(resourcePool))]
 		player.resources[selectedResource] -= 1
 		p.game.players[p.game.playerTurn].AddResource(selectedResource)
+
+		currentPlayer := &p.game.players[p.game.playerTurn]
+		p.game.LogAction(fmt.Sprintf("%s stole a card from %s", currentPlayer.RenderName(), player.RenderName()))
 	}
 	return p.continuation
 }

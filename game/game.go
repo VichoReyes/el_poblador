@@ -26,6 +26,21 @@ type PhaseCancelable interface {
 	Cancel() Phase
 }
 
+func (g *Game) LogAction(action string) {
+	g.actionLog = append(g.actionLog, action)
+	if len(g.actionLog) > 15 {
+		g.actionLog = g.actionLog[1:]
+	}
+}
+
+func (g *Game) ActionLog() []string {
+	return g.actionLog
+}
+
+func (g *Game) Players() []Player {
+	return g.players
+}
+
 type Game struct {
 	board       *board.Board
 	players     []Player
@@ -33,6 +48,7 @@ type Game struct {
 	phase       Phase
 	playerTurn  int
 	devCardDeck []DevCard
+	actionLog   []string
 }
 
 // requestPlayer is the player that the user is playing as.
@@ -139,6 +155,7 @@ func (g *Game) Start(playerNames []string) {
 	g.playerTurn = 0
 	g.phase = PhaseInitialSettlements(g, true)
 	g.devCardDeck = shuffleDevCards()
+	g.actionLog = make([]string, 0, 15)
 }
 
 

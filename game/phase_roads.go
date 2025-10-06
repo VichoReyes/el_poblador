@@ -142,7 +142,13 @@ func (p *phaseRoadEnd) Confirm() Phase {
 	}
 
 	p.game.board.SetRoad(pathCoord, playerId)
-	
+
+	if p.isFree {
+		p.game.LogAction(fmt.Sprintf("%s built a free road", player.RenderName()))
+	} else {
+		p.game.LogAction(fmt.Sprintf("%s built a road", player.RenderName()))
+	}
+
 	message := "Road built!"
 	if p.isFree {
 		if p.helpPrefix != "" {
