@@ -2,6 +2,7 @@ package game
 
 import (
 	"el_poblador/board"
+	"fmt"
 )
 
 type phaseBuilding struct {
@@ -75,12 +76,14 @@ func (p *phaseBuilding) Confirm() Phase {
 			if player.BuyDevelopmentCard() {
 				if card := p.game.DrawDevelopmentCard(); card != nil {
 					player.hiddenDevCards = append(player.hiddenDevCards, *card)
-					
+
+					p.game.LogAction(fmt.Sprintf("%s bought a development card", player.RenderName()))
+
 					// Check for game end after buying development card (in case it's a victory point card)
 					if winner := p.game.CheckGameEnd(); winner != nil {
 						return PhaseGameEnd(p.game, winner)
 					}
-					
+
 					return p.previousPhase
 				}
 			}
@@ -132,6 +135,8 @@ func (p *phaseSettlementPlacement) Confirm() Phase {
 	}
 
 	p.game.board.SetSettlement(p.cursorCross, playerId)
+
+	p.game.LogAction(fmt.Sprintf("%s built a settlement", player.RenderName()))
 
 	// Check for game end after building settlement
 	if winner := p.game.CheckGameEnd(); winner != nil {
@@ -195,6 +200,8 @@ func (p *phaseCityPlacement) Confirm() Phase {
 	}
 
 	p.game.board.UpgradeToCity(p.cursorCross, playerId)
+
+	p.game.LogAction(fmt.Sprintf("%s upgraded to a city", player.RenderName()))
 
 	// Check for game end after building city
 	if winner := p.game.CheckGameEnd(); winner != nil {

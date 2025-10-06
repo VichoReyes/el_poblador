@@ -42,15 +42,19 @@ func (p *phasePlayDevelopmentCard) Confirm() Phase {
 	switch card {
 	case DevCardKnight:
 		player.PlayDevCard(card)
+		p.game.LogAction(fmt.Sprintf("%s played Knight", player.RenderName()))
 		return PhasePlaceRobber(p.game, PhaseIdle(p.game))
 	case DevCardRoadBuilding:
 		player.PlayDevCard(card)
+		p.game.LogAction(fmt.Sprintf("%s played Road Building", player.RenderName()))
 		return PhaseRoadBuilding(p.game)
 	case DevCardMonopoly:
 		player.PlayDevCard(card)
+		p.game.LogAction(fmt.Sprintf("%s played Monopoly", player.RenderName()))
 		return PhaseMonopoly(p.game, PhaseIdle(p.game))
 	case DevCardYearOfPlenty:
 		player.PlayDevCard(card)
+		p.game.LogAction(fmt.Sprintf("%s played Year of Plenty", player.RenderName()))
 		return PhaseYearOfPlenty(p.game, PhaseIdle(p.game))
 	case DevCardVictoryPoint:
 		return p.previousPhase
@@ -109,8 +113,10 @@ func (p *phaseMonopoly) Confirm() Phase {
 
 	if totalCollected > 0 {
 		currentPlayer.resources[selectedResource] += totalCollected
+		p.game.LogAction(fmt.Sprintf("%s collected %d %s from all players", currentPlayer.RenderName(), totalCollected, selectedResource))
 		return PhaseIdleWithNotification(p.game, fmt.Sprintf("Collected %d %s from other players!", totalCollected, selectedResource))
 	} else {
+		p.game.LogAction(fmt.Sprintf("%s monopolized %s but collected nothing", currentPlayer.RenderName(), selectedResource))
 		return PhaseIdleWithNotification(p.game, "No resources collected - nobody had any!")
 	}
 }
@@ -163,6 +169,8 @@ func (p *phaseYearOfPlenty) Confirm() Phase {
 	for _, resource := range p.selectedResources {
 		currentPlayer.AddResource(resource)
 	}
+
+	p.game.LogAction(fmt.Sprintf("%s gained %s and %s from the bank", currentPlayer.RenderName(), p.selectedResources[0], p.selectedResources[1]))
 
 	return PhaseIdleWithNotification(p.game, fmt.Sprintf("Gained %s and %s from the bank!", p.selectedResources[0], p.selectedResources[1]))
 }

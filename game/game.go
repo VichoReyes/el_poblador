@@ -26,6 +26,21 @@ type PhaseCancelable interface {
 	Cancel() Phase
 }
 
+func (g *Game) LogAction(action string) {
+	g.actionLog = append([]string{action}, g.actionLog...)
+	if len(g.actionLog) > 15 {
+		g.actionLog = g.actionLog[:15]
+	}
+}
+
+func (g *Game) ActionLog() []string {
+	return g.actionLog
+}
+
+func (g *Game) Players() []Player {
+	return g.players
+}
+
 type Game struct {
 	board       *board.Board
 	players     []Player
@@ -33,6 +48,7 @@ type Game struct {
 	phase       Phase
 	playerTurn  int
 	devCardDeck []DevCard
+	actionLog   []string
 }
 
 // requestPlayer is the player that the user is playing as.
@@ -83,9 +99,17 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 			phaseSidebar = margin.Render(p.Menu())
 		}
 	}
+	// right sidebar
 	sidebar := lipgloss.JoinVertical(lipgloss.Left, dice, otherPlayers, myResourcesStr, phaseSidebar)
 	sidebarWithMinWidth := lipgloss.NewStyle().Width(30).Render(sidebar)
-	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebarWithMinWidth)
+
+	// action log (left sidebar)
+	actionLogStyle := margin.Width(30).MaxHeight(20)
+
+	actionLogContent := strings.Join(g.actionLog, "\n")
+	actionLogRendered := actionLogStyle.Render(actionLogContent)
+
+	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebarWithMinWidth)
 
 	// Calculate the available space for the board.
 	availableHeight := height - lipgloss.Height(help)
@@ -139,8 +163,8 @@ func (g *Game) Start(playerNames []string) {
 	g.playerTurn = 0
 	g.phase = PhaseInitialSettlements(g, true)
 	g.devCardDeck = shuffleDevCards()
+	g.actionLog = make([]string, 0, 15)
 }
-
 
 func (g *Game) MoveCursor(direction string, requestPlayer *int) {
 	playerPerspective := g.playerPerspective(requestPlayer)

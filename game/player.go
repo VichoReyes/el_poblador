@@ -178,3 +178,7 @@ func (p *Player) Render(s string) string {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
 	return style.Render(s)
 }
+
+func (p *Player) RenderName() string {
+	return p.Render(p.Name)
+}

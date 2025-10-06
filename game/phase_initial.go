@@ -3,6 +3,7 @@ package game
 import (
 	"el_poblador/board"
 	"fmt"
+	"strings"
 )
 
 func nextInitialPhase(game *Game, isFirstPair bool) Phase {
@@ -43,19 +44,38 @@ func (p *phaseInitialSettlements) Confirm() Phase {
 	if !p.isFirstPair {
 		player := &p.game.players[p.game.playerTurn]
 		adjacentTiles := p.game.board.AdjacentTiles(p.cursorCross)
+
+		// Collect resources and track what was gained
+		var resourcesGained []board.ResourceType
 		for _, tile := range adjacentTiles {
 			resource, ok := board.TileResource(tile)
 			if ok {
 				player.AddResource(resource)
+				resourcesGained = append(resourcesGained, resource)
 			}
 		}
+
+		// Log the initial resources gained
+		if len(resourcesGained) > 0 {
+			resourceCounts := make(map[board.ResourceType]int)
+			for _, resource := range resourcesGained {
+				resourceCounts[resource]++
+			}
+
+			var resourceParts []string
+			for resourceType, count := range resourceCounts {
+				resourceParts = append(resourceParts, fmt.Sprintf("%d %s", count, resourceType))
+			}
+
+			p.game.LogAction(fmt.Sprintf("%s gained %s from initial settlement", player.RenderName(), strings.Join(resourceParts, ", ")))
+		}
 	}
-	
+
 	// Check for game end after building initial settlement (unlikely but for completeness)
 	if winner := p.game.CheckGameEnd(); winner != nil {
 		return PhaseGameEnd(p.game, winner)
 	}
-	
+
 	return PhaseInitialRoad(p.game, p.cursorCross, p.isFirstPair)
 }
 

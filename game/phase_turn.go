@@ -1,7 +1,10 @@
 package game
 
 import (
+	"el_poblador/board"
+	"fmt"
 	"math/rand/v2"
+	"strings"
 )
 
 type phaseDiceRoll struct {
@@ -55,6 +58,28 @@ func rollDice(game *Game) Phase {
 			game.players[player].AddResource(r)
 		}
 	}
+
+	// Log resource generation for each player if they received any
+	for playerId, resources := range generatedResources {
+		if len(resources) > 0 {
+			// Count resources by type
+			resourceCounts := make(map[board.ResourceType]int)
+			for _, resource := range resources {
+				resourceCounts[resource]++
+			}
+
+			// Build resource description
+			var resourceParts []string
+			for resourceType, count := range resourceCounts {
+				resourceParts = append(resourceParts, fmt.Sprintf("%d %s", count, resourceType))
+			}
+
+			game.LogAction(fmt.Sprintf("%s gained %s from dice roll (%d)",
+				game.players[playerId].RenderName(),
+				strings.Join(resourceParts, ", "),
+				sum))
+		}
+	}
 	return PhaseIdle(game)
 }
 
@@ -89,6 +114,8 @@ func (p *phaseIdle) Confirm() Phase {
 	case 3: // End Turn
 		p.game.playerTurn++
 		p.game.playerTurn %= len(p.game.players)
+		nextPlayer := &p.game.players[p.game.playerTurn]
+		p.game.LogAction(fmt.Sprintf("Turn passed to %s", nextPlayer.RenderName()))
 		return PhaseDiceRoll(p.game)
 	default:
 		panic("Invalid option selected")
