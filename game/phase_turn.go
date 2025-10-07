@@ -1,10 +1,14 @@
 package game
 
 import (
+	"bytes"
 	"el_poblador/board"
+	"encoding/gob"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"strings"
+	"time"
 )
 
 type phaseDiceRoll struct {
@@ -16,7 +20,7 @@ func PhaseDiceRoll(game *Game) Phase {
 	return &phaseDiceRoll{
 		phaseWithOptions: phaseWithOptions{
 			game:    game,
-			options: []string{"Roll", "Play Knight"},
+			options: []string{"Roll", "Play Knight", "Save & Quit"},
 		},
 	}
 }
@@ -32,6 +36,14 @@ func (p *phaseDiceRoll) Confirm() Phase {
 			return PhasePlaceRobber(p.game, p)
 		}
 		p.invalid = "You don't have a Knight card"
+		return p
+	case 2:
+		// Save & Quit
+		if err := saveGameState(p.game); err != nil {
+			p.invalid = fmt.Sprintf("Save failed: %v", err)
+			return p
+		}
+		p.game.shouldQuit = true
 		return p
 	default:
 		panic("Invalid option selected")
@@ -127,4 +139,17 @@ func (p *phaseIdle) HelpText() string {
 		return p.notification + " Anything else?"
 	}
 	return "What do you want to do?"
+}
+
+func saveGameState(g *Game) error {
+	filename := fmt.Sprintf("game_save_%s.gob", time.Now().Format("2006-01-02_15-04-05"))
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(g); err != nil {
+		return fmt.Errorf("encoding failed: %w", err)
+	}
+	if err := os.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write failed: %w", err)
+	}
+	return nil
 }

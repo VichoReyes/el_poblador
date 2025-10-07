@@ -41,6 +41,7 @@ type Game struct {
 	PlayerTurn  int
 	DevCardDeck []DevCard
 	ActionLog   []string
+	shouldQuit  bool
 }
 
 // requestPlayer is the player that the user is playing as.
@@ -238,4 +239,8 @@ func (g *Game) CheckGameEnd() *Player {
 		}
 	}
 	return nil
+}
+
+func (g *Game) ShouldQuit() bool {
+	return g.shouldQuit
 }

@@ -33,6 +33,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.game.MoveCursor(msg.String(), m.userPlayer)
 		case "enter":
 			m.game.ConfirmAction(m.userPlayer)
+			if m.game.ShouldQuit() {
+				return m, tea.Quit
+			}
 		case "esc":
 			m.game.CancelAction(m.userPlayer)
 		case "s":
