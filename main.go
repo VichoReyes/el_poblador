@@ -106,33 +106,55 @@ func loadGameState(filename string) (*game.Game, error) {
 	return &g, nil
 }
 
+func printUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("  el_poblador new <player1> <player2> <player3> [player4]")
+	fmt.Println("  el_poblador load <filename.gob>")
+	fmt.Println()
+	fmt.Println("Commands:")
+	fmt.Println("  new   Start a new game with 3-4 players")
+	fmt.Println("  load  Load a saved game from file")
+}
+
 func main() {
+	if len(os.Args) < 2 {
+		printUsage()
+		os.Exit(1)
+	}
+
+	command := os.Args[1]
 	var g *game.Game
 
-	// Check if loading from save file
-	if len(os.Args) >= 2 && os.Args[1] == "load" {
-		if len(os.Args) != 3 {
-			fmt.Println("Usage: el_poblador load <filename.gob>")
+	switch command {
+	case "new":
+		if len(os.Args) < 5 || len(os.Args) > 6 {
+			fmt.Println("Error: 'new' command requires 3-4 player names")
+			fmt.Println()
+			printUsage()
 			os.Exit(1)
 		}
+		g = &game.Game{}
+		g.Start(os.Args[2:])
 
+	case "load":
+		if len(os.Args) != 3 {
+			fmt.Println("Error: 'load' command requires a filename")
+			fmt.Println()
+			printUsage()
+			os.Exit(1)
+		}
 		loadedGame, err := loadGameState(os.Args[2])
 		if err != nil {
 			fmt.Printf("Failed to load game: %v\n", err)
 			os.Exit(1)
 		}
 		g = loadedGame
-		fmt.Println("Game loaded successfully!")
-	} else {
-		// Start new game
-		if len(os.Args) < 4 || len(os.Args) > 5 {
-			fmt.Println("Usage:")
-			fmt.Println("  New game: el_poblador <player1> <player2> <player3> [player4]")
-			fmt.Println("  Load game: el_poblador load <filename.gob>")
-			os.Exit(1)
-		}
-		g = &game.Game{}
-		g.Start(os.Args[1:])
+
+	default:
+		fmt.Printf("Error: unknown command '%s'\n", command)
+		fmt.Println()
+		printUsage()
+		os.Exit(1)
 	}
 
 	p := tea.NewProgram(model{game: g}, tea.WithAltScreen())
