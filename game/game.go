@@ -157,9 +157,12 @@ func (g *Game) Start(playerNames []string) {
 	rand.Shuffle(len(g.players), func(i, j int) {
 		g.players[i], g.players[j] = g.players[j], g.players[i]
 	})
-	g.board = board.NewLegalBoard(func(playerId int, content string) string {
-		return g.players[playerId].Render(content)
-	})
+	// Create player color map for board rendering
+	playerColors := make(map[int]int)
+	for i, player := range g.players {
+		playerColors[i] = player.color
+	}
+	g.board = board.NewLegalBoard(playerColors)
 	g.playerTurn = 0
 	g.phase = PhaseInitialSettlements(g, true)
 	g.devCardDeck = shuffleDevCards()

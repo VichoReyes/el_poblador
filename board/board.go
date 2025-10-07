@@ -9,7 +9,7 @@ type Board struct {
 	roads        map[PathCoord]int
 	settlements  map[CrossCoord]int
 	cityUpgrades map[CrossCoord]int // tracks which settlements have been upgraded to cities
-	playerRender func(int, string) string
+	playerColors map[int]int        // player id to color code for rendering
 	robber       TileCoord
 }
 

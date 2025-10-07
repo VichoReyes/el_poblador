@@ -9,9 +9,7 @@ func NewDesertBoard() *Board {
 		roads:        make(map[PathCoord]int),
 		settlements:  make(map[CrossCoord]int),
 		cityUpgrades: make(map[CrossCoord]int),
-		playerRender: func(_ int, content string) string {
-			return content
-		},
+		playerColors: make(map[int]int),
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -32,9 +30,7 @@ func NewChaoticBoard() *Board {
 		roads:        make(map[PathCoord]int),
 		settlements:  make(map[CrossCoord]int),
 		cityUpgrades: make(map[CrossCoord]int),
-		playerRender: func(_ int, content string) string {
-			return content
-		},
+		playerColors: make(map[int]int),
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -60,7 +56,7 @@ func NewChaoticBoard() *Board {
 	return board
 }
 
-func NewLegalBoard(playerRender func(int, string) string) *Board {
+func NewLegalBoard(playerColors map[int]int) *Board {
 	diceNumbers := []int{2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12}
 	terrains := []TerrainType{
 		TerrainWood, TerrainWood, TerrainWood, TerrainWood,
@@ -81,7 +77,7 @@ func NewLegalBoard(playerRender func(int, string) string) *Board {
 		roads:        make(map[PathCoord]int),
 		settlements:  make(map[CrossCoord]int),
 		cityUpgrades: make(map[CrossCoord]int),
-		playerRender: playerRender,
+		playerColors: playerColors,
 	}
 	for x := 0; x <= 5; x++ {
 		for y := 0; y <= 10; y++ {
