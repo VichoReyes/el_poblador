@@ -20,7 +20,7 @@ func (p *phaseWithOptions) BoardCursor() interface{} {
 
 func (p *phaseWithOptions) Menu() string {
 	paddedOptions := make([]string, len(p.options))
-	player := &p.game.players[p.game.playerTurn]
+	player := &p.game.Players[p.game.PlayerTurn]
 	for i, option := range p.options {
 		if i == p.selected {
 			paddedOptions[i] = player.Render("> ") + option

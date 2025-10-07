@@ -121,7 +121,7 @@ func TestNewDesertBoardTileCount(t *testing.T) {
 	board := NewDesertBoard()
 
 	// Count number of tiles
-	tileCount := len(board.tiles)
+	tileCount := len(board.Tiles)
 
 	// Standard Catan board has 19 hexagonal tiles
 	expectedTiles := 19

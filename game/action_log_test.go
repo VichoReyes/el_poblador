@@ -13,16 +13,16 @@ func TestActionLogBasicFunctionality(t *testing.T) {
 	game.LogAction("Test action 1")
 	game.LogAction("Test action 2")
 
-	if len(game.actionLog) != 2 {
-		t.Errorf("Expected 2 actions, got %d", len(game.actionLog))
+	if len(game.ActionLog) != 2 {
+		t.Errorf("Expected 2 actions, got %d", len(game.ActionLog))
 	}
 
-	if game.actionLog[0] != "Test action 2" {
-		t.Errorf("Expected first action 'Test action 2' (most recent), got '%s'", game.actionLog[0])
+	if game.ActionLog[0] != "Test action 2" {
+		t.Errorf("Expected first action 'Test action 2' (most recent), got '%s'", game.ActionLog[0])
 	}
 
-	if game.actionLog[1] != "Test action 1" {
-		t.Errorf("Expected second action 'Test action 1' (oldest), got '%s'", game.actionLog[1])
+	if game.ActionLog[1] != "Test action 1" {
+		t.Errorf("Expected second action 'Test action 1' (oldest), got '%s'", game.ActionLog[1])
 	}
 }
 
@@ -35,17 +35,17 @@ func TestActionLogMaxLength(t *testing.T) {
 		game.LogAction("Action " + string(rune('0'+i%10)))
 	}
 
-	if len(game.actionLog) != 15 {
-		t.Errorf("Expected log length to be capped at 15, got %d", len(game.actionLog))
+	if len(game.ActionLog) != 15 {
+		t.Errorf("Expected log length to be capped at 15, got %d", len(game.ActionLog))
 	}
 
 	// Newest should be at index 0, oldest at index 14
-	if game.actionLog[0] != "Action 0" {
-		t.Errorf("Expected first action 'Action 0' (most recent), got '%s'", game.actionLog[0])
+	if game.ActionLog[0] != "Action 0" {
+		t.Errorf("Expected first action 'Action 0' (most recent), got '%s'", game.ActionLog[0])
 	}
 
-	if game.actionLog[14] != "Action 6" {
-		t.Errorf("Expected last action 'Action 6' (oldest), got '%s'", game.actionLog[14])
+	if game.ActionLog[14] != "Action 6" {
+		t.Errorf("Expected last action 'Action 6' (oldest), got '%s'", game.ActionLog[14])
 	}
 }
 
@@ -54,13 +54,13 @@ func TestActionLogDevelopmentCardPurchase(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give the first player resources to buy a development card
-	firstPlayer := &game.players[0]
+	firstPlayer := &game.Players[0]
 	firstPlayer.AddResource(board.ResourceWheat)
 	firstPlayer.AddResource(board.ResourceOre)
 	firstPlayer.AddResource(board.ResourceSheep)
 
 	// Check that development card deck is not empty
-	if len(game.devCardDeck) == 0 {
+	if len(game.DevCardDeck) == 0 {
 		t.Fatal("Development card deck is empty")
 	}
 
@@ -70,9 +70,9 @@ func TestActionLogDevelopmentCardPurchase(t *testing.T) {
 	buildPhase.selected = 3 // Development Card option
 
 	// Execute the purchase
-	originalDevCardCount := len(firstPlayer.hiddenDevCards)
+	originalDevCardCount := len(firstPlayer.HiddenDevCards)
 	game.phase = game.phase.Confirm()
-	newDevCardCount := len(firstPlayer.hiddenDevCards)
+	newDevCardCount := len(firstPlayer.HiddenDevCards)
 
 	// Verify the purchase actually happened
 	if newDevCardCount != originalDevCardCount+1 {
@@ -80,13 +80,13 @@ func TestActionLogDevelopmentCardPurchase(t *testing.T) {
 	}
 
 	// Check that the action was logged
-	if len(game.actionLog) == 0 {
+	if len(game.ActionLog) == 0 {
 		t.Fatal("Expected at least one action to be logged")
 	}
 
 	expectedAction := firstPlayer.Name + " bought a development card"
 	found := false
-	for _, action := range game.actionLog {
+	for _, action := range game.ActionLog {
 		if action == expectedAction {
 			found = true
 			break
@@ -94,7 +94,7 @@ func TestActionLogDevelopmentCardPurchase(t *testing.T) {
 	}
 
 	if !found {
-		t.Errorf("Expected to find action '%s' in log: %v", expectedAction, game.actionLog)
+		t.Errorf("Expected to find action '%s' in log: %v", expectedAction, game.ActionLog)
 	}
 }
 
@@ -103,7 +103,7 @@ func TestRenderNameMethod(t *testing.T) {
 	game := &Game{}
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
-	player := &game.players[0]
+	player := &game.Players[0]
 
 	// Test that RenderName exists and returns the name (colored or not)
 	renderedName := player.RenderName()
@@ -122,7 +122,7 @@ func TestActionLogUsesRenderNameInsteadOfPlainName(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give the first player resources to buy a development card
-	firstPlayer := &game.players[0]
+	firstPlayer := &game.Players[0]
 	firstPlayer.AddResource(board.ResourceWheat)
 	firstPlayer.AddResource(board.ResourceOre)
 	firstPlayer.AddResource(board.ResourceSheep)
@@ -136,11 +136,11 @@ func TestActionLogUsesRenderNameInsteadOfPlainName(t *testing.T) {
 	game.phase = game.phase.Confirm()
 
 	// Check that the action was logged
-	if len(game.actionLog) == 0 {
+	if len(game.ActionLog) == 0 {
 		t.Fatal("Expected at least one action to be logged")
 	}
 
-	loggedAction := game.actionLog[0]
+	loggedAction := game.ActionLog[0]
 
 	// Verify it contains the expected text structure
 	if !containsText(loggedAction, "bought a development card") {

@@ -11,12 +11,12 @@ type phasePlayDevelopmentCard struct {
 }
 
 func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
-	player := &game.players[game.playerTurn]
+	player := &game.Players[game.PlayerTurn]
 
 	// Build options based on available development cards
 	var options []string
 
-	for _, card := range player.hiddenDevCards {
+	for _, card := range player.HiddenDevCards {
 		options = append(options, card.String())
 	}
 
@@ -32,12 +32,12 @@ func PhasePlayDevelopmentCard(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phasePlayDevelopmentCard) Confirm() Phase {
-	player := &p.game.players[p.game.playerTurn]
-	numCards := len(player.hiddenDevCards)
+	player := &p.game.Players[p.game.PlayerTurn]
+	numCards := len(player.HiddenDevCards)
 	if p.selected == numCards {
 		return p.previousPhase
 	}
-	card := player.hiddenDevCards[p.selected]
+	card := player.HiddenDevCards[p.selected]
 
 	switch card {
 	case DevCardKnight:
@@ -98,21 +98,21 @@ func (p *phaseMonopoly) Confirm() Phase {
 	}
 
 	selectedResource := board.RESOURCE_TYPES[p.selected]
-	currentPlayer := p.game.players[p.game.playerTurn]
+	currentPlayer := p.game.Players[p.game.PlayerTurn]
 
 	totalCollected := 0
-	for i, player := range p.game.players {
-		if i != p.game.playerTurn {
-			count := player.resources[selectedResource]
+	for i, player := range p.game.Players {
+		if i != p.game.PlayerTurn {
+			count := player.Resources[selectedResource]
 			if count > 0 {
-				player.resources[selectedResource] = 0
+				player.Resources[selectedResource] = 0
 				totalCollected += count
 			}
 		}
 	}
 
 	if totalCollected > 0 {
-		currentPlayer.resources[selectedResource] += totalCollected
+		currentPlayer.Resources[selectedResource] += totalCollected
 		p.game.LogAction(fmt.Sprintf("%s collected %d %s from all players", currentPlayer.RenderName(), totalCollected, selectedResource))
 		return PhaseIdleWithNotification(p.game, fmt.Sprintf("Collected %d %s from other players!", totalCollected, selectedResource))
 	} else {
@@ -165,7 +165,7 @@ func (p *phaseYearOfPlenty) Confirm() Phase {
 	}
 
 	// Both resources selected, give them to the player
-	currentPlayer := &p.game.players[p.game.playerTurn]
+	currentPlayer := &p.game.Players[p.game.PlayerTurn]
 	for _, resource := range p.selectedResources {
 		currentPlayer.AddResource(resource)
 	}

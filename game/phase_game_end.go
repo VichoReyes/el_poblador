@@ -38,8 +38,8 @@ func (p *phaseGameEnd) Menu() string {
 		"",
 		"Final Scores:",
 	}
-	
-	for _, player := range p.game.players {
+
+	for _, player := range p.game.Players {
 		points := player.VictoryPoints(p.game)
 		marker := "  "
 		if &player == p.winner {
@@ -47,7 +47,7 @@ func (p *phaseGameEnd) Menu() string {
 		}
 		lines = append(lines, fmt.Sprintf("%s %s: %d points", marker, player.Render(player.Name), points))
 	}
-	
+
 	return strings.Join(lines, "\n")
 }
 

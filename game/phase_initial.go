@@ -7,20 +7,20 @@ import (
 )
 
 func nextInitialPhase(game *Game, isFirstPair bool) Phase {
-	numPlayers := len(game.players)
+	numPlayers := len(game.Players)
 
 	if isFirstPair {
-		if game.playerTurn == numPlayers-1 {
+		if game.PlayerTurn == numPlayers-1 {
 			return PhaseInitialSettlements(game, false)
 		} else {
-			game.playerTurn++
+			game.PlayerTurn++
 			return PhaseInitialSettlements(game, true)
 		}
 	} else {
-		if game.playerTurn == 0 {
+		if game.PlayerTurn == 0 {
 			return PhaseDiceRoll(game)
 		} else {
-			game.playerTurn--
+			game.PlayerTurn--
 			return PhaseInitialSettlements(game, false)
 		}
 	}
@@ -33,17 +33,17 @@ type phaseInitialSettlements struct {
 }
 
 func PhaseInitialSettlements(game *Game, isFirstPair bool) Phase {
-	cursorCross := game.board.ValidCrossCoord()
+	cursorCross := game.Board.ValidCrossCoord()
 	return &phaseInitialSettlements{game: game, cursorCross: cursorCross, isFirstPair: isFirstPair}
 }
 
 func (p *phaseInitialSettlements) Confirm() Phase {
-	if !p.game.board.SetSettlement(p.cursorCross, p.game.playerTurn) {
+	if !p.game.Board.SetSettlement(p.cursorCross, p.game.PlayerTurn) {
 		return p
 	}
 	if !p.isFirstPair {
-		player := &p.game.players[p.game.playerTurn]
-		adjacentTiles := p.game.board.AdjacentTiles(p.cursorCross)
+		player := &p.game.Players[p.game.PlayerTurn]
+		adjacentTiles := p.game.Board.AdjacentTiles(p.cursorCross)
 
 		// Collect resources and track what was gained
 		var resourcesGained []board.ResourceType
@@ -119,7 +119,7 @@ func PhaseInitialRoad(game *Game, sourceCross board.CrossCoord, isFirstPair bool
 
 func (p *phaseInitialRoad) Confirm() Phase {
 	roadCoord := board.NewPathCoord(p.sourceCross, p.cursorCross)
-	p.game.board.SetRoad(roadCoord, p.game.playerTurn)
+	p.game.Board.SetRoad(roadCoord, p.game.PlayerTurn)
 	return nextInitialPhase(p.game, p.isFirstPair)
 }
 

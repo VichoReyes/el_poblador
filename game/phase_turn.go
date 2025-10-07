@@ -1,10 +1,14 @@
 package game
 
 import (
+	"bytes"
 	"el_poblador/board"
+	"encoding/gob"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"strings"
+	"time"
 )
 
 type phaseDiceRoll struct {
@@ -16,7 +20,7 @@ func PhaseDiceRoll(game *Game) Phase {
 	return &phaseDiceRoll{
 		phaseWithOptions: phaseWithOptions{
 			game:    game,
-			options: []string{"Roll", "Play Knight"},
+			options: []string{"Roll", "Play Knight", "Save & Quit"},
 		},
 	}
 }
@@ -27,11 +31,19 @@ func (p *phaseDiceRoll) Confirm() Phase {
 		return rollDice(p.game)
 	case 1:
 		// Play Knight card
-		player := &p.game.players[p.game.playerTurn]
+		player := &p.game.Players[p.game.PlayerTurn]
 		if player.PlayDevCard(DevCardKnight) {
 			return PhasePlaceRobber(p.game, p)
 		}
 		p.invalid = "You don't have a Knight card"
+		return p
+	case 2:
+		// Save & Quit
+		if err := saveGameState(p.game); err != nil {
+			p.invalid = fmt.Sprintf("Save failed: %v", err)
+			return p
+		}
+		p.game.shouldQuit = true
 		return p
 	default:
 		panic("Invalid option selected")
@@ -46,16 +58,16 @@ func (p *phaseDiceRoll) HelpText() string {
 }
 
 func rollDice(game *Game) Phase {
-	game.lastDice = [2]int{rand.IntN(6) + 1, rand.IntN(6) + 1}
-	sum := game.lastDice[0] + game.lastDice[1]
+	game.LastDice = [2]int{rand.IntN(6) + 1, rand.IntN(6) + 1}
+	sum := game.LastDice[0] + game.LastDice[1]
 	if sum == 7 {
 		// TODO: discarding of > 7 cards
 		return PhasePlaceRobber(game, PhaseIdle(game))
 	}
-	generatedResources := game.board.GenerateResources(sum)
+	generatedResources := game.Board.GenerateResources(sum)
 	for player, resources := range generatedResources {
 		for _, r := range resources {
-			game.players[player].AddResource(r)
+			game.Players[player].AddResource(r)
 		}
 	}
 
@@ -75,7 +87,7 @@ func rollDice(game *Game) Phase {
 			}
 
 			game.LogAction(fmt.Sprintf("%s gained %s from dice roll (%d)",
-				game.players[playerId].RenderName(),
+				game.Players[playerId].RenderName(),
 				strings.Join(resourceParts, ", "),
 				sum))
 		}
@@ -112,9 +124,9 @@ func (p *phaseIdle) Confirm() Phase {
 	case 2: // Play Development Card
 		return PhasePlayDevelopmentCard(p.game, p)
 	case 3: // End Turn
-		p.game.playerTurn++
-		p.game.playerTurn %= len(p.game.players)
-		nextPlayer := &p.game.players[p.game.playerTurn]
+		p.game.PlayerTurn++
+		p.game.PlayerTurn %= len(p.game.Players)
+		nextPlayer := &p.game.Players[p.game.PlayerTurn]
 		p.game.LogAction(fmt.Sprintf("Turn passed to %s", nextPlayer.RenderName()))
 		return PhaseDiceRoll(p.game)
 	default:
@@ -127,4 +139,17 @@ func (p *phaseIdle) HelpText() string {
 		return p.notification + " Anything else?"
 	}
 	return "What do you want to do?"
+}
+
+func saveGameState(g *Game) error {
+	filename := fmt.Sprintf("game_save_%s.gob", time.Now().Format("2006-01-02_15-04-05"))
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(g); err != nil {
+		return fmt.Errorf("encoding failed: %w", err)
+	}
+	if err := os.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("write failed: %w", err)
+	}
+	return nil
 }

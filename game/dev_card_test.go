@@ -12,13 +12,13 @@ func TestDevelopmentCardPurchase(t *testing.T) {
 	game.Start([]string{"Player1", "Player2", "Player3"})
 
 	// Give player 0 enough resources to buy a development card
-	player := &game.players[0]
+	player := &game.Players[0]
 	player.AddResource(board.ResourceWheat)
 	player.AddResource(board.ResourceOre)
 	player.AddResource(board.ResourceSheep)
 
 	// Check initial state
-	initialDeckSize := len(game.devCardDeck)
+	initialDeckSize := len(game.DevCardDeck)
 	initialPlayerCards := player.TotalDevCards()
 
 	// Verify player can buy a development card
@@ -38,10 +38,10 @@ func TestDevelopmentCardPurchase(t *testing.T) {
 	}
 
 	// Add card to player's hidden deck
-	player.hiddenDevCards = append(player.hiddenDevCards, *card)
+	player.HiddenDevCards = append(player.HiddenDevCards, *card)
 
 	// Verify final state
-	finalDeckSize := len(game.devCardDeck)
+	finalDeckSize := len(game.DevCardDeck)
 	finalPlayerCards := player.TotalDevCards()
 
 	if finalDeckSize != initialDeckSize-1 {
@@ -64,12 +64,12 @@ func TestDevelopmentCardPlay(t *testing.T) {
 	game.Start([]string{"Player1", "Player2", "Player3"})
 
 	// Give player 0 a development card
-	player := &game.players[0]
-	player.hiddenDevCards = []DevCard{DevCardKnight}
+	player := &game.Players[0]
+	player.HiddenDevCards = []DevCard{DevCardKnight}
 
 	// Check initial state
-	initialHidden := len(player.hiddenDevCards)
-	initialPlayed := len(player.playedDevCards)
+	initialHidden := len(player.HiddenDevCards)
+	initialPlayed := len(player.PlayedDevCards)
 
 	// Play the card
 	if !player.PlayDevCard(DevCardKnight) {
@@ -77,8 +77,8 @@ func TestDevelopmentCardPlay(t *testing.T) {
 	}
 
 	// Verify final state
-	finalHidden := len(player.hiddenDevCards)
-	finalPlayed := len(player.playedDevCards)
+	finalHidden := len(player.HiddenDevCards)
+	finalPlayed := len(player.PlayedDevCards)
 
 	if finalHidden != initialHidden-1 {
 		t.Errorf("Hidden cards should decrease by 1, got %d, expected %d", finalHidden, initialHidden-1)
@@ -99,8 +99,8 @@ func TestKnightCardUsage(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give the first player a knight card
-	player := &game.players[0]
-	player.hiddenDevCards = append(player.hiddenDevCards, DevCardKnight)
+	player := &game.Players[0]
+	player.HiddenDevCards = append(player.HiddenDevCards, DevCardKnight)
 
 	// Test that the dice roll phase always shows the knight option
 	dicePhase := PhaseDiceRoll(game)
@@ -130,16 +130,16 @@ func TestKnightCardUsage(t *testing.T) {
 	}
 
 	// Test that the knight card is consumed when played
-	initialCardCount := len(player.hiddenDevCards)
+	initialCardCount := len(player.HiddenDevCards)
 	if !player.PlayDevCard(DevCardKnight) {
 		t.Fatal("Should be able to play knight card")
 	}
 
-	if len(player.hiddenDevCards) != initialCardCount-1 {
+	if len(player.HiddenDevCards) != initialCardCount-1 {
 		t.Fatal("Knight card should be removed from hidden cards when played")
 	}
 
-	if len(player.playedDevCards) != 1 {
+	if len(player.PlayedDevCards) != 1 {
 		t.Fatal("Knight card should be added to played cards when played")
 	}
 }
@@ -149,15 +149,15 @@ func TestMonopolyCard(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give Alice a monopoly card
-	game.players[0].hiddenDevCards = []DevCard{DevCardMonopoly}
+	game.Players[0].HiddenDevCards = []DevCard{DevCardMonopoly}
 
 
 	// Give players some resources  
-	game.players[0].AddResource(board.ResourceWheat) // Alice (current player)
-	game.players[1].AddResource(board.ResourceWheat) // Bob
-	game.players[1].AddResource(board.ResourceWheat) // Bob (2 total)
-	game.players[2].AddResource(board.ResourceWheat) // Charlie
-	game.players[2].AddResource(board.ResourceOre)   // Charlie (different resource)
+	game.Players[0].AddResource(board.ResourceWheat) // Alice (current player)
+	game.Players[1].AddResource(board.ResourceWheat) // Bob
+	game.Players[1].AddResource(board.ResourceWheat) // Bob (2 total)
+	game.Players[2].AddResource(board.ResourceWheat) // Charlie
+	game.Players[2].AddResource(board.ResourceOre)   // Charlie (different resource)
 
 	// Create development card phase and select monopoly
 	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
@@ -175,9 +175,9 @@ func TestMonopolyCard(t *testing.T) {
 	}
 
 	// Record initial state
-	initialAliceWheat := game.players[0].resources[board.ResourceWheat]
-	initialBobWheat := game.players[1].resources[board.ResourceWheat]
-	initialCharlieWheat := game.players[2].resources[board.ResourceWheat]
+	initialAliceWheat := game.Players[0].Resources[board.ResourceWheat]
+	initialBobWheat := game.Players[1].Resources[board.ResourceWheat]
+	initialCharlieWheat := game.Players[2].Resources[board.ResourceWheat]
 
 	// Find wheat option index
 	wheatIndex := -1
@@ -197,24 +197,24 @@ func TestMonopolyCard(t *testing.T) {
 
 	// Verify Alice collected all wheat
 	expectedAliceWheat := initialAliceWheat + initialBobWheat + initialCharlieWheat
-	if game.players[0].resources[board.ResourceWheat] != expectedAliceWheat {
-		t.Errorf("Alice should have %d wheat, got %d", expectedAliceWheat, game.players[0].resources[board.ResourceWheat])
+	if game.Players[0].Resources[board.ResourceWheat] != expectedAliceWheat {
+		t.Errorf("Alice should have %d wheat, got %d", expectedAliceWheat, game.Players[0].Resources[board.ResourceWheat])
 	}
 
 	// Verify other players lost their wheat
-	if game.players[1].resources[board.ResourceWheat] != 0 {
+	if game.Players[1].Resources[board.ResourceWheat] != 0 {
 		t.Error("Bob should have no wheat after monopoly")
 	}
-	if game.players[2].resources[board.ResourceWheat] != 0 {
+	if game.Players[2].Resources[board.ResourceWheat] != 0 {
 		t.Error("Charlie should have no wheat after monopoly")
 	}
 
 	// Verify the monopoly card was played
-	if len(game.players[0].hiddenDevCards) != 0 {
-		t.Errorf("Monopoly card should be removed from hidden cards, hidden count: %d, cards: %v", len(game.players[0].hiddenDevCards), game.players[0].hiddenDevCards)
+	if len(game.Players[0].HiddenDevCards) != 0 {
+		t.Errorf("Monopoly card should be removed from hidden cards, hidden count: %d, cards: %v", len(game.Players[0].HiddenDevCards), game.Players[0].HiddenDevCards)
 	}
-	if len(game.players[0].playedDevCards) != 1 {
-		t.Errorf("Monopoly card should be added to played cards, played count: %d, cards: %v", len(game.players[0].playedDevCards), game.players[0].playedDevCards)
+	if len(game.Players[0].PlayedDevCards) != 1 {
+		t.Errorf("Monopoly card should be added to played cards, played count: %d, cards: %v", len(game.Players[0].PlayedDevCards), game.Players[0].PlayedDevCards)
 	}
 
 	// Verify we return to idle phase with notification
@@ -228,11 +228,11 @@ func TestYearOfPlentyCard(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give Alice a year of plenty card
-	game.players[0].hiddenDevCards = []DevCard{DevCardYearOfPlenty}
+	game.Players[0].HiddenDevCards = []DevCard{DevCardYearOfPlenty}
 
 	// Record initial resource counts
-	initialWheat := game.players[0].resources[board.ResourceWheat]
-	initialOre := game.players[0].resources[board.ResourceOre]
+	initialWheat := game.Players[0].Resources[board.ResourceWheat]
+	initialOre := game.Players[0].Resources[board.ResourceOre]
 
 	// Create development card phase and select year of plenty
 	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
@@ -249,10 +249,10 @@ func TestYearOfPlentyCard(t *testing.T) {
 	}
 
 	// Verify the card was played
-	if len(game.players[0].hiddenDevCards) != 0 {
+	if len(game.Players[0].HiddenDevCards) != 0 {
 		t.Error("Year of Plenty card should be removed from hidden cards")
 	}
-	if len(game.players[0].playedDevCards) != 1 {
+	if len(game.Players[0].PlayedDevCards) != 1 {
 		t.Error("Year of Plenty card should be added to played cards")
 	}
 
@@ -296,8 +296,8 @@ func TestYearOfPlentyCard(t *testing.T) {
 	}
 
 	// Verify player received both resources
-	finalWheat := game.players[0].resources[board.ResourceWheat]
-	finalOre := game.players[0].resources[board.ResourceOre]
+	finalWheat := game.Players[0].Resources[board.ResourceWheat]
+	finalOre := game.Players[0].Resources[board.ResourceOre]
 
 	if finalWheat != initialWheat+1 {
 		t.Errorf("Player should have gained 1 wheat, got %d, expected %d", finalWheat, initialWheat+1)
@@ -312,7 +312,7 @@ func TestRoadBuildingCard(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give Alice a road building card
-	game.players[0].hiddenDevCards = []DevCard{DevCardRoadBuilding}
+	game.Players[0].HiddenDevCards = []DevCard{DevCardRoadBuilding}
 
 	// Create development card phase and select road building
 	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
@@ -329,10 +329,10 @@ func TestRoadBuildingCard(t *testing.T) {
 	}
 
 	// Verify the card was played
-	if len(game.players[0].hiddenDevCards) != 0 {
+	if len(game.Players[0].HiddenDevCards) != 0 {
 		t.Error("Road Building card should be removed from hidden cards")
 	}
-	if len(game.players[0].playedDevCards) != 1 {
+	if len(game.Players[0].PlayedDevCards) != 1 {
 		t.Error("Road Building card should be added to played cards")
 	}
 
@@ -355,13 +355,13 @@ func TestBuyDevelopmentCardThroughBuildingPhase(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give Alice enough resources to buy a development card
-	player := &game.players[0]
+	player := &game.Players[0]
 	player.AddResource(board.ResourceWheat)
 	player.AddResource(board.ResourceOre)
 	player.AddResource(board.ResourceSheep)
 
 	// Record initial state
-	initialDeckSize := len(game.devCardDeck)
+	initialDeckSize := len(game.DevCardDeck)
 	initialPlayerCards := player.TotalDevCards()
 
 	// Create building phase
@@ -380,13 +380,13 @@ func TestBuyDevelopmentCardThroughBuildingPhase(t *testing.T) {
 	}
 
 	// Check that the development card was actually added to the player
-	finalPlayerCards := game.players[0].TotalDevCards() // Use game.players[0] to get the actual player
+	finalPlayerCards := game.Players[0].TotalDevCards() // Use game.Players[0] to get the actual player
 	if finalPlayerCards != initialPlayerCards+1 {
 		t.Errorf("Player should have gained 1 development card, got %d, expected %d", finalPlayerCards, initialPlayerCards+1)
 	}
 
 	// Check that the deck size decreased
-	finalDeckSize := len(game.devCardDeck)
+	finalDeckSize := len(game.DevCardDeck)
 	if finalDeckSize != initialDeckSize-1 {
 		t.Errorf("Deck size should decrease by 1, got %d, expected %d", finalDeckSize, initialDeckSize-1)
 	}
@@ -402,12 +402,12 @@ func TestPlayKnightCardThroughDiceRollPhase(t *testing.T) {
 	game.Start([]string{"Alice", "Bob", "Charlie"})
 
 	// Give Alice a knight card
-	player := &game.players[0]
-	player.hiddenDevCards = append(player.hiddenDevCards, DevCardKnight)
+	player := &game.Players[0]
+	player.HiddenDevCards = append(player.HiddenDevCards, DevCardKnight)
 
 	// Record initial state
-	initialHiddenCards := len(player.hiddenDevCards)
-	initialPlayedCards := len(player.playedDevCards)
+	initialHiddenCards := len(player.HiddenDevCards)
+	initialPlayedCards := len(player.PlayedDevCards)
 
 	// Create dice roll phase
 	diceRollPhase := PhaseDiceRoll(game)
@@ -425,8 +425,8 @@ func TestPlayKnightCardThroughDiceRollPhase(t *testing.T) {
 	}
 
 	// Check that the knight card was actually played (moved from hidden to played)
-	finalHiddenCards := game.players[0].TotalDevCards() - len(game.players[0].playedDevCards) // hidden cards
-	finalPlayedCards := len(game.players[0].playedDevCards)
+	finalHiddenCards := game.Players[0].TotalDevCards() - len(game.Players[0].PlayedDevCards) // hidden cards
+	finalPlayedCards := len(game.Players[0].PlayedDevCards)
 
 	if finalHiddenCards != initialHiddenCards-1 {
 		t.Errorf("Player should have lost 1 hidden development card, got %d, expected %d", finalHiddenCards, initialHiddenCards-1)

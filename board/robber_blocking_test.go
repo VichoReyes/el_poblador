@@ -9,11 +9,11 @@ func TestRobberBlocksResourceGeneration(t *testing.T) {
 	
 	// Set up a specific tile with wheat and dice number 6
 	wheatTileCoord := TileCoord{X: 2, Y: 3}
-	b.tiles[wheatTileCoord] = Tile{Terrain: TerrainWheat, DiceNumber: 6}
-	
+	b.Tiles[wheatTileCoord] = Tile{Terrain: TerrainWheat, DiceNumber: 6}
+
 	// Place a settlement at a cross adjacent to the wheat tile
 	cross := CrossCoord{X: 2, Y: 4}
-	b.settlements[cross] = 0 // player 0
+	b.Settlements[cross] = 0 // player 0
 	
 	// Generate resources without robber
 	resourcesBefore := b.GenerateResources(6)
@@ -42,14 +42,14 @@ func TestRobberDoesNotBlockOtherTiles(t *testing.T) {
 	
 	// Set up two specific tiles with different dice numbers
 	wheatTileCoord := TileCoord{X: 2, Y: 3}
-	b.tiles[wheatTileCoord] = Tile{Terrain: TerrainWheat, DiceNumber: 6}
-	
+	b.Tiles[wheatTileCoord] = Tile{Terrain: TerrainWheat, DiceNumber: 6}
+
 	oreTileCoord := TileCoord{X: 1, Y: 4}
-	b.tiles[oreTileCoord] = Tile{Terrain: TerrainOre, DiceNumber: 8}
-	
+	b.Tiles[oreTileCoord] = Tile{Terrain: TerrainOre, DiceNumber: 8}
+
 	// Place a settlement at a cross adjacent to both tiles
 	cross := CrossCoord{X: 2, Y: 4}
-	b.settlements[cross] = 0 // player 0
+	b.Settlements[cross] = 0 // player 0
 	
 	// Place robber on wheat tile
 	b.PlaceRobber(wheatTileCoord)

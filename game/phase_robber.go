@@ -17,7 +17,7 @@ type phasePlaceRobber struct {
 func PhasePlaceRobber(game *Game, continuation Phase) Phase {
 	return &phasePlaceRobber{
 		game:         game,
-		tileCoord:    game.board.ValidTileCoord(),
+		tileCoord:    game.Board.ValidTileCoord(),
 		continuation: continuation,
 	}
 }
@@ -43,19 +43,19 @@ func (p *phasePlaceRobber) HelpText() string {
 
 func (p *phasePlaceRobber) Confirm() Phase {
 	// Check if trying to place robber on the same tile it's already on
-	if p.tileCoord == p.game.board.GetRobber() {
+	if p.tileCoord == p.game.Board.GetRobber() {
 		p.invalid = "Robber cannot be moved to the same tile it's already on"
 		return p
 	}
-	
-	playerIds := p.game.board.PlaceRobber(p.tileCoord)
 
-	currentPlayer := &p.game.players[p.game.playerTurn]
+	playerIds := p.game.Board.PlaceRobber(p.tileCoord)
+
+	currentPlayer := &p.game.Players[p.game.PlayerTurn]
 	p.game.LogAction(fmt.Sprintf("%s moved the robber", currentPlayer.RenderName()))
 
 	var stealablePlayers []Player
 	for _, playerId := range playerIds {
-		p := p.game.players[playerId]
+		p := p.game.Players[playerId]
 		if p.TotalResources() > 0 {
 			stealablePlayers = append(stealablePlayers, p)
 		}
@@ -98,17 +98,17 @@ func (p *phaseStealCard) HelpText() string {
 func (p *phaseStealCard) Confirm() Phase {
 	player := p.stealablePlayers[p.selected]
 	var resourcePool []board.ResourceType
-	for resType, count := range player.resources {
+	for resType, count := range player.Resources {
 		for i := 0; i < count; i++ {
 			resourcePool = append(resourcePool, resType)
 		}
 	}
 	if len(resourcePool) > 0 {
 		selectedResource := resourcePool[rand.IntN(len(resourcePool))]
-		player.resources[selectedResource] -= 1
-		p.game.players[p.game.playerTurn].AddResource(selectedResource)
+		player.Resources[selectedResource] -= 1
+		p.game.Players[p.game.PlayerTurn].AddResource(selectedResource)
 
-		currentPlayer := &p.game.players[p.game.playerTurn]
+		currentPlayer := &p.game.Players[p.game.PlayerTurn]
 		p.game.LogAction(fmt.Sprintf("%s stole a card from %s", currentPlayer.RenderName(), player.RenderName()))
 	}
 	return p.continuation

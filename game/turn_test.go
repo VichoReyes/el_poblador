@@ -10,7 +10,7 @@ func TestBuildingPhase(t *testing.T) {
 	game.Start([]string{"p1", "p2", "p3"})
 
 	// Complete initial settlements
-	for i := 0; i < 2*len(game.players); i++ {
+	for i := 0; i < 2*len(game.Players); i++ {
 		game.MoveCursorToPlaceSettlement()
 		game.ConfirmAction(nil) // place settlement
 		game.ConfirmAction(nil) // place road
@@ -64,14 +64,14 @@ func TestRoadPurchase(t *testing.T) {
 	game.Start([]string{"p1", "p2", "p3"})
 
 	// Directly set up a settlement for the current player to connect roads to
-	playerId := game.playerTurn
+	playerId := game.PlayerTurn
 	settlementCoord, _ := board.NewCrossCoord(2, 3)
-	game.board.SetSettlement(settlementCoord, playerId)
+	game.Board.SetSettlement(settlementCoord, playerId)
 
 	game.phase = PhaseIdle(game)
 
 	// Give the player enough resources to build a road
-	player := &game.players[game.playerTurn]
+	player := &game.Players[game.PlayerTurn]
 	player.AddResource(board.ResourceWood)
 	player.AddResource(board.ResourceBrick)
 
@@ -109,7 +109,7 @@ func TestRoadPurchase(t *testing.T) {
 	found := false
 	for _, neighbor := range neighbors {
 		pathCoord := board.NewPathCoord(settlementCoord, neighbor)
-		if game.board.CanPlaceRoad(pathCoord, playerId) {
+		if game.Board.CanPlaceRoad(pathCoord, playerId) {
 			roadEndPhase.cursorCross = neighbor
 			found = true
 			break
@@ -130,7 +130,7 @@ func TestRoadPurchase(t *testing.T) {
 	if player.CanBuildRoad() {
 		t.Fatal("Resources were not consumed - player can still build roads")
 	}
-	if game.board.CanPlaceRoad(pathCoord, playerId) {
+	if game.Board.CanPlaceRoad(pathCoord, playerId) {
 		t.Fatal("Road was not built - path is still available")
 	}
 

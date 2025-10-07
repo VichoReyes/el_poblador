@@ -105,3 +105,4 @@ When working on specific packages, always check for markdown files in the packag
 - Coordinate systems and algorithms
 - Rendering approaches
 - Testing strategies
+- avoid committing compiled binaries. before making a commit, check whether you need to add any to gitignore

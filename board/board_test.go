@@ -10,15 +10,15 @@ func TestResourceGenerationWithSettlementsAndCities(t *testing.T) {
 
 	// Set up a specific tile with wheat and dice number 6
 	wheatTileCoord := TileCoord{X: 2, Y: 3}
-	board.tiles[wheatTileCoord] = Tile{Terrain: TerrainWheat, DiceNumber: 6}
+	board.Tiles[wheatTileCoord] = Tile{Terrain: TerrainWheat, DiceNumber: 6}
 
 	// Set up a specific tile with ore and dice number 6
 	oreTileCoord := TileCoord{X: 1, Y: 4}
-	board.tiles[oreTileCoord] = Tile{Terrain: TerrainOre, DiceNumber: 6}
+	board.Tiles[oreTileCoord] = Tile{Terrain: TerrainOre, DiceNumber: 6}
 
 	// Place a settlement at a crossing adjacent to both tiles
 	settlementCoord := CrossCoord{X: 2, Y: 4}
-	board.settlements[settlementCoord] = 0 // player 0
+	board.Settlements[settlementCoord] = 0 // player 0
 
 	// Test resource generation for dice roll 6
 	resources := board.GenerateResources(6)
@@ -47,7 +47,7 @@ func TestResourceGenerationWithSettlementsAndCities(t *testing.T) {
 	}
 
 	// Now upgrade the settlement to a city
-	board.cityUpgrades[settlementCoord] = 0
+	board.CityUpgrades[settlementCoord] = 0
 
 	// Test resource generation again for dice roll 6
 	resources = board.GenerateResources(6)
@@ -81,7 +81,7 @@ func TestCityUpgradeFunctionality(t *testing.T) {
 
 	// Place a settlement
 	settlementCoord := CrossCoord{X: 2, Y: 4}
-	board.settlements[settlementCoord] = 0 // player 0
+	board.Settlements[settlementCoord] = 0 // player 0
 
 	// Test that we can upgrade the settlement to a city
 	if !board.CanUpgradeToCity(settlementCoord, 0) {
@@ -120,12 +120,12 @@ func TestRoadPlacementValidation(t *testing.T) {
 
 	// Place a settlement
 	settlementCoord := CrossCoord{X: 2, Y: 4}
-	board.settlements[settlementCoord] = 0 // player 0
+	board.Settlements[settlementCoord] = 0 // player 0
 
 	// Place a road connected to the settlement
 	neighborCoord := CrossCoord{X: 2, Y: 3}
 	roadCoord := NewPathCoord(settlementCoord, neighborCoord)
-	board.roads[roadCoord] = 0
+	board.Roads[roadCoord] = 0
 
 	// Test that we can place a road connected to our existing road
 	nextNeighborCoord := CrossCoord{X: 2, Y: 2}
@@ -168,17 +168,17 @@ func TestSettlementPlacementValidation(t *testing.T) {
 
 	// Place a settlement
 	settlementCoord := CrossCoord{X: 2, Y: 4}
-	board.settlements[settlementCoord] = 0 // player 0
+	board.Settlements[settlementCoord] = 0 // player 0
 
 	// Place a road connected to the settlement
 	neighborCoord := CrossCoord{X: 2, Y: 3}
 	roadCoord := NewPathCoord(settlementCoord, neighborCoord)
-	board.roads[roadCoord] = 0
+	board.Roads[roadCoord] = 0
 
 	// Place a road to the location where we want to place the settlement
 	roadEndCoord := CrossCoord{X: 2, Y: 2}
 	roadToSettlement := NewPathCoord(neighborCoord, roadEndCoord)
-	board.roads[roadToSettlement] = 0
+	board.Roads[roadToSettlement] = 0
 
 	// Test that we can place a settlement connected to our road
 	if !board.CanPlaceSettlementForPlayer(roadEndCoord, 0) {
@@ -213,7 +213,7 @@ func TestRoadConnectionDetection(t *testing.T) {
 
 	// Place a settlement
 	settlementCoord := CrossCoord{X: 2, Y: 4}
-	board.settlements[settlementCoord] = 0 // player 0
+	board.Settlements[settlementCoord] = 0 // player 0
 
 	// Test that settlement has no roads connected initially
 	if board.HasRoadConnected(settlementCoord, 0) {
@@ -223,7 +223,7 @@ func TestRoadConnectionDetection(t *testing.T) {
 	// Place a road connected to the settlement
 	neighborCoord := CrossCoord{X: 2, Y: 3}
 	roadCoord := NewPathCoord(settlementCoord, neighborCoord)
-	board.roads[roadCoord] = 0
+	board.Roads[roadCoord] = 0
 
 	// Test that settlement now has a road connected
 	if !board.HasRoadConnected(settlementCoord, 0) {
@@ -252,7 +252,7 @@ func TestSettlementOwnershipDetection(t *testing.T) {
 
 	// Place a settlement
 	settlementCoord := CrossCoord{X: 2, Y: 4}
-	board.settlements[settlementCoord] = 0 // player 0
+	board.Settlements[settlementCoord] = 0 // player 0
 
 	// Test that player 0 owns the settlement
 	if !board.HasSettlementAt(settlementCoord, 0) {

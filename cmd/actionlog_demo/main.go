@@ -16,7 +16,7 @@ func main() {
 	// Simulate some actions to generate log entries
 
 	// 1. Give Alice resources and buy a development card
-	alice := &g.Players()[0]
+	alice := &g.Players[0]
 	alice.AddResource(board.ResourceWheat)
 	alice.AddResource(board.ResourceOre)
 	alice.AddResource(board.ResourceSheep)
@@ -25,10 +25,10 @@ func main() {
 	g.LogAction(fmt.Sprintf("%s bought a development card", alice.RenderName()))
 
 	// 2. Log some building actions
-	bob := &g.Players()[1]
+	bob := &g.Players[1]
 	g.LogAction(fmt.Sprintf("%s built a road", bob.RenderName()))
 
-	charlie := &g.Players()[2]
+	charlie := &g.Players[2]
 	g.LogAction(fmt.Sprintf("%s built a settlement", charlie.RenderName()))
 
 	// 3. Log some more complex actions
@@ -45,7 +45,7 @@ func main() {
 	// Display the action log
 	fmt.Println("\nAction Log:")
 	fmt.Println("----------")
-	for i, action := range g.ActionLog() {
+	for i, action := range g.ActionLog {
 		fmt.Printf("%2d. %s\n", i+1, action)
 	}
 }
