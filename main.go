@@ -88,14 +88,54 @@ func (m model) View() string {
 	return view
 }
 
-func main() {
-	game := game.Game{}
-	if len(os.Args) < 4 || len(os.Args) > 5 {
-		fmt.Println("Please provide 3-4 player names as arguments")
-		os.Exit(1)
+func loadGameState(filename string) (*game.Game, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("read failed: %w", err)
 	}
-	game.Start(os.Args[1:])
-	p := tea.NewProgram(model{game: &game}, tea.WithAltScreen())
+
+	var g game.Game
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	if err := decoder.Decode(&g); err != nil {
+		return nil, fmt.Errorf("decoding failed: %w", err)
+	}
+
+	// Restore phase to PhaseDiceRoll
+	g.SetPhase(game.PhaseDiceRoll(&g))
+
+	return &g, nil
+}
+
+func main() {
+	var g *game.Game
+
+	// Check if loading from save file
+	if len(os.Args) >= 2 && os.Args[1] == "load" {
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: el_poblador load <filename.gob>")
+			os.Exit(1)
+		}
+
+		loadedGame, err := loadGameState(os.Args[2])
+		if err != nil {
+			fmt.Printf("Failed to load game: %v\n", err)
+			os.Exit(1)
+		}
+		g = loadedGame
+		fmt.Println("Game loaded successfully!")
+	} else {
+		// Start new game
+		if len(os.Args) < 4 || len(os.Args) > 5 {
+			fmt.Println("Usage:")
+			fmt.Println("  New game: el_poblador <player1> <player2> <player3> [player4]")
+			fmt.Println("  Load game: el_poblador load <filename.gob>")
+			os.Exit(1)
+		}
+		g = &game.Game{}
+		g.Start(os.Args[1:])
+	}
+
+	p := tea.NewProgram(model{game: g}, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

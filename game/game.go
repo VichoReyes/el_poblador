@@ -244,3 +244,7 @@ func (g *Game) CheckGameEnd() *Player {
 func (g *Game) ShouldQuit() bool {
 	return g.shouldQuit
 }
+
+func (g *Game) SetPhase(phase Phase) {
+	g.phase = phase
+}
