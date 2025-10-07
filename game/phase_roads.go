@@ -31,7 +31,7 @@ func PhaseRoadBuilding(game *Game) Phase {
 }
 
 func newPhaseRoadStart(game *Game, previousPhase Phase, isFree bool, continuation Phase, helpPrefix string) Phase {
-	cursorCross := game.board.ValidCrossCoord()
+	cursorCross := game.Board.ValidCrossCoord()
 	return &phaseRoadStart{
 		game:          game,
 		cursorCross:   cursorCross,
@@ -44,10 +44,10 @@ func newPhaseRoadStart(game *Game, previousPhase Phase, isFree bool, continuatio
 
 func (p *phaseRoadStart) Confirm() Phase {
 	// Check if player has a road or settlement connected to this crossing
-	playerId := p.game.playerTurn
-	if !p.game.board.HasRoadConnected(p.cursorCross, playerId) {
+	playerId := p.game.PlayerTurn
+	if !p.game.Board.HasRoadConnected(p.cursorCross, playerId) {
 		// Check if player has a settlement at this crossing
-		if !p.game.board.HasSettlementAt(p.cursorCross, playerId) {
+		if !p.game.Board.HasSettlementAt(p.cursorCross, playerId) {
 			p.invalid = "You must have a road or settlement connected to this crossing"
 			return p // Invalid selection, stay in same phase
 		}
@@ -125,11 +125,11 @@ func newPhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phas
 }
 
 func (p *phaseRoadEnd) Confirm() Phase {
-	player := &p.game.players[p.game.playerTurn]
-	playerId := p.game.playerTurn
+	player := &p.game.Players[p.game.PlayerTurn]
+	playerId := p.game.PlayerTurn
 	pathCoord := board.NewPathCoord(p.startCross, p.cursorCross)
 
-	if !p.game.board.CanPlaceRoad(pathCoord, playerId) {
+	if !p.game.Board.CanPlaceRoad(pathCoord, playerId) {
 		p.invalid = "Can't build road here"
 		return p
 	}
@@ -141,7 +141,7 @@ func (p *phaseRoadEnd) Confirm() Phase {
 		}
 	}
 
-	p.game.board.SetRoad(pathCoord, playerId)
+	p.game.Board.SetRoad(pathCoord, playerId)
 
 	if p.isFree {
 		p.game.LogAction(fmt.Sprintf("%s built a free road", player.RenderName()))

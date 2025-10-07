@@ -4,26 +4,26 @@ import "slices"
 
 // Board represents the game board
 type Board struct {
-	tiles map[TileCoord]Tile
-	// roads and settlements are indexed by player id
-	roads        map[PathCoord]int
-	settlements  map[CrossCoord]int
-	cityUpgrades map[CrossCoord]int // tracks which settlements have been upgraded to cities
-	playerColors map[int]int        // player id to color code for rendering
-	robber       TileCoord
+	Tiles map[TileCoord]Tile
+	// Roads and Settlements are indexed by player id
+	Roads        map[PathCoord]int
+	Settlements  map[CrossCoord]int
+	CityUpgrades map[CrossCoord]int // tracks which settlements have been upgraded to cities
+	PlayerColors map[int]int        // player id to color code for rendering
+	Robber       TileCoord
 }
 
 // GetRobber returns the current robber position
 func (b *Board) GetRobber() TileCoord {
-	return b.robber
+	return b.Robber
 }
 
 // SetRobber sets the robber to the given tile coordinate
 // also returns the player ids of the players that can be stolen from
 func (b *Board) PlaceRobber(coord TileCoord) []int {
-	b.robber = coord
+	b.Robber = coord
 	playerIds := make([]int, 0)
-	for settlement, playerId := range b.settlements {
+	for settlement, playerId := range b.Settlements {
 		if slices.Contains(settlement.adjacentTileCoords(), coord) {
 			playerIds = append(playerIds, playerId)
 		}
@@ -46,11 +46,11 @@ func (b *Board) ValidTileCoord() TileCoord {
 }
 
 func (b *Board) CanPlaceSettlement(coord CrossCoord) bool {
-	if _, ok := b.settlements[coord]; ok {
+	if _, ok := b.Settlements[coord]; ok {
 		return false
 	}
 	for _, neighbor := range coord.Neighbors() {
-		if _, ok := b.settlements[neighbor]; ok {
+		if _, ok := b.Settlements[neighbor]; ok {
 			return false
 		}
 	}
@@ -61,7 +61,7 @@ func (b *Board) AdjacentTiles(coord CrossCoord) []Tile {
 	tileCoords := coord.adjacentTileCoords()
 	tiles := make([]Tile, len(tileCoords))
 	for i, tileCoord := range tileCoords {
-		tiles[i] = b.tiles[tileCoord]
+		tiles[i] = b.Tiles[tileCoord]
 	}
 	return tiles
 }
@@ -70,7 +70,7 @@ func (b *Board) SetSettlement(coord CrossCoord, playerId int) bool {
 	if !b.CanPlaceSettlement(coord) {
 		return false
 	}
-	b.settlements[coord] = playerId
+	b.Settlements[coord] = playerId
 	return true
 }
 
@@ -80,14 +80,14 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 	resources := make(map[int][]ResourceType)
 
 	// First, generate resources for settlements (1 resource each)
-	for crossCoord, playerId := range b.settlements {
+	for crossCoord, playerId := range b.Settlements {
 		tileCoords := crossCoord.adjacentTileCoords()
 		for _, tileCoord := range tileCoords {
 			// Skip resource generation if robber is on this tile
-			if tileCoord == b.robber {
+			if tileCoord == b.Robber {
 				continue
 			}
-			tile := b.tiles[tileCoord]
+			tile := b.Tiles[tileCoord]
 			if tile.DiceNumber == sum {
 				resource, ok := TileResource(tile)
 				if ok {
@@ -98,14 +98,14 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 	}
 
 	// Then, generate additional resources for cities (1 more resource each)
-	for crossCoord, playerId := range b.cityUpgrades {
+	for crossCoord, playerId := range b.CityUpgrades {
 		tileCoords := crossCoord.adjacentTileCoords()
 		for _, tileCoord := range tileCoords {
 			// Skip resource generation if robber is on this tile
-			if tileCoord == b.robber {
+			if tileCoord == b.Robber {
 				continue
 			}
-			tile := b.tiles[tileCoord]
+			tile := b.Tiles[tileCoord]
 			if tile.DiceNumber == sum {
 				resource, ok := TileResource(tile)
 				if ok {
@@ -119,7 +119,7 @@ func (b *Board) GenerateResources(sum int) map[int][]ResourceType {
 }
 
 func (b *Board) SetRoad(coord PathCoord, playerId int) {
-	b.roads[coord] = playerId
+	b.Roads[coord] = playerId
 }
 
 // HasRoadConnected checks if a player has a road connected to a specific crossing
@@ -127,7 +127,7 @@ func (b *Board) HasRoadConnected(cross CrossCoord, playerId int) bool {
 	neighbors := cross.Neighbors()
 	for _, neighbor := range neighbors {
 		pathCoord := NewPathCoord(cross, neighbor)
-		if roadPlayerId, exists := b.roads[pathCoord]; exists && roadPlayerId == playerId {
+		if roadPlayerId, exists := b.Roads[pathCoord]; exists && roadPlayerId == playerId {
 			return true
 		}
 	}
@@ -137,15 +137,15 @@ func (b *Board) HasRoadConnected(cross CrossCoord, playerId int) bool {
 // CanPlaceRoad checks if a road can be placed at the given path coordinate
 func (b *Board) CanPlaceRoad(coord PathCoord, playerId int) bool {
 	// Check if road already exists
-	if _, ok := b.roads[coord]; ok {
+	if _, ok := b.Roads[coord]; ok {
 		return false
 	}
 
 	// Check if player has a settlement/city at one of the endpoints
-	if settlementPlayerId, ok := b.settlements[coord.From]; ok && settlementPlayerId == playerId {
+	if settlementPlayerId, ok := b.Settlements[coord.From]; ok && settlementPlayerId == playerId {
 		return true
 	}
-	if settlementPlayerId, ok := b.settlements[coord.To]; ok && settlementPlayerId == playerId {
+	if settlementPlayerId, ok := b.Settlements[coord.To]; ok && settlementPlayerId == playerId {
 		return true
 	}
 
@@ -162,7 +162,7 @@ func (b *Board) CanPlaceRoad(coord PathCoord, playerId int) bool {
 
 // HasSettlementAt checks if a player has a settlement at a specific crossing
 func (b *Board) HasSettlementAt(cross CrossCoord, playerId int) bool {
-	if settlementPlayerId, ok := b.settlements[cross]; ok {
+	if settlementPlayerId, ok := b.Settlements[cross]; ok {
 		return settlementPlayerId == playerId
 	}
 	return false
@@ -182,12 +182,12 @@ func (b *Board) CanPlaceSettlementForPlayer(cross CrossCoord, playerId int) bool
 // CanUpgradeToCity checks if a settlement can be upgraded to a city
 func (b *Board) CanUpgradeToCity(coord CrossCoord, playerId int) bool {
 	// Check if there's a settlement owned by this player
-	if settlementPlayerId, ok := b.settlements[coord]; !ok || settlementPlayerId != playerId {
+	if settlementPlayerId, ok := b.Settlements[coord]; !ok || settlementPlayerId != playerId {
 		return false
 	}
 
 	// Check if it's already been upgraded to a city
-	if _, ok := b.cityUpgrades[coord]; ok {
+	if _, ok := b.CityUpgrades[coord]; ok {
 		return false
 	}
 
@@ -199,14 +199,14 @@ func (b *Board) UpgradeToCity(coord CrossCoord, playerId int) bool {
 	if !b.CanUpgradeToCity(coord, playerId) {
 		return false
 	}
-	b.cityUpgrades[coord] = playerId
+	b.CityUpgrades[coord] = playerId
 	return true
 }
 
 // CountSettlements counts the number of settlements owned by a player
 func (b *Board) CountSettlements(playerId int) int {
 	count := 0
-	for _, owner := range b.settlements {
+	for _, owner := range b.Settlements {
 		if owner == playerId {
 			count++
 		}
@@ -217,7 +217,7 @@ func (b *Board) CountSettlements(playerId int) int {
 // CountCities counts the number of cities owned by a player
 func (b *Board) CountCities(playerId int) int {
 	count := 0
-	for _, owner := range b.cityUpgrades {
+	for _, owner := range b.CityUpgrades {
 		if owner == playerId {
 			count++
 		}

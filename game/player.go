@@ -9,28 +9,28 @@ import (
 
 type Player struct {
 	Name           string
-	color          int // 8 bit color code
-	resources      map[board.ResourceType]int
-	hiddenDevCards []DevCard
-	playedDevCards []DevCard
+	Color          int // 8 bit color code
+	Resources      map[board.ResourceType]int
+	HiddenDevCards []DevCard
+	PlayedDevCards []DevCard
 }
 
 func (p *Player) TotalResources() int {
 	total := 0
-	for _, amount := range p.resources {
+	for _, amount := range p.Resources {
 		total += amount
 	}
 	return total
 }
 
 func (p *Player) AddResource(t board.ResourceType) {
-	p.resources[t] += 1
+	p.Resources[t] += 1
 }
 
 // HasResources checks if the player has the required resources
 func (p *Player) HasResources(required map[board.ResourceType]int) bool {
 	for resource, amount := range required {
-		if p.resources[resource] < amount {
+		if p.Resources[resource] < amount {
 			return false
 		}
 	}
@@ -43,7 +43,7 @@ func (p *Player) ConsumeResources(required map[board.ResourceType]int) bool {
 		return false
 	}
 	for resource, amount := range required {
-		p.resources[resource] -= amount
+		p.Resources[resource] -= amount
 	}
 	return true
 }
@@ -99,12 +99,12 @@ func (p *Player) BuyDevelopmentCard() bool {
 
 // PlayDevCard moves a card from hidden to played deck
 func (p *Player) PlayDevCard(card DevCard) bool {
-	for i, hiddenCard := range p.hiddenDevCards {
+	for i, hiddenCard := range p.HiddenDevCards {
 		if hiddenCard == card {
 			// Remove from hidden deck
-			p.hiddenDevCards = append(p.hiddenDevCards[:i], p.hiddenDevCards[i+1:]...)
+			p.HiddenDevCards = append(p.HiddenDevCards[:i], p.HiddenDevCards[i+1:]...)
 			// Add to played deck
-			p.playedDevCards = append(p.playedDevCards, card)
+			p.PlayedDevCards = append(p.PlayedDevCards, card)
 			return true
 		}
 	}
@@ -113,7 +113,7 @@ func (p *Player) PlayDevCard(card DevCard) bool {
 
 // TotalDevCards returns the total number of development cards the player has
 func (p *Player) TotalDevCards() int {
-	return len(p.hiddenDevCards) + len(p.playedDevCards)
+	return len(p.HiddenDevCards) + len(p.PlayedDevCards)
 }
 
 // BuildRoad consumes resources and builds a road
@@ -148,34 +148,34 @@ func (p *Player) BuildCity() bool {
 // VictoryPoints calculates the player's current victory points
 func (p *Player) VictoryPoints(game *Game) int {
 	points := 0
-	
+
 	// Count victory point development cards (both hidden and played)
-	for _, card := range p.hiddenDevCards {
+	for _, card := range p.HiddenDevCards {
 		if card == DevCardVictoryPoint {
 			points++
 		}
 	}
-	for _, card := range p.playedDevCards {
+	for _, card := range p.PlayedDevCards {
 		if card == DevCardVictoryPoint {
 			points++
 		}
 	}
-	
+
 	// Count settlements and cities on the board
 	playerID := game.getPlayerID(p)
 	if playerID != -1 {
 		// Settlements are worth 1 point each
-		points += game.board.CountSettlements(playerID)
+		points += game.Board.CountSettlements(playerID)
 		// Cities replace settlements, so they're worth 2 points total (not additional 2)
 		// But in this codebase cities are stored separately from settlements, so count cities as 1 additional point
-		points += game.board.CountCities(playerID)
+		points += game.Board.CountCities(playerID)
 	}
-	
+
 	return points
 }
 
 func (p *Player) Render(s string) string {
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.color)))
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.Color)))
 	return style.Render(s)
 }
 

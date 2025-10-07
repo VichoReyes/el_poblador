@@ -37,7 +37,7 @@ func TestPlaceRobberReturnsAdjacentPlayerIds_Single(t *testing.T) {
 	}
 
 	// Place one adjacent settlement for player 0 (bypass distance rule for setup)
-	b.settlements[adj[0]] = 0
+	b.Settlements[adj[0]] = 0
 
 	// Place a far settlement for player 1 that is NOT adjacent to the tile
 	farCross, _ := NewCrossCoord(4, 6)
@@ -68,8 +68,8 @@ func TestPlaceRobberReturnsAdjacentPlayerIds_Multiple(t *testing.T) {
 	}
 
 	// Place two adjacent settlements for different players (bypass distance rule for setup)
-	b.settlements[adj[0]] = 0
-	b.settlements[adj[1]] = 1
+	b.Settlements[adj[0]] = 0
+	b.Settlements[adj[1]] = 1
 
 	ids := b.PlaceRobber(tile)
 	// Order is not guaranteed; verify set equality

@@ -13,9 +13,9 @@ func TestInitialSettlementsRender(t *testing.T) {
 	expectedTurns := []int{0, 1, 2, 2, 1, 0}
 
 	// 2 rounds of placing settlements and roads
-	for i := 0; i < 2*len(game.players); i++ {
+	for i := 0; i < 2*len(game.Players); i++ {
 		help := game.helpText(100)
-		expectedTurn := game.players[expectedTurns[i]].Name
+		expectedTurn := game.Players[expectedTurns[i]].Name
 		if !strings.Contains(help, expectedTurn) {
 			t.Fatalf("Help text '%s' does not contain expected turn '%s'. Iteration %d", help, expectedTurn, i)
 		}
@@ -35,10 +35,10 @@ func TestInitialSettlementsRender(t *testing.T) {
 		t.Fatal("Phase should be dice roll after initial flow is complete")
 	}
 	game.ConfirmAction(nil) // roll dice
-	if game.lastDice[0] == 0 {
+	if game.LastDice[0] == 0 {
 		t.Fatal("Dice should be rolled")
 	}
-	diceText := fmt.Sprintf("Dice: %d (%d + %d)", game.lastDice[0]+game.lastDice[1], game.lastDice[0], game.lastDice[1])
+	diceText := fmt.Sprintf("Dice: %d (%d + %d)", game.LastDice[0]+game.LastDice[1], game.LastDice[0], game.LastDice[1])
 	fullRender := game.Print(60, 50, nil)
 	if !strings.Contains(fullRender, diceText) {
 		t.Fatalf("Game render does not contain expected dice text '%s'", diceText)

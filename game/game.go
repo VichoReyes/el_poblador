@@ -27,28 +27,20 @@ type PhaseCancelable interface {
 }
 
 func (g *Game) LogAction(action string) {
-	g.actionLog = append([]string{action}, g.actionLog...)
-	if len(g.actionLog) > 15 {
-		g.actionLog = g.actionLog[:15]
+	g.ActionLog = append([]string{action}, g.ActionLog...)
+	if len(g.ActionLog) > 15 {
+		g.ActionLog = g.ActionLog[:15]
 	}
 }
 
-func (g *Game) ActionLog() []string {
-	return g.actionLog
-}
-
-func (g *Game) Players() []Player {
-	return g.players
-}
-
 type Game struct {
-	board       *board.Board
-	players     []Player
-	lastDice    [2]int
-	phase       Phase
-	playerTurn  int
-	devCardDeck []DevCard
-	actionLog   []string
+	Board       *board.Board
+	Players     []Player
+	LastDice    [2]int
+	phase       Phase // not exported - not needed for network serialization
+	PlayerTurn  int
+	DevCardDeck []DevCard
+	ActionLog   []string
 }
 
 // requestPlayer is the player that the user is playing as.
@@ -59,19 +51,19 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 
 	help := g.helpText(width)
 
-	boardLines := g.board.Print(g.phase.BoardCursor())
+	boardLines := g.Board.Print(g.phase.BoardCursor())
 	boardContent := strings.Join(boardLines, "\n")
 
 	var dice string
-	if g.lastDice[0] != 0 {
-		dice = fmt.Sprintf("Dice: %d (%d + %d)", g.lastDice[0]+g.lastDice[1], g.lastDice[0], g.lastDice[1])
+	if g.LastDice[0] != 0 {
+		dice = fmt.Sprintf("Dice: %d (%d + %d)", g.LastDice[0]+g.LastDice[1], g.LastDice[0], g.LastDice[1])
 	} else {
 		dice = "Dice: not rolled yet"
 	}
 	dice = margin.Render(dice)
 
 	var playerList []string
-	for i, player := range g.players {
+	for i, player := range g.Players {
 		var name string
 		if i == playerPerspective {
 			name = fmt.Sprintf("%s (you)", player.Render(player.Name))
@@ -83,10 +75,10 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 	}
 	otherPlayers := margin.Render(strings.Join(playerList, "\n"))
 
-	myPlayer := g.players[playerPerspective]
+	myPlayer := g.Players[playerPerspective]
 	myResources := []string{"Your resources:"}
 	for _, resource := range board.RESOURCE_TYPES {
-		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, myPlayer.resources[resource]))
+		myResources = append(myResources, fmt.Sprintf("%s: %d", resource, myPlayer.Resources[resource]))
 	}
 	myResources = append(myResources, "")
 	myResources = append(myResources, fmt.Sprintf("Dev Cards: %d", myPlayer.TotalDevCards()))
@@ -95,7 +87,7 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 
 	var phaseSidebar string
 	if p, ok := g.phase.(PhaseWithMenu); ok {
-		if playerPerspective == g.playerTurn {
+		if playerPerspective == g.PlayerTurn {
 			phaseSidebar = margin.Render(p.Menu())
 		}
 	}
@@ -106,7 +98,7 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 	// action log (left sidebar)
 	actionLogStyle := margin.Width(30).MaxHeight(20)
 
-	actionLogContent := strings.Join(g.actionLog, "\n")
+	actionLogContent := strings.Join(g.ActionLog, "\n")
 	actionLogRendered := actionLogStyle.Render(actionLogContent)
 
 	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebarWithMinWidth)
@@ -125,15 +117,15 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 }
 
 func (g *Game) playerPerspective(requestPlayer *int) int {
-	if requestPlayer != nil && *requestPlayer < len(g.players) {
+	if requestPlayer != nil && *requestPlayer < len(g.Players) {
 		return *requestPlayer
 	} else {
-		return g.playerTurn
+		return g.PlayerTurn
 	}
 }
 
 func (g *Game) helpText(width int) string {
-	player := &g.players[g.playerTurn]
+	player := &g.Players[g.PlayerTurn]
 	help := fmt.Sprintf("%s's turn. %s", player.Render(player.Name), g.phase.HelpText())
 	renderedHelp := lipgloss.PlaceHorizontal(width, lipgloss.Center, help)
 	return renderedHelp
@@ -144,35 +136,35 @@ func (g *Game) Start(playerNames []string) {
 		panic("Game must have 3-4 players")
 	}
 	colors := []int{20, 88, 165, 103} // blue, red, purple, white
-	g.players = make([]Player, len(playerNames))
+	g.Players = make([]Player, len(playerNames))
 	for i, name := range playerNames {
-		g.players[i] = Player{
+		g.Players[i] = Player{
 			Name:           name,
-			color:          colors[i],
-			resources:      make(map[board.ResourceType]int),
-			hiddenDevCards: make([]DevCard, 0),
-			playedDevCards: make([]DevCard, 0),
+			Color:          colors[i],
+			Resources:      make(map[board.ResourceType]int),
+			HiddenDevCards: make([]DevCard, 0),
+			PlayedDevCards: make([]DevCard, 0),
 		}
 	}
-	rand.Shuffle(len(g.players), func(i, j int) {
-		g.players[i], g.players[j] = g.players[j], g.players[i]
+	rand.Shuffle(len(g.Players), func(i, j int) {
+		g.Players[i], g.Players[j] = g.Players[j], g.Players[i]
 	})
 	// Create player color map for board rendering
 	playerColors := make(map[int]int)
-	for i, player := range g.players {
-		playerColors[i] = player.color
+	for i, player := range g.Players {
+		playerColors[i] = player.Color
 	}
-	g.board = board.NewLegalBoard(playerColors)
-	g.playerTurn = 0
+	g.Board = board.NewLegalBoard(playerColors)
+	g.PlayerTurn = 0
 	g.phase = PhaseInitialSettlements(g, true)
-	g.devCardDeck = shuffleDevCards()
-	g.actionLog = make([]string, 0, 15)
+	g.DevCardDeck = shuffleDevCards()
+	g.ActionLog = make([]string, 0, 15)
 }
 
 func (g *Game) MoveCursor(direction string, requestPlayer *int) {
 	playerPerspective := g.playerPerspective(requestPlayer)
 	// for now simply ignore moves from other players
-	if playerPerspective != g.playerTurn {
+	if playerPerspective != g.PlayerTurn {
 		return
 	}
 	g.phase.MoveCursor(direction)
@@ -184,7 +176,7 @@ func (g *Game) MoveCursorToPlaceSettlement() {
 		for x := 0; x <= 5; x++ {
 			for y := 0; y <= 10; y++ {
 				coord, valid := board.NewCrossCoord(x, y)
-				if valid && g.board.CanPlaceSettlement(coord) {
+				if valid && g.Board.CanPlaceSettlement(coord) {
 					return coord
 				}
 			}
@@ -199,7 +191,7 @@ func (g *Game) MoveCursorToPlaceSettlement() {
 func (g *Game) ConfirmAction(requestPlayer *int) {
 	playerPerspective := g.playerPerspective(requestPlayer)
 	// for now simply ignore actions from other players
-	if playerPerspective != g.playerTurn {
+	if playerPerspective != g.PlayerTurn {
 		return
 	}
 	g.phase = g.phase.Confirm()
@@ -208,7 +200,7 @@ func (g *Game) ConfirmAction(requestPlayer *int) {
 func (g *Game) CancelAction(requestPlayer *int) {
 	playerPerspective := g.playerPerspective(requestPlayer)
 	// for now simply ignore actions from other players
-	if playerPerspective != g.playerTurn {
+	if playerPerspective != g.PlayerTurn {
 		return
 	}
 	if p, ok := g.phase.(PhaseCancelable); ok {
@@ -218,19 +210,19 @@ func (g *Game) CancelAction(requestPlayer *int) {
 
 // DrawDevelopmentCard draws a card from the development card deck
 func (g *Game) DrawDevelopmentCard() *DevCard {
-	if len(g.devCardDeck) == 0 {
+	if len(g.DevCardDeck) == 0 {
 		return nil
 	}
 
-	card := g.devCardDeck[len(g.devCardDeck)-1]
-	g.devCardDeck = g.devCardDeck[:len(g.devCardDeck)-1]
+	card := g.DevCardDeck[len(g.DevCardDeck)-1]
+	g.DevCardDeck = g.DevCardDeck[:len(g.DevCardDeck)-1]
 	return &card
 }
 
 // getPlayerID returns the player ID for a given player, or -1 if not found
 func (g *Game) getPlayerID(player *Player) int {
-	for i := range g.players {
-		if &g.players[i] == player {
+	for i := range g.Players {
+		if &g.Players[i] == player {
 			return i
 		}
 	}
@@ -239,8 +231,8 @@ func (g *Game) getPlayerID(player *Player) int {
 
 // CheckGameEnd checks if any player has won and returns the winner, or nil if game continues
 func (g *Game) CheckGameEnd() *Player {
-	for i := range g.players {
-		player := &g.players[i]
+	for i := range g.Players {
+		player := &g.Players[i]
 		if player.VictoryPoints(g) >= 10 {
 			return player
 		}

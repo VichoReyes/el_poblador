@@ -36,14 +36,14 @@ func TestKnightPlayLeadsToRobberPlacementAndPotentialSteal(t *testing.T) {
 	g := &Game{}
 	g.Start([]string{"A", "B", "C"})
 
-	current := &g.players[g.playerTurn]
+	current := &g.Players[g.PlayerTurn]
 	// Ensure current player has a Knight
-	current.hiddenDevCards = append(current.hiddenDevCards, DevCardKnight)
+	current.HiddenDevCards = append(current.HiddenDevCards, DevCardKnight)
 
 	// Give next player some resources to be stealable
-	victimIdx := (g.playerTurn + 1) % len(g.players)
-	g.players[victimIdx].AddResource(board.ResourceWheat)
-	g.players[victimIdx].AddResource(board.ResourceBrick)
+	victimIdx := (g.PlayerTurn + 1) % len(g.Players)
+	g.Players[victimIdx].AddResource(board.ResourceWheat)
+	g.Players[victimIdx].AddResource(board.ResourceBrick)
 
 	// Also ensure victim has a settlement adjacent to a known tile we will pick
 	// Choose a valid tile and one adjacent cross for victim
@@ -60,8 +60,8 @@ func TestKnightPlayLeadsToRobberPlacementAndPotentialSteal(t *testing.T) {
 				continue
 			}
 			if isCrossAdjacentToTile(c, tile) {
-				if g.board.CanPlaceSettlement(c) {
-					g.board.SetSettlement(c, victimIdx)
+				if g.Board.CanPlaceSettlement(c) {
+					g.Board.SetSettlement(c, victimIdx)
 					found = true
 				}
 			}
@@ -96,18 +96,18 @@ func TestKnightPlayLeadsToRobberPlacementAndPotentialSteal(t *testing.T) {
 	// Select the victim if multiple players are available
 	// Move cursor until selected player matches victimIdx; cap iterations
 	for i := 0; i < len(steal.stealablePlayers)*2; i++ {
-		if steal.stealablePlayers[steal.selected].Name == g.players[victimIdx].Name {
+		if steal.stealablePlayers[steal.selected].Name == g.Players[victimIdx].Name {
 			break
 		}
 		g.MoveCursor("down", nil)
 	}
 
-	beforeVictim := g.players[victimIdx].TotalResources()
+	beforeVictim := g.Players[victimIdx].TotalResources()
 	beforeThief := current.TotalResources()
 
 	g.ConfirmAction(nil)
 
-	afterVictim := g.players[victimIdx].TotalResources()
+	afterVictim := g.Players[victimIdx].TotalResources()
 	afterThief := current.TotalResources()
 
 	if !(afterVictim == beforeVictim-1 && afterThief == beforeThief+1) {
@@ -164,7 +164,7 @@ func TestRobberCannotBePlacedOnSameTile(t *testing.T) {
 		t.Fatal("expected valid tile coordinate (2,3)")
 	}
 	
-	g.board.PlaceRobber(initialTile)
+	g.Board.PlaceRobber(initialTile)
 	
 	// Create a place robber phase and set cursor to the same tile
 	phase := PhasePlaceRobber(g, PhaseIdle(g)).(*phasePlaceRobber)
@@ -183,7 +183,7 @@ func TestRobberCannotBePlacedOnSameTile(t *testing.T) {
 	}
 	
 	// Verify robber didn't move
-	currentPos := g.board.GetRobber()
+	currentPos := g.Board.GetRobber()
 	if currentPos != initialTile {
 		t.Fatalf("robber should not have moved from %v, but got %v", initialTile, currentPos)
 	}

@@ -36,7 +36,7 @@ func (b *Board) Print(cursor interface{}) []string {
 func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cursor interface{}) {
 	// print crossing
 	midLine := coord.Y * 3
-	settlementOwner, hasSettlement := board.settlements[coord]
+	settlementOwner, hasSettlement := board.Settlements[coord]
 	hasCursor := false
 	if c, ok := cursor.(CrossCoord); ok && c == coord {
 		hasCursor = true
@@ -45,11 +45,11 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		style := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Blink(true)
 		lines[midLine].WriteString(style.Render(" ○ "))
 	} else if hasSettlement {
-		_, isCity := board.cityUpgrades[coord]
+		_, isCity := board.CityUpgrades[coord]
 		if isCity {
-			lines[midLine].WriteString(renderPlayerContent(board.playerColors, settlementOwner, "███"))
+			lines[midLine].WriteString(renderPlayerContent(board.PlayerColors, settlementOwner, "███"))
 		} else {
-			lines[midLine].WriteString(renderPlayerContent(board.playerColors, settlementOwner, "▲▲▲"))
+			lines[midLine].WriteString(renderPlayerContent(board.PlayerColors, settlementOwner, "▲▲▲"))
 		}
 	} else {
 		lines[midLine].WriteString("   ")
@@ -60,10 +60,10 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		up, valid := coord.Up()
 		if valid {
 			path := NewPathCoord(coord, up)
-			roadOwner, hasRoad := board.roads[path]
+			roadOwner, hasRoad := board.Roads[path]
 			if hasRoad {
-				lines[midLine-2].WriteString(renderPlayerContent(board.playerColors, roadOwner, "//"))
-				lines[midLine-1].WriteString(renderPlayerContent(board.playerColors, roadOwner, "//"))
+				lines[midLine-2].WriteString(renderPlayerContent(board.PlayerColors, roadOwner, "//"))
+				lines[midLine-1].WriteString(renderPlayerContent(board.PlayerColors, roadOwner, "//"))
 			} else {
 				lines[midLine-2].WriteString("  ")
 				lines[midLine-1].WriteString("  ")
@@ -72,10 +72,10 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		down, valid := coord.Down()
 		if valid {
 			path := NewPathCoord(coord, down)
-			roadOwner, hasRoad := board.roads[path]
+			roadOwner, hasRoad := board.Roads[path]
 			if hasRoad {
-				lines[midLine+1].WriteString(renderPlayerContent(board.playerColors, roadOwner, "\\\\"))
-				lines[midLine+2].WriteString(renderPlayerContent(board.playerColors, roadOwner, "\\\\"))
+				lines[midLine+1].WriteString(renderPlayerContent(board.PlayerColors, roadOwner, "\\\\"))
+				lines[midLine+2].WriteString(renderPlayerContent(board.PlayerColors, roadOwner, "\\\\"))
 			} else {
 				lines[midLine+1].WriteString("  ")
 				lines[midLine+2].WriteString("  ")
@@ -87,8 +87,8 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 			if c, ok := cursor.(TileCoord); ok && c == tileCoord {
 				hasCursor = true
 			}
-			tile := board.tiles[tileCoord]
-			hasRobber := board.robber == tileCoord
+			tile := board.Tiles[tileCoord]
+			hasRobber := board.Robber == tileCoord
 			renderedTile := tile.RenderTile(hasCursor, hasRobber)
 			lines[midLine-2].WriteString(renderedTile[0])
 			lines[midLine-1].WriteString(renderedTile[1])
@@ -102,9 +102,9 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 			return
 		}
 		pathCoord := NewPathCoord(coord, right)
-		roadOwner, hasRoad := board.roads[pathCoord]
+		roadOwner, hasRoad := board.Roads[pathCoord]
 		if hasRoad {
-			lines[midLine].WriteString(renderPlayerContent(board.playerColors, roadOwner, " ==== "))
+			lines[midLine].WriteString(renderPlayerContent(board.PlayerColors, roadOwner, " ==== "))
 		} else {
 			lines[midLine].WriteString("      ")
 		}

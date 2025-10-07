@@ -11,7 +11,7 @@ type phaseBuilding struct {
 }
 
 func PhaseBuilding(game *Game, previousPhase Phase) Phase {
-	player := &game.players[game.playerTurn]
+	player := &game.Players[game.PlayerTurn]
 
 	// Build the list of available building options
 	var options []string
@@ -53,7 +53,7 @@ func PhaseBuilding(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phaseBuilding) Confirm() Phase {
-	player := &p.game.players[p.game.playerTurn]
+	player := &p.game.Players[p.game.PlayerTurn]
 
 	switch p.selected {
 	case 0: // Road
@@ -75,7 +75,7 @@ func (p *phaseBuilding) Confirm() Phase {
 		if player.CanBuyDevelopmentCard() {
 			if player.BuyDevelopmentCard() {
 				if card := p.game.DrawDevelopmentCard(); card != nil {
-					player.hiddenDevCards = append(player.hiddenDevCards, *card)
+					player.HiddenDevCards = append(player.HiddenDevCards, *card)
 
 					p.game.LogAction(fmt.Sprintf("%s bought a development card", player.RenderName()))
 
@@ -112,7 +112,7 @@ type phaseSettlementPlacement struct {
 }
 
 func PhaseSettlementPlacement(game *Game, previousPhase Phase) Phase {
-	cursorCross := game.board.ValidCrossCoord()
+	cursorCross := game.Board.ValidCrossCoord()
 	return &phaseSettlementPlacement{
 		game:          game,
 		cursorCross:   cursorCross,
@@ -121,10 +121,10 @@ func PhaseSettlementPlacement(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phaseSettlementPlacement) Confirm() Phase {
-	player := &p.game.players[p.game.playerTurn]
-	playerId := p.game.playerTurn
+	player := &p.game.Players[p.game.PlayerTurn]
+	playerId := p.game.PlayerTurn
 
-	if !p.game.board.CanPlaceSettlementForPlayer(p.cursorCross, playerId) {
+	if !p.game.Board.CanPlaceSettlementForPlayer(p.cursorCross, playerId) {
 		p.invalid = "Can't build settlement here"
 		return p
 	}
@@ -134,7 +134,7 @@ func (p *phaseSettlementPlacement) Confirm() Phase {
 		return p
 	}
 
-	p.game.board.SetSettlement(p.cursorCross, playerId)
+	p.game.Board.SetSettlement(p.cursorCross, playerId)
 
 	p.game.LogAction(fmt.Sprintf("%s built a settlement", player.RenderName()))
 
@@ -177,7 +177,7 @@ type phaseCityPlacement struct {
 }
 
 func PhaseCityPlacement(game *Game, previousPhase Phase) Phase {
-	cursorCross := game.board.ValidCrossCoord()
+	cursorCross := game.Board.ValidCrossCoord()
 	return &phaseCityPlacement{
 		game:          game,
 		cursorCross:   cursorCross,
@@ -186,10 +186,10 @@ func PhaseCityPlacement(game *Game, previousPhase Phase) Phase {
 }
 
 func (p *phaseCityPlacement) Confirm() Phase {
-	player := &p.game.players[p.game.playerTurn]
-	playerId := p.game.playerTurn
+	player := &p.game.Players[p.game.PlayerTurn]
+	playerId := p.game.PlayerTurn
 
-	if !p.game.board.CanUpgradeToCity(p.cursorCross, playerId) {
+	if !p.game.Board.CanUpgradeToCity(p.cursorCross, playerId) {
 		p.invalid = "Can't upgrade to city here"
 		return p
 	}
@@ -199,7 +199,7 @@ func (p *phaseCityPlacement) Confirm() Phase {
 		return p
 	}
 
-	p.game.board.UpgradeToCity(p.cursorCross, playerId)
+	p.game.Board.UpgradeToCity(p.cursorCross, playerId)
 
 	p.game.LogAction(fmt.Sprintf("%s upgraded to a city", player.RenderName()))
 
