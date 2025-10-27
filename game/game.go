@@ -97,9 +97,19 @@ func (g *Game) Print(width, height int, requestPlayer *int, twoColumnCycle, oneC
 	sidebar := lipgloss.JoinVertical(lipgloss.Left, dice, otherPlayers, myResourcesStr, phaseSidebar)
 	sidebarWithMinWidth := lipgloss.NewStyle().Width(30).Render(sidebar)
 
-	// action log (left sidebar)
-	actionLogStyle := margin.Width(30).MaxHeight(20)
+	// layout is computed wrt board dimensions
+	boardWidth := lipgloss.Width(boardContent)
+	boardHeight := lipgloss.Height(boardContent)
 
+	var actionLogWidth int
+	if width >= 120 {
+		actionLogWidth = width - boardWidth - 36
+	} else {
+		// will replace board, with border and margin
+		actionLogWidth = boardWidth - 4
+	}
+
+	actionLogStyle := margin.Border(lipgloss.NormalBorder()).Width(actionLogWidth).Height(boardHeight - 4)
 	actionLogContent := strings.Join(g.ActionLog, "\n")
 	actionLogRendered := actionLogStyle.Render(actionLogContent)
 
@@ -110,11 +120,11 @@ func (g *Game) Print(width, height int, requestPlayer *int, twoColumnCycle, oneC
 		// Show all 3 columns
 		renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebarWithMinWidth)
 	} else if width >= 90 {
-		// Show 2 columns: Sidebar + (Board or Log based on cycle)
+		// Show 2 columns: Sidebar (right) + Board or Log (left)
 		if twoColumnCycle == 0 {
-			renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, sidebarWithMinWidth, boardContent)
+			renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebarWithMinWidth)
 		} else {
-			renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, sidebarWithMinWidth, actionLogRendered)
+			renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, sidebarWithMinWidth)
 		}
 	} else {
 		// Show 1 column based on cycle
