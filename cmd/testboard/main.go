@@ -3,6 +3,9 @@ package main
 import (
 	"el_poblador/board"
 	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func main() {
@@ -42,16 +45,17 @@ func main() {
 	fmt.Println()
 
 	boardInstance := board.NewChaoticBoard()
-	
+
 	// Place robber on a tile to test robber rendering
 	robberCoord, valid := board.NewTileCoord(1, 2)
 	if valid {
 		boardInstance.PlaceRobber(robberCoord)
 		fmt.Printf("Robber placed on the board for testing\n\n")
 	}
-	
+
 	lines := boardInstance.Print(nil)
-	for _, line := range lines {
-		fmt.Println(line)
-	}
+
+	total := strings.Join(lines, "\n")
+	fmt.Println(total)
+	fmt.Printf("\nBoard size: %d, %d\n", lipgloss.Width(total), lipgloss.Height(total))
 }

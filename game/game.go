@@ -46,15 +46,57 @@ type Game struct {
 
 // requestPlayer is the player that the user is playing as.
 // If nil, the game will render from the perspective of the turn holder.
-func (g *Game) Print(width, height int, requestPlayer *int) string {
+// twoColumnCycle and oneColumnCycle control which columns are visible in responsive layouts.
+func (g *Game) Print(width, height int, requestPlayer *int, twoColumnCycle, oneColumnCycle int) string {
 	playerPerspective := g.playerPerspective(requestPlayer)
 	margin := lipgloss.NewStyle().Margin(1)
 
 	help := g.helpText(width)
+	sidebar := g.buildSidebar(playerPerspective, margin)
 
 	boardLines := g.Board.Print(g.phase.BoardCursor())
 	boardContent := strings.Join(boardLines, "\n")
+	boardWidth := lipgloss.Width(boardContent)
+	boardHeight := lipgloss.Height(boardContent)
 
+	var actionLogWidth int
+	if width >= 120 {
+		actionLogWidth = width - boardWidth - 36
+	} else {
+		actionLogWidth = boardWidth - 4
+	}
+
+	actionLogStyle := margin.Border(lipgloss.NormalBorder()).Width(actionLogWidth).Height(boardHeight - 4)
+	actionLogContent := strings.Join(g.ActionLog, "\n")
+	actionLogRendered := actionLogStyle.Render(actionLogContent)
+
+	var layout string
+	if width >= 120 {
+		layout = lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebar)
+	} else if width >= 90 {
+		if twoColumnCycle == 0 {
+			layout = lipgloss.JoinHorizontal(lipgloss.Top, boardContent, sidebar)
+		} else {
+			layout = lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, sidebar)
+		}
+	} else {
+		switch oneColumnCycle {
+		case 0:
+			layout = sidebar
+		case 1:
+			layout = boardContent
+		case 2:
+			layout = actionLogRendered
+		}
+	}
+
+	availableHeight := height - lipgloss.Height(help)
+	mainContent := lipgloss.Place(width, availableHeight, lipgloss.Center, lipgloss.Center, layout)
+
+	return lipgloss.JoinVertical(lipgloss.Left, mainContent, help)
+}
+
+func (g *Game) buildSidebar(playerPerspective int, margin lipgloss.Style) string {
 	var dice string
 	if g.LastDice[0] != 0 {
 		dice = fmt.Sprintf("Dice: %d (%d + %d)", g.LastDice[0]+g.LastDice[1], g.LastDice[0], g.LastDice[1])
@@ -92,29 +134,9 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 			phaseSidebar = margin.Render(p.Menu())
 		}
 	}
-	// right sidebar
+
 	sidebar := lipgloss.JoinVertical(lipgloss.Left, dice, otherPlayers, myResourcesStr, phaseSidebar)
-	sidebarWithMinWidth := lipgloss.NewStyle().Width(30).Render(sidebar)
-
-	// action log (left sidebar)
-	actionLogStyle := margin.Width(30).MaxHeight(20)
-
-	actionLogContent := strings.Join(g.ActionLog, "\n")
-	actionLogRendered := actionLogStyle.Render(actionLogContent)
-
-	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebarWithMinWidth)
-
-	// Calculate the available space for the board.
-	availableHeight := height - lipgloss.Height(help)
-
-	// Main content is the board, centered in the available space.
-	mainContent := lipgloss.Place(width, availableHeight,
-		lipgloss.Center,
-		lipgloss.Center,
-		renderedPlayers,
-	)
-
-	return lipgloss.JoinVertical(lipgloss.Left, mainContent, help)
+	return lipgloss.NewStyle().Width(30).Render(sidebar)
 }
 
 func (g *Game) playerPerspective(requestPlayer *int) int {
