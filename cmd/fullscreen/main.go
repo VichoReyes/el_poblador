@@ -16,5 +16,5 @@ func main() {
 	}
 	g.ConfirmAction(nil) // roll dice
 
-	fmt.Println(g.Print(80, 32, nil))
+	fmt.Println(g.Print(80, 32, nil, 0, 0))
 }

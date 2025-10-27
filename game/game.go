@@ -46,7 +46,8 @@ type Game struct {
 
 // requestPlayer is the player that the user is playing as.
 // If nil, the game will render from the perspective of the turn holder.
-func (g *Game) Print(width, height int, requestPlayer *int) string {
+// twoColumnCycle and oneColumnCycle control which columns are visible in responsive layouts.
+func (g *Game) Print(width, height int, requestPlayer *int, twoColumnCycle, oneColumnCycle int) string {
 	playerPerspective := g.playerPerspective(requestPlayer)
 	margin := lipgloss.NewStyle().Margin(1)
 
@@ -102,7 +103,30 @@ func (g *Game) Print(width, height int, requestPlayer *int) string {
 	actionLogContent := strings.Join(g.ActionLog, "\n")
 	actionLogRendered := actionLogStyle.Render(actionLogContent)
 
-	renderedPlayers := lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebarWithMinWidth)
+	// Determine which columns to show based on terminal width
+	var renderedPlayers string
+
+	if width >= 120 {
+		// Show all 3 columns
+		renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, actionLogRendered, boardContent, sidebarWithMinWidth)
+	} else if width >= 90 {
+		// Show 2 columns: Sidebar + (Board or Log based on cycle)
+		if twoColumnCycle == 0 {
+			renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, sidebarWithMinWidth, boardContent)
+		} else {
+			renderedPlayers = lipgloss.JoinHorizontal(lipgloss.Top, sidebarWithMinWidth, actionLogRendered)
+		}
+	} else {
+		// Show 1 column based on cycle
+		switch oneColumnCycle {
+		case 0:
+			renderedPlayers = sidebarWithMinWidth
+		case 1:
+			renderedPlayers = boardContent
+		case 2:
+			renderedPlayers = actionLogRendered
+		}
+	}
 
 	// Calculate the available space for the board.
 	availableHeight := height - lipgloss.Height(help)

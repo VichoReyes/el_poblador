@@ -11,10 +11,12 @@ import (
 )
 
 type model struct {
-	game       *game.Game
-	width      int
-	height     int
-	userPlayer *int
+	game           *game.Game
+	width          int
+	height         int
+	userPlayer     *int
+	twoColumnCycle int // 0-1: for width 90-119
+	oneColumnCycle int // 0-2: for width <90
 }
 
 func (m model) Init() tea.Cmd {
@@ -27,6 +29,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "tab":
+			m.twoColumnCycle = (m.twoColumnCycle + 1) % 2
+			m.oneColumnCycle = (m.oneColumnCycle + 1) % 3
 		case "up", "down", "left", "right":
 			m.game.MoveCursor(msg.String(), m.userPlayer)
 		case "enter":
@@ -53,7 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return m.game.Print(m.width, m.height, m.userPlayer)
+	return m.game.Print(m.width, m.height, m.userPlayer, m.twoColumnCycle, m.oneColumnCycle)
 }
 
 func loadGameState(filename string) (*game.Game, error) {

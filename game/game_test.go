@@ -39,7 +39,7 @@ func TestInitialSettlementsRender(t *testing.T) {
 		t.Fatal("Dice should be rolled")
 	}
 	diceText := fmt.Sprintf("Dice: %d (%d + %d)", game.LastDice[0]+game.LastDice[1], game.LastDice[0], game.LastDice[1])
-	fullRender := game.Print(60, 50, nil)
+	fullRender := game.Print(60, 50, nil, 0, 0)
 	if !strings.Contains(fullRender, diceText) {
 		t.Fatalf("Game render does not contain expected dice text '%s'", diceText)
 	}
