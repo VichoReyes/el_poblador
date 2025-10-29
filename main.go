@@ -92,7 +92,7 @@ func printUsage() {
 func main() {
 	// Handle Termux bug where os.Args[1] contains the executable path
 	args := os.Args[1:]
-	if len(args) > 0 && (args[0] == os.Args[0] || (len(args[0]) > 0 && args[0][0] == '/')) {
+	if len(args) > 0 && len(args[0]) > 0 && (args[0] == os.Args[0] || args[0][0] == '/') {
 		// Skip the executable path if it appears as first arg
 		args = args[1:]
 	}
