@@ -90,33 +90,40 @@ func printUsage() {
 }
 
 func main() {
-	if len(os.Args) < 2 {
+	// Handle Termux bug where os.Args[1] contains the executable path
+	args := os.Args[1:]
+	if len(args) > 0 && len(args[0]) > 0 && (args[0] == os.Args[0] || args[0][0] == '/') {
+		// Skip the executable path if it appears as first arg
+		args = args[1:]
+	}
+
+	if len(args) < 1 {
 		printUsage()
 		os.Exit(1)
 	}
 
-	command := os.Args[1]
+	command := args[0]
 	var g *game.Game
 
 	switch command {
 	case "new":
-		if len(os.Args) < 5 || len(os.Args) > 6 {
+		if len(args) < 4 || len(args) > 5 {
 			fmt.Println("Error: 'new' command requires 3-4 player names")
 			fmt.Println()
 			printUsage()
 			os.Exit(1)
 		}
 		g = &game.Game{}
-		g.Start(os.Args[2:])
+		g.Start(args[1:])
 
 	case "load":
-		if len(os.Args) != 3 {
+		if len(args) != 2 {
 			fmt.Println("Error: 'load' command requires a filename")
 			fmt.Println()
 			printUsage()
 			os.Exit(1)
 		}
-		loadedGame, err := loadGameState(os.Args[2])
+		loadedGame, err := loadGameState(args[1])
 		if err != nil {
 			fmt.Printf("Failed to load game: %v\n", err)
 			os.Exit(1)
