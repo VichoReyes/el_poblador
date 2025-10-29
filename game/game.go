@@ -163,7 +163,7 @@ func (g *Game) Start(playerNames []string) {
 		{Light: "#1565C0", Dark: "#42A5F5"}, // Blue
 		{Light: "#C62828", Dark: "#EF5350"}, // Red
 		{Light: "#F57C00", Dark: "#FFB74D"}, // Orange
-		{Light: "#2E7D32", Dark: "#66BB6A"}, // Green
+		{Light: "#6A1B9A", Dark: "#AB47BC"}, // Purple
 	}
 	g.Players = make([]Player, len(playerNames))
 	for i, name := range playerNames {

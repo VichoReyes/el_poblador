@@ -2,7 +2,6 @@ package game
 
 import (
 	"el_poblador/board"
-	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
 )

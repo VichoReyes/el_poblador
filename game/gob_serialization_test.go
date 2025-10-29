@@ -60,7 +60,7 @@ func TestGobSerialization(t *testing.T) {
 			t.Errorf("Player %d name mismatch: got %s, want %s", i, deserializedPlayer.Name, player.Name)
 		}
 		if deserializedPlayer.Color != player.Color {
-			t.Errorf("Player %d color mismatch: got %d, want %d", i, deserializedPlayer.Color, player.Color)
+			t.Errorf("Player %d color mismatch: got %+v, want %+v", i, deserializedPlayer.Color, player.Color)
 		}
 	}
 
