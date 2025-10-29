@@ -158,7 +158,13 @@ func (g *Game) Start(playerNames []string) {
 	if len(playerNames) < 3 || len(playerNames) > 4 {
 		panic("Game must have 3-4 players")
 	}
-	colors := []int{20, 88, 165, 103} // blue, red, purple, white
+	// Distinctive colors that work well on both light and dark backgrounds
+	colors := []lipgloss.AdaptiveColor{
+		{Light: "#1565C0", Dark: "#42A5F5"}, // Blue
+		{Light: "#C62828", Dark: "#EF5350"}, // Red
+		{Light: "#F57C00", Dark: "#FFB74D"}, // Orange
+		{Light: "#2E7D32", Dark: "#66BB6A"}, // Green
+	}
 	g.Players = make([]Player, len(playerNames))
 	for i, name := range playerNames {
 		g.Players[i] = Player{
@@ -173,7 +179,7 @@ func (g *Game) Start(playerNames []string) {
 		g.Players[i], g.Players[j] = g.Players[j], g.Players[i]
 	})
 	// Create player color map for board rendering
-	playerColors := make(map[int]int)
+	playerColors := make(map[int]lipgloss.AdaptiveColor)
 	for i, player := range g.Players {
 		playerColors[i] = player.Color
 	}

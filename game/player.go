@@ -9,7 +9,7 @@ import (
 
 type Player struct {
 	Name           string
-	Color          int // 8 bit color code
+	Color          lipgloss.AdaptiveColor
 	Resources      map[board.ResourceType]int
 	HiddenDevCards []DevCard
 	PlayedDevCards []DevCard
@@ -175,7 +175,7 @@ func (p *Player) VictoryPoints(game *Game) int {
 }
 
 func (p *Player) Render(s string) string {
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", p.Color)))
+	style := lipgloss.NewStyle().Foreground(p.Color)
 	return style.Render(s)
 }
 
