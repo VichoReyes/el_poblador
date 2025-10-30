@@ -9,23 +9,21 @@ import (
 // phaseTradeOffer allows player to specify resources to offer
 // Use up/down to move cursor, left/right to adjust amounts
 type phaseTradeOffer struct {
-	game          *Game
-	previousPhase Phase
-	offer         map[board.ResourceType]int
-	selected      int // 0-4 for resources, 5 for confirm, 6 for cancel
+	game     *Game
+	offer    map[board.ResourceType]int
+	selected int // 0-4 for resources, 5 for confirm, 6 for cancel
 }
 
-func PhaseTradeOffer(game *Game, previousPhase Phase) Phase {
+func PhaseTradeOffer(game *Game) Phase {
 	offer := make(map[board.ResourceType]int)
 	for _, resourceType := range board.RESOURCE_TYPES {
 		offer[resourceType] = 0
 	}
 
 	return &phaseTradeOffer{
-		game:          game,
-		previousPhase: previousPhase,
-		offer:         offer,
-		selected:      0,
+		game:     game,
+		offer:    offer,
+		selected: 0,
 	}
 }
 
@@ -79,12 +77,12 @@ func (p *phaseTradeOffer) Confirm() Phase {
 			// Stay in phase if nothing offered
 			return p
 		}
-		return PhaseTradeSelectReceive(p.game, p.offer, p.previousPhase)
+		return PhaseTradeSelectReceive(p.game, p.offer, p)
 	}
 
 	// On "Cancel" button
 	if p.selected == numResources+1 {
-		return p.previousPhase
+		return PhaseIdle(p.game)
 	}
 
 	// Pressing confirm on a resource does nothing (use left/right)
@@ -152,11 +150,11 @@ type phaseTradeSelectReceive struct {
 	game          *Game
 	offer         map[board.ResourceType]int
 	request       map[board.ResourceType]int
-	previousPhase Phase // The original idle phase to return to
+	previousPhase Phase // The offer phase to return to on cancel
 	selected      int   // 0-4 for resources, 5 for confirm, 6 for cancel
 }
 
-func PhaseTradeSelectReceive(game *Game, offer map[board.ResourceType]int, previousPhase Phase) Phase {
+func PhaseTradeSelectReceive(game *Game, offer map[board.ResourceType]int, offerPhase Phase) Phase {
 	request := make(map[board.ResourceType]int)
 	for _, resourceType := range board.RESOURCE_TYPES {
 		request[resourceType] = 0
@@ -166,7 +164,7 @@ func PhaseTradeSelectReceive(game *Game, offer map[board.ResourceType]int, previ
 		game:          game,
 		offer:         offer,
 		request:       request,
-		previousPhase: previousPhase,
+		previousPhase: offerPhase,
 		selected:      0,
 	}
 }
@@ -223,11 +221,9 @@ func (p *phaseTradeSelectReceive) Confirm() Phase {
 		return p.validateAndExecuteTrade()
 	}
 
-	// On "Cancel" button - go back to offer phase with offer preserved
+	// On "Cancel" button - go back to offer phase
 	if p.selected == numResources+1 {
-		phase := PhaseTradeOffer(p.game, p.previousPhase).(*phaseTradeOffer)
-		phase.offer = p.offer
-		return phase
+		return p.previousPhase
 	}
 
 	// Pressing confirm on a resource does nothing (use left/right)

@@ -119,7 +119,7 @@ func (p *phaseIdle) Confirm() Phase {
 	case 0: // Build
 		return PhaseBuilding(p.game, p)
 	case 1: // Trade
-		return PhaseTradeOffer(p.game, p)
+		return PhaseTradeOffer(p.game)
 	case 2: // Play Development Card
 		return PhasePlayDevelopmentCard(p.game, p)
 	case 3: // End Turn
