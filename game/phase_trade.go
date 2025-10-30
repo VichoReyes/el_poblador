@@ -68,13 +68,18 @@ func (p *phaseTradeOffer) MoveCursor(direction string) {
 func (p *phaseTradeOffer) Confirm() Phase {
 	numResources := len(board.RESOURCE_TYPES)
 
-	// On "Confirm Trade" button
+	// On "Confirm" button - no validation, just proceed
 	if p.selected == numResources {
-		if p.isValidBankTrade() {
-			return PhaseTradeSelectReceive(p.game, p.offer, p.previousPhase)
+		// Check if offering anything
+		totalOffered := 0
+		for _, amount := range p.offer {
+			totalOffered += amount
 		}
-		// Invalid trade - stay in phase (error shown in HelpText)
-		return p
+		if totalOffered == 0 {
+			// Stay in phase if nothing offered
+			return p
+		}
+		return PhaseTradeSelectReceive(p.game, p.offer, p.previousPhase)
 	}
 
 	// On "Cancel" button
@@ -94,6 +99,9 @@ func (p *phaseTradeOffer) Menu() string {
 	var lines []string
 	player := &p.game.Players[p.game.PlayerTurn]
 
+	lines = append(lines, "What do you want to offer?")
+	lines = append(lines, "")
+
 	// Render each resource with amount
 	for i, resourceType := range board.RESOURCE_TYPES {
 		amount := p.offer[resourceType]
@@ -111,10 +119,7 @@ func (p *phaseTradeOffer) Menu() string {
 	lines = append(lines, "") // Empty line before buttons
 
 	// Confirm button
-	confirmLine := "Confirm Trade"
-	if !p.isValidBankTrade() {
-		confirmLine += " (need 4 of one resource)"
-	}
+	confirmLine := "Confirm"
 	if p.selected == len(board.RESOURCE_TYPES) {
 		confirmLine = player.Render("> ") + confirmLine
 	} else {
@@ -141,96 +146,210 @@ func (p *phaseTradeOffer) HelpText() string {
 	return "Use ↑/↓ to move cursor, Enter to confirm"
 }
 
-// isValidBankTrade checks if offer is valid for bank trading
-// Bank trade requires exactly 4 of exactly one resource type
-func (p *phaseTradeOffer) isValidBankTrade() bool {
-	player := &p.game.Players[p.game.PlayerTurn]
-	totalOffered := 0
-	resourcesOffered := 0
-	var offeredResource board.ResourceType
-
-	for resourceType, amount := range p.offer {
-		if amount > 0 {
-			resourcesOffered++
-			offeredResource = resourceType
-			totalOffered += amount
-		}
-	}
-
-	// Must offer exactly 4 of exactly one resource
-	if totalOffered != 4 || resourcesOffered != 1 {
-		return false
-	}
-
-	// Must have enough resources
-	return player.Resources[offeredResource] >= 4
-}
-
-// phaseTradeSelectReceive allows player to select which resource to receive
+// phaseTradeSelectReceive allows player to select which resources to receive
+// Use up/down to move cursor, left/right to adjust amounts
 type phaseTradeSelectReceive struct {
-	phaseWithOptions
+	game          *Game
 	offer         map[board.ResourceType]int
+	request       map[board.ResourceType]int
 	previousPhase Phase // The original idle phase to return to
+	selected      int   // 0-4 for resources, 5 for confirm, 6 for cancel
 }
 
 func PhaseTradeSelectReceive(game *Game, offer map[board.ResourceType]int, previousPhase Phase) Phase {
-	// Build list of resources that can be received (all except what's being offered)
-	var options []string
+	request := make(map[board.ResourceType]int)
 	for _, resourceType := range board.RESOURCE_TYPES {
-		if offer[resourceType] == 0 {
-			options = append(options, string(resourceType))
-		}
+		request[resourceType] = 0
 	}
-	options = append(options, "Cancel")
 
 	return &phaseTradeSelectReceive{
-		phaseWithOptions: phaseWithOptions{
-			game:    game,
-			options: options,
-		},
+		game:          game,
 		offer:         offer,
+		request:       request,
 		previousPhase: previousPhase,
+		selected:      0,
+	}
+}
+
+func (p *phaseTradeSelectReceive) MoveCursor(direction string) {
+	numResources := len(board.RESOURCE_TYPES)
+	numOptions := numResources + 2 // resources + confirm + cancel
+
+	switch direction {
+	case "up":
+		p.selected--
+		if p.selected < 0 {
+			p.selected = numOptions - 1
+		}
+	case "down":
+		p.selected++
+		if p.selected >= numOptions {
+			p.selected = 0
+		}
+	case "left":
+		// Decrement resource amount if cursor on a resource
+		if p.selected < numResources {
+			resourceType := board.RESOURCE_TYPES[p.selected]
+			if p.request[resourceType] > 0 {
+				p.request[resourceType]--
+			}
+		}
+	case "right":
+		// Increment resource amount if cursor on a resource
+		if p.selected < numResources {
+			resourceType := board.RESOURCE_TYPES[p.selected]
+			// No upper limit for request amounts
+			p.request[resourceType]++
+		}
 	}
 }
 
 func (p *phaseTradeSelectReceive) Confirm() Phase {
-	// Check if cancel was selected
-	if p.selected == len(p.options)-1 {
-		// Go back to offer phase with current offer preserved
+	numResources := len(board.RESOURCE_TYPES)
+
+	// On "Confirm" button
+	if p.selected == numResources {
+		// Check if requesting anything
+		totalRequested := 0
+		for _, amount := range p.request {
+			totalRequested += amount
+		}
+		if totalRequested == 0 {
+			// Stay in phase if nothing requested
+			return p
+		}
+
+		// Now validate the complete trade
+		return p.validateAndExecuteTrade()
+	}
+
+	// On "Cancel" button - go back to offer phase with offer preserved
+	if p.selected == numResources+1 {
 		phase := PhaseTradeOffer(p.game, p.previousPhase).(*phaseTradeOffer)
 		phase.offer = p.offer
 		return phase
 	}
 
-	// Execute the trade
-	selectedResource := board.ResourceType(p.options[p.selected])
+	// Pressing confirm on a resource does nothing (use left/right)
+	return p
+}
+
+func (p *phaseTradeSelectReceive) BoardCursor() interface{} {
+	return nil
+}
+
+func (p *phaseTradeSelectReceive) Menu() string {
+	var lines []string
 	player := &p.game.Players[p.game.PlayerTurn]
 
-	// Find what resource is being offered
-	var offeredResource board.ResourceType
-	var offeredAmount int
-	for resourceType, amount := range p.offer {
-		if amount > 0 {
-			offeredResource = resourceType
-			offeredAmount = amount
-			break
+	lines = append(lines, "What do you want to receive?")
+	lines = append(lines, "")
+
+	// Render each resource with amount
+	for i, resourceType := range board.RESOURCE_TYPES {
+		amount := p.request[resourceType]
+
+		line := fmt.Sprintf("%s:  %d", resourceType, amount)
+		if i == p.selected {
+			line = player.Render("> ") + line
+		} else {
+			line = "  " + line
 		}
+		lines = append(lines, line)
 	}
 
-	// Deduct offered resources
-	player.Resources[offeredResource] -= offeredAmount
+	lines = append(lines, "") // Empty line before buttons
 
-	// Add received resource
-	player.Resources[selectedResource]++
+	// Confirm button
+	confirmLine := "Confirm"
+	if p.selected == len(board.RESOURCE_TYPES) {
+		confirmLine = player.Render("> ") + confirmLine
+	} else {
+		confirmLine = "  " + confirmLine
+	}
+	lines = append(lines, confirmLine)
 
-	// Log the trade
-	p.game.LogAction(fmt.Sprintf("%s traded %d %s for 1 %s with the bank",
-		player.RenderName(), offeredAmount, offeredResource, selectedResource))
+	// Cancel button
+	cancelLine := "Cancel"
+	if p.selected == len(board.RESOURCE_TYPES)+1 {
+		cancelLine = player.Render("> ") + cancelLine
+	} else {
+		cancelLine = "  " + cancelLine
+	}
+	lines = append(lines, cancelLine)
 
-	return PhaseIdleWithNotification(p.game,
-		fmt.Sprintf("Traded %d %s for 1 %s!", offeredAmount, offeredResource, selectedResource))
+	return strings.Join(lines, "\n")
 }
 
 func (p *phaseTradeSelectReceive) HelpText() string {
-	return "Select a resource to receive"
+	if p.selected < len(board.RESOURCE_TYPES) {
+		return "Use ←/→ to adjust amount, ↑/↓ to move cursor"
+	}
+	return "Use ↑/↓ to move cursor, Enter to confirm"
+}
+
+// validateAndExecuteTrade checks what type of trade this is and executes it
+func (p *phaseTradeSelectReceive) validateAndExecuteTrade() Phase {
+	player := &p.game.Players[p.game.PlayerTurn]
+
+	// Check if it's a valid bank trade (4 of one type → 1 of one type)
+	if tradeType, offeredResource, requestedResource := p.isBankTrade(); tradeType == "bank" {
+		// Validate player has enough resources
+		if player.Resources[offeredResource] < 4 {
+			return PhaseIdleWithNotification(p.game, "Not enough resources for bank trade!")
+		}
+
+		// Execute bank trade
+		player.Resources[offeredResource] -= 4
+		player.Resources[requestedResource]++
+
+		p.game.LogAction(fmt.Sprintf("%s traded 4 %s for 1 %s with the bank",
+			player.RenderName(), offeredResource, requestedResource))
+
+		return PhaseIdleWithNotification(p.game,
+			fmt.Sprintf("Traded 4 %s for 1 %s!", offeredResource, requestedResource))
+	}
+
+	// Future: Check for harbor trades here
+	// if tradeType, resource, amount := p.isHarborTrade(); tradeType == "harbor" { ... }
+
+	// Future: Check for player trades here
+	// if p.isPlayerTrade() { return PhaseSelectTradePartner(...) }
+
+	// Not a recognized trade type
+	return PhaseIdleWithNotification(p.game, "Trade type not yet implemented")
+}
+
+// isBankTrade checks if the trade is exactly 4:1 (bank trade)
+func (p *phaseTradeSelectReceive) isBankTrade() (string, board.ResourceType, board.ResourceType) {
+	// Count offered resources
+	totalOffered := 0
+	offeredTypes := 0
+	var offeredResource board.ResourceType
+	for resourceType, amount := range p.offer {
+		if amount > 0 {
+			offeredTypes++
+			offeredResource = resourceType
+			totalOffered += amount
+		}
+	}
+
+	// Count requested resources
+	totalRequested := 0
+	requestedTypes := 0
+	var requestedResource board.ResourceType
+	for resourceType, amount := range p.request {
+		if amount > 0 {
+			requestedTypes++
+			requestedResource = resourceType
+			totalRequested += amount
+		}
+	}
+
+	// Bank trade: exactly 4 of one → exactly 1 of one
+	if totalOffered == 4 && offeredTypes == 1 && totalRequested == 1 && requestedTypes == 1 {
+		return "bank", offeredResource, requestedResource
+	}
+
+	return "unknown", "", ""
 }

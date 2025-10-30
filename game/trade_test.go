@@ -50,7 +50,6 @@ func TestBankTrade(t *testing.T) {
 	}
 
 	// Navigate to brick (index 4 in RESOURCE_TYPES: Ore, Wood, Sheep, Wheat, Brick)
-	// RESOURCE_TYPES order is: Piedra (Ore), Madera (Wood), Lana (Sheep), Trigo (Wheat), Ladrillo (Brick)
 	brickIndex := -1
 	for i, rt := range board.RESOURCE_TYPES {
 		if rt == board.ResourceBrick {
@@ -77,7 +76,7 @@ func TestBankTrade(t *testing.T) {
 		t.Fatalf("Expected offer of 4 brick, got %d", tradePhase.offer[board.ResourceBrick])
 	}
 
-	// Navigate to "Confirm Trade" button (down from last resource)
+	// Navigate to "Confirm" button
 	numResources := len(board.RESOURCE_TYPES)
 	currentPosition := brickIndex
 	stepsToConfirm := numResources - currentPosition
@@ -94,24 +93,39 @@ func TestBankTrade(t *testing.T) {
 		t.Fatalf("Should be in trade select receive phase, got: %T", game.phase)
 	}
 
-	// Find ore in the options
+	// Find ore in RESOURCE_TYPES
 	oreIndex := -1
-	for i, option := range receivePhase.options {
-		if option == string(board.ResourceOre) {
+	for i, rt := range board.RESOURCE_TYPES {
+		if rt == board.ResourceOre {
 			oreIndex = i
 			break
 		}
 	}
 	if oreIndex == -1 {
-		t.Fatal("Ore should be in receive options")
+		t.Fatal("Could not find ore in RESOURCE_TYPES")
 	}
 
-	// Move to ore option
+	// Move cursor to ore
 	for i := 0; i < oreIndex; i++ {
 		game.phase.MoveCursor("down")
 	}
 
-	// Confirm selection of ore
+	// Increment ore request to 1 using right arrow
+	game.phase.MoveCursor("right")
+
+	// Verify request has 1 ore
+	if receivePhase.request[board.ResourceOre] != 1 {
+		t.Fatalf("Expected request of 1 ore, got %d", receivePhase.request[board.ResourceOre])
+	}
+
+	// Navigate to "Confirm" button
+	currentPosition = oreIndex
+	stepsToConfirm = numResources - currentPosition
+	for i := 0; i < stepsToConfirm; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	// Confirm the request
 	game.ConfirmAction(nil)
 
 	// Should be back in idle phase with notification
@@ -137,10 +151,13 @@ func TestBankTradeInvalidOffer(t *testing.T) {
 
 	game.phase = PhaseIdle(game)
 
-	// Give player only 3 brick (not enough for bank trade)
+	// Give player 4 brick and 2 wheat
 	player := &game.Players[game.PlayerTurn]
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		player.AddResource(board.ResourceBrick)
+	}
+	for i := 0; i < 2; i++ {
+		player.AddResource(board.ResourceWheat)
 	}
 
 	// Go to trade phase
@@ -151,7 +168,7 @@ func TestBankTradeInvalidOffer(t *testing.T) {
 		t.Fatalf("Should be in trade offer phase, got: %T", game.phase)
 	}
 
-	// Try to offer 3 brick
+	// Try to offer 3 brick (not a valid bank trade, but should still proceed)
 	brickIndex := -1
 	for i, rt := range board.RESOURCE_TYPES {
 		if rt == board.ResourceBrick {
@@ -175,17 +192,48 @@ func TestBankTradeInvalidOffer(t *testing.T) {
 		game.phase.MoveCursor("down")
 	}
 
-	// Try to confirm (should fail validation and stay in same phase)
+	// Confirm (should proceed to receive phase even with invalid bank trade)
 	game.ConfirmAction(nil)
 
-	// Should still be in trade offer phase (validation failed)
-	if _, ok := game.phase.(*phaseTradeOffer); !ok {
-		t.Fatalf("Should still be in trade offer phase after invalid trade, got: %T", game.phase)
+	// Should be in receive phase
+	if _, ok := game.phase.(*phaseTradeSelectReceive); !ok {
+		t.Fatalf("Should be in receive phase, got: %T", game.phase)
+	}
+
+	// Request 2 sheep (making this an invalid trade)
+	sheepIndex := -1
+	for i, rt := range board.RESOURCE_TYPES {
+		if rt == board.ResourceSheep {
+			sheepIndex = i
+			break
+		}
+	}
+
+	for i := 0; i < sheepIndex; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	for i := 0; i < 2; i++ {
+		game.phase.MoveCursor("right")
+	}
+
+	// Navigate to confirm
+	stepsToConfirm = numResources - sheepIndex
+	for i := 0; i < stepsToConfirm; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	// Confirm (should fail validation and show "not yet implemented")
+	game.ConfirmAction(nil)
+
+	// Should be back in idle phase with error notification
+	if _, ok := game.phase.(*phaseIdle); !ok {
+		t.Fatalf("Should be back in idle phase after invalid trade, got: %T", game.phase)
 	}
 
 	// Resources should be unchanged
-	if player.Resources[board.ResourceBrick] != 3 {
-		t.Fatalf("Resources should be unchanged, expected 3 brick, got %d", player.Resources[board.ResourceBrick])
+	if player.Resources[board.ResourceBrick] != 4 {
+		t.Fatalf("Resources should be unchanged, expected 4 brick, got %d", player.Resources[board.ResourceBrick])
 	}
 }
 
@@ -270,13 +318,12 @@ func TestBankTradeCancelFromReceivePhase(t *testing.T) {
 	game.ConfirmAction(nil)
 
 	// Should be in receive phase
-	receivePhase, ok := game.phase.(*phaseTradeSelectReceive)
-	if !ok {
+	if _, ok := game.phase.(*phaseTradeSelectReceive); !ok {
 		t.Fatalf("Should be in trade select receive phase, got: %T", game.phase)
 	}
 
-	// Navigate to cancel (last option)
-	for i := 0; i < len(receivePhase.options)-1; i++ {
+	// Navigate to cancel (resources + confirm + cancel)
+	for i := 0; i <= numResources; i++ {
 		game.phase.MoveCursor("down")
 	}
 
@@ -297,5 +344,100 @@ func TestBankTradeCancelFromReceivePhase(t *testing.T) {
 	// Resources should be unchanged
 	if player.Resources[board.ResourceBrick] != 4 {
 		t.Fatalf("Resources should be unchanged, expected 4 brick, got %d", player.Resources[board.ResourceBrick])
+	}
+}
+
+func TestInvalidTradeNotYetImplemented(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"p1", "p2", "p3"})
+
+	game.phase = PhaseIdle(game)
+
+	player := &game.Players[game.PlayerTurn]
+	// Give player 4 wood and 2 sheep
+	for i := 0; i < 4; i++ {
+		player.AddResource(board.ResourceWood)
+	}
+	for i := 0; i < 2; i++ {
+		player.AddResource(board.ResourceSheep)
+	}
+
+	// Go to trade phase
+	game.phase.MoveCursor("down")
+	game.ConfirmAction(nil)
+
+	// Offer 4 wood
+	woodIndex := -1
+	for i, rt := range board.RESOURCE_TYPES {
+		if rt == board.ResourceWood {
+			woodIndex = i
+			break
+		}
+	}
+
+	for i := 0; i < woodIndex; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	for i := 0; i < 4; i++ {
+		game.phase.MoveCursor("right")
+	}
+
+	// Navigate to confirm
+	numResources := len(board.RESOURCE_TYPES)
+	stepsToConfirm := numResources - woodIndex
+	for i := 0; i < stepsToConfirm; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	game.ConfirmAction(nil)
+
+	// Should be in receive phase
+	if _, ok := game.phase.(*phaseTradeSelectReceive); !ok {
+		t.Fatalf("Should be in receive phase, got: %T", game.phase)
+	}
+
+	// Request 2 sheep (not a 4:1 bank trade, should be "not yet implemented")
+	sheepIndex := -1
+	for i, rt := range board.RESOURCE_TYPES {
+		if rt == board.ResourceSheep {
+			sheepIndex = i
+			break
+		}
+	}
+
+	for i := 0; i < sheepIndex; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	for i := 0; i < 2; i++ {
+		game.phase.MoveCursor("right")
+	}
+
+	// Navigate to confirm
+	stepsToConfirm = numResources - sheepIndex
+	for i := 0; i < stepsToConfirm; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	game.ConfirmAction(nil)
+
+	// Should be back in idle phase with "not yet implemented" notification
+	idlePhase, ok := game.phase.(*phaseIdle)
+	if !ok {
+		t.Fatalf("Should be back in idle phase, got: %T", game.phase)
+	}
+
+	// Check that we got the "not yet implemented" notification
+	if idlePhase.notification != "Trade type not yet implemented" {
+		t.Fatalf("Expected 'Trade type not yet implemented' notification, got: %s", idlePhase.notification)
+	}
+
+	// Resources should be unchanged
+	if player.Resources[board.ResourceWood] != 4 {
+		t.Fatalf("Resources should be unchanged, expected 4 wood, got %d", player.Resources[board.ResourceWood])
+	}
+	if player.Resources[board.ResourceSheep] != 2 {
+		t.Fatalf("Resources should be unchanged, expected 2 sheep, got %d", player.Resources[board.ResourceSheep])
 	}
 }
