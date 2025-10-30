@@ -1,7 +1,6 @@
 package board
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -42,7 +41,8 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 		hasCursor = true
 	}
 	if hasCursor {
-		style := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Blink(true)
+		cursorColor := lipgloss.AdaptiveColor{Light: "#0277BD", Dark: "#4FC3F7"}
+		style := lipgloss.NewStyle().Foreground(cursorColor).Blink(true)
 		lines[midLine].WriteString(style.Render(" ○ "))
 	} else if hasSettlement {
 		_, isCity := board.CityUpgrades[coord]
@@ -112,9 +112,9 @@ func renderCrossing(board *Board, lines []strings.Builder, coord CrossCoord, cur
 }
 
 // renderPlayerContent applies player color to content string
-func renderPlayerContent(playerColors map[int]int, playerId int, content string) string {
+func renderPlayerContent(playerColors map[int]lipgloss.AdaptiveColor, playerId int, content string) string {
 	if color, ok := playerColors[playerId]; ok {
-		style := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", color)))
+		style := lipgloss.NewStyle().Foreground(color)
 		return style.Render(content)
 	}
 	return content

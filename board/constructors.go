@@ -1,6 +1,10 @@
 package board
 
-import "math/rand/v2"
+import (
+	"math/rand/v2"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // NewDesertBoard creates a new board of only desert tiles
 func NewDesertBoard() *Board {
@@ -9,7 +13,7 @@ func NewDesertBoard() *Board {
 		Roads:        make(map[PathCoord]int),
 		Settlements:  make(map[CrossCoord]int),
 		CityUpgrades: make(map[CrossCoord]int),
-		PlayerColors: make(map[int]int),
+		PlayerColors: make(map[int]lipgloss.AdaptiveColor),
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -30,7 +34,7 @@ func NewChaoticBoard() *Board {
 		Roads:        make(map[PathCoord]int),
 		Settlements:  make(map[CrossCoord]int),
 		CityUpgrades: make(map[CrossCoord]int),
-		PlayerColors: make(map[int]int),
+		PlayerColors: make(map[int]lipgloss.AdaptiveColor),
 	}
 	// brute force all tile coords
 	for x := 0; x <= 5; x++ {
@@ -56,7 +60,7 @@ func NewChaoticBoard() *Board {
 	return board
 }
 
-func NewLegalBoard(playerColors map[int]int) *Board {
+func NewLegalBoard(playerColors map[int]lipgloss.AdaptiveColor) *Board {
 	diceNumbers := []int{2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12}
 	terrains := []TerrainType{
 		TerrainWood, TerrainWood, TerrainWood, TerrainWood,

@@ -64,7 +64,8 @@ func (tile *Tile) RenderTile(isCursor bool, hasRobber bool) [5]string {
 
 	style := tile.getTerrainStyle()
 	if isCursor {
-		style = style.Background(lipgloss.Color("15"))
+		cursorBg := lipgloss.AdaptiveColor{Light: "#E0E0E0", Dark: "#424242"}
+		style = style.Background(cursorBg)
 	}
 
 	infoLine := "\\        /"
@@ -104,30 +105,30 @@ func (tile *Tile) getTerrainAbbrev() string {
 
 // getTerrainStyle returns the lipgloss style for the terrain
 func (tile *Tile) getTerrainStyle() lipgloss.Style {
-	var colorNumber int
+	var color lipgloss.AdaptiveColor
 	switch tile.Terrain {
 	case TerrainWood:
-		// dark green
-		colorNumber = 2
+		// Dark green for dark backgrounds, forest green for light
+		color = lipgloss.AdaptiveColor{Light: "#2D5016", Dark: "#4CAF50"}
 	case TerrainBrick:
-		// red
-		colorNumber = 1
+		// Brick red
+		color = lipgloss.AdaptiveColor{Light: "#B71C1C", Dark: "#EF5350"}
 	case TerrainOre:
-		// dark gray
-		colorNumber = 8
+		// Gray stone
+		color = lipgloss.AdaptiveColor{Light: "#424242", Dark: "#9E9E9E"}
 	case TerrainWheat:
-		// yellow
-		colorNumber = 11
+		// Golden yellow
+		color = lipgloss.AdaptiveColor{Light: "#F57F17", Dark: "#FFEB3B"}
 	case TerrainSheep:
-		// green
-		colorNumber = 10
+		// Bright green pasture
+		color = lipgloss.AdaptiveColor{Light: "#388E3C", Dark: "#8BC34A"}
 	case TerrainDesert:
-		// brown
-		colorNumber = 3
+		// Sandy brown
+		color = lipgloss.AdaptiveColor{Light: "#795548", Dark: "#BCAAA4"}
 	default:
-		colorNumber = 0
+		color = lipgloss.AdaptiveColor{Light: "#000000", Dark: "#FFFFFF"}
 	}
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", colorNumber)))
+	return lipgloss.NewStyle().Foreground(color)
 }
 
 type ResourceType string

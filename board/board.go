@@ -1,6 +1,10 @@
 package board
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // Board represents the game board
 type Board struct {
@@ -8,8 +12,8 @@ type Board struct {
 	// Roads and Settlements are indexed by player id
 	Roads        map[PathCoord]int
 	Settlements  map[CrossCoord]int
-	CityUpgrades map[CrossCoord]int // tracks which settlements have been upgraded to cities
-	PlayerColors map[int]int        // player id to color code for rendering
+	CityUpgrades map[CrossCoord]int           // tracks which settlements have been upgraded to cities
+	PlayerColors map[int]lipgloss.AdaptiveColor // player id to adaptive color for rendering
 	Robber       TileCoord
 }
 
