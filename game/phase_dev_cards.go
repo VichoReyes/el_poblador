@@ -79,7 +79,7 @@ type phaseMonopoly struct {
 func PhaseMonopoly(game *Game, previousPhase Phase) Phase {
 	resourceOptions := make([]string, len(board.RESOURCE_TYPES))
 	for i, resourceType := range board.RESOURCE_TYPES {
-		resourceOptions[i] = string(resourceType)
+		resourceOptions[i] = resourceType.String()
 	}
 	resourceOptions = append(resourceOptions, "Cancel")
 
@@ -136,7 +136,7 @@ type phaseYearOfPlenty struct {
 func PhaseYearOfPlenty(game *Game, previousPhase Phase) Phase {
 	resourceOptions := make([]string, len(board.RESOURCE_TYPES))
 	for i, resourceType := range board.RESOURCE_TYPES {
-		resourceOptions[i] = string(resourceType)
+		resourceOptions[i] = resourceType.String()
 	}
 	resourceOptions = append(resourceOptions, "Cancel")
 

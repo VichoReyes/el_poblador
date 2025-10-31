@@ -22,19 +22,19 @@ const (
 func (t TerrainType) String() string {
 	switch t {
 	case TerrainWood:
-		return "Bosque"
+		return "Forest"
 	case TerrainBrick:
-		return "Arcilla"
+		return "Clay"
 	case TerrainOre:
-		return "Montaña"
+		return "Mountain"
 	case TerrainWheat:
-		return "Plantación"
+		return "Plantation"
 	case TerrainSheep:
-		return "Pasto"
+		return "Pasture"
 	case TerrainDesert:
-		return "Desierto"
+		return "Desert"
 	default:
-		return "Desconocido"
+		return "Unknown"
 	}
 }
 
@@ -87,17 +87,17 @@ func (tile *Tile) RenderTile(isCursor bool, hasRobber bool) [5]string {
 func (tile *Tile) getTerrainAbbrev() string {
 	switch tile.Terrain {
 	case TerrainWood:
-		return "BOSQ"
+		return "WOOD"
 	case TerrainBrick:
-		return "ARCI"
+		return "CLAY"
 	case TerrainOre:
-		return "MONT"
+		return "MNTN"
 	case TerrainWheat:
-		return "PLAN"
+		return "WHEA"
 	case TerrainSheep:
 		return "PAST"
 	case TerrainDesert:
-		return "DESI"
+		return "DESE"
 	default:
 		return "????"
 	}
@@ -131,20 +131,34 @@ func (tile *Tile) getTerrainStyle() lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(color)
 }
 
-type ResourceType string
+type ResourceType int
 
 const (
-	ResourceOre   ResourceType = "Piedra"
-	ResourceWood  ResourceType = "Madera"
-	ResourceSheep ResourceType = "Lana"
-	ResourceWheat ResourceType = "Trigo"
-	ResourceBrick ResourceType = "Ladrillo"
+	ResourceInvalid ResourceType = iota
+	ResourceOre
+	ResourceWood
+	ResourceSheep
+	ResourceWheat
+	ResourceBrick
 )
 
 var RESOURCE_TYPES = []ResourceType{ResourceOre, ResourceWood, ResourceSheep, ResourceWheat, ResourceBrick}
 
 func (r ResourceType) String() string {
-	return string(r)
+	switch r {
+	case ResourceOre:
+		return "Ore"
+	case ResourceWood:
+		return "Wood"
+	case ResourceSheep:
+		return "Wool"
+	case ResourceWheat:
+		return "Wheat"
+	case ResourceBrick:
+		return "Brick"
+	default:
+		return "Unknown"
+	}
 }
 
 func TileResource(t Tile) (ResourceType, bool) {
@@ -160,6 +174,6 @@ func TileResource(t Tile) (ResourceType, bool) {
 	case TerrainBrick:
 		return ResourceBrick, true
 	default:
-		return "", false
+		return 0, false
 	}
 }

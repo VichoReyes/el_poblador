@@ -37,7 +37,7 @@ func main() {
 	g.LogAction(fmt.Sprintf("%s stole a card from %s", alice.RenderName(), bob.RenderName()))
 
 	// 4. Log resource generation
-	g.LogAction(fmt.Sprintf("%s gained 2 Madera, 1 Ladrillo from dice roll (8)", bob.RenderName()))
+	g.LogAction(fmt.Sprintf("%s gained 2 Wood, 1 Brick from dice roll (8)", bob.RenderName()))
 
 	// 5. Log turn change
 	g.LogAction(fmt.Sprintf("Turn passed to %s", charlie.RenderName()))

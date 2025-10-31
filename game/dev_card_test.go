@@ -282,7 +282,7 @@ func TestYearOfPlentyCard(t *testing.T) {
 
 	// Verify help text shows what was selected
 	helpText := yearOfPlentyPhaseImpl2.HelpText()
-	if !strings.Contains(helpText, "Trigo") { // Wheat in Spanish
+	if !strings.Contains(helpText, "Wheat") {
 		t.Errorf("Help text should show selected wheat, got: %s", helpText)
 	}
 
