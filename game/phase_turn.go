@@ -3,6 +3,7 @@ package game
 import (
 	"bytes"
 	"el_poblador/board"
+	"el_poblador/i18n"
 	"encoding/gob"
 	"fmt"
 	"math/rand/v2"
@@ -20,7 +21,7 @@ func PhaseDiceRoll(game *Game) Phase {
 	return &phaseDiceRoll{
 		phaseWithOptions: phaseWithOptions{
 			game:    game,
-			options: []string{"Roll", "Play Knight", "Save & Quit"},
+			options: []string{i18n.T("Roll"), i18n.T("Play Knight"), i18n.T("Save & Quit")},
 		},
 	}
 }
@@ -54,7 +55,7 @@ func (p *phaseDiceRoll) HelpText() string {
 	if p.invalid != "" {
 		return p.invalid
 	}
-	return "Time to roll the dice"
+	return i18n.T("Time to roll the dice")
 }
 
 func rollDice(game *Game) Phase {
@@ -108,7 +109,7 @@ func PhaseIdleWithNotification(game *Game, notification string) Phase {
 	return &phaseIdle{
 		phaseWithOptions: phaseWithOptions{
 			game:    game,
-			options: []string{"Build", "Trade", "Play Development Card", "End Turn"},
+			options: []string{i18n.T("Build"), i18n.T("Trade"), "Play Development Card", i18n.T("End Turn")},
 		},
 		notification: notification,
 	}
@@ -137,7 +138,7 @@ func (p *phaseIdle) HelpText() string {
 	if p.notification != "" {
 		return p.notification + " Anything else?"
 	}
-	return "What do you want to do?"
+	return i18n.T("What do you want to do?")
 }
 
 func saveGameState(g *Game) error {

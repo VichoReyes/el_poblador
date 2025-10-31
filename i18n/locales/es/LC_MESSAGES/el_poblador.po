@@ -1,0 +1,29 @@
+# Spanish translations for El Poblador
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es\n"
+
+msgid "Roll"
+msgstr "Tirar"
+
+msgid "Play Knight"
+msgstr "Jugar Caballero"
+
+msgid "Save & Quit"
+msgstr "Guardar y Salir"
+
+msgid "Build"
+msgstr "Construir"
+
+msgid "Trade"
+msgstr "Comerciar"
+
+msgid "End Turn"
+msgstr "Terminar Turno"
+
+msgid "Time to roll the dice"
+msgstr "Es hora de tirar los dados"
+
+msgid "What do you want to do?"
+msgstr "¿Qué quieres hacer?"

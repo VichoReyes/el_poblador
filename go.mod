@@ -4,7 +4,10 @@ go 1.23.0
 
 toolchain go1.24.3
 
-require golang.org/x/term v0.32.0
+require (
+	github.com/leonelquinteros/gotext v1.7.0
+	golang.org/x/term v0.32.0
+)
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
