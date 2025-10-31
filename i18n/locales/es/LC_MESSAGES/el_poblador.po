@@ -1,0 +1,33 @@
+# Spanish translations for El Poblador
+# Copyright (C) 2025
+# This file is distributed under the same license as the El Poblador package.
+#
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es\n"
+
+# Game phase messages
+msgid "Roll"
+msgstr "Tirar"
+
+msgid "Play Knight"
+msgstr "Jugar Caballero"
+
+msgid "Save & Quit"
+msgstr "Guardar y Salir"
+
+msgid "Time to roll the dice"
+msgstr "Es hora de tirar los dados"
+
+msgid "Build"
+msgstr "Construir"
+
+msgid "Trade"
+msgstr "Comerciar"
+
+msgid "End Turn"
+msgstr "Terminar Turno"
+
+msgid "What do you want to do?"
+msgstr "¿Qué quieres hacer?"
