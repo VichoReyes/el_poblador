@@ -275,5 +275,5 @@ func (p *phaseTradeSelectReceive) isBankTrade() (string, board.ResourceType, boa
 		return "bank", offeredResource, requestedResource
 	}
 
-	return "unknown", "", ""
+	return "unknown", 0, 0
 }
