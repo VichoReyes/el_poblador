@@ -40,9 +40,10 @@ type Game struct {
 	phase       Phase // not exported - not needed for network serialization
 	PlayerTurn  int
 	DevCardDeck []DevCard
-	ActionLog   []string
-	shouldQuit  bool
-}
+		ActionLog    []string
+		TradeOffers  []TradeOffer
+		shouldQuit   bool
+	}
 
 // requestPlayer is the player that the user is playing as.
 // If nil, the game will render from the perspective of the turn holder.

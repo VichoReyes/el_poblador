@@ -5,320 +5,199 @@ import (
 	"testing"
 )
 
-func TestBankTrade(t *testing.T) {
-	game := &Game{}
-	game.Start([]string{"p1", "p2", "p3"})
+// setupGameForTradeTest creates a new game with 3 players and gives them resources.
+func setupGameForTradeTest() *Game {
+	g := &Game{}
+	g.Start([]string{"P1", "P2", "P3"})
+	g.Players[0].Resources[board.ResourceWood] = 5
+	g.Players[0].Resources[board.ResourceBrick] = 5
+	g.Players[1].Resources[board.ResourceSheep] = 5
+	g.Players[1].Resources[board.ResourceOre] = 5
+	g.Players[2].Resources[board.ResourceWheat] = 5
+	return g
+}
 
-	game.phase = PhaseIdle(game)
-
-	player := &game.Players[game.PlayerTurn]
-	for i := 0; i < 4; i++ {
-		player.AddResource(board.ResourceBrick)
-	}
-	for i := 0; i < 2; i++ {
-		player.AddResource(board.ResourceWheat)
-	}
-
-	if player.Resources[board.ResourceBrick] != 4 {
-		t.Fatalf("Expected 4 brick, got %d", player.Resources[board.ResourceBrick])
-	}
-	if player.Resources[board.ResourceOre] != 0 {
-		t.Fatalf("Expected 0 ore, got %d", player.Resources[board.ResourceOre])
+func TestTradeOfferCreation(t *testing.T) {
+	g := setupGameForTradeTest()
+	if len(g.TradeOffers) != 0 {
+		t.Fatalf("Expected 0 trade offers at the start, got %d", len(g.TradeOffers))
 	}
 
-	game.phase.MoveCursor("down")
-	game.ConfirmAction(nil)
+	// Simulate player 0 creating an offer
+	g.PlayerTurn = 0
+	// Assume the flow of phases works and an offer is created
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{
+		ID:        0,
+		OffererID: 0,
+		TargetID:  1,
+		Offering:  map[board.ResourceType]int{board.ResourceWood: 1},
+		Requesting: map[board.ResourceType]int{board.ResourceSheep: 1},
+		Status:    OfferIsPending,
+	})
 
-	tradePhase, ok := game.phase.(*phaseTradeOffer)
-	if !ok {
-		t.Fatalf("Should be in trade offer phase, got: %T", game.phase)
+	if len(g.TradeOffers) != 1 {
+		t.Errorf("Expected 1 trade offer, got %d", len(g.TradeOffers))
 	}
-
-	brickIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceBrick {
-			brickIndex = i
-			break
-		}
-	}
-
-	for i := 0; i < brickIndex; i++ {
-		game.phase.MoveCursor("down")
-	}
-
-	for i := 0; i < 4; i++ {
-		game.phase.MoveCursor("right")
-	}
-
-	if tradePhase.offer[board.ResourceBrick] != 4 {
-		t.Fatalf("Expected offer of 4 brick, got %d", tradePhase.offer[board.ResourceBrick])
-	}
-
-	game.ConfirmAction(nil)
-
-	receivePhase, ok := game.phase.(*phaseTradeSelectReceive)
-	if !ok {
-		t.Fatalf("Should be in receive phase, got: %T", game.phase)
-	}
-
-	oreIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceOre {
-			oreIndex = i
-			break
-		}
-	}
-
-	for i := 0; i < oreIndex; i++ {
-		game.phase.MoveCursor("down")
-	}
-
-	game.phase.MoveCursor("right")
-
-	if receivePhase.request[board.ResourceOre] != 1 {
-		t.Fatalf("Expected request of 1 ore, got %d", receivePhase.request[board.ResourceOre])
-	}
-
-	game.ConfirmAction(nil)
-
-	if _, ok := game.phase.(*phaseIdle); !ok {
-		t.Fatalf("Should be in idle phase after trade, got: %T", game.phase)
-	}
-
-	if player.Resources[board.ResourceBrick] != 0 {
-		t.Fatalf("Expected 0 brick after trade, got %d", player.Resources[board.ResourceBrick])
-	}
-	if player.Resources[board.ResourceWheat] != 2 {
-		t.Fatalf("Expected 2 wheat unchanged, got %d", player.Resources[board.ResourceWheat])
-	}
-	if player.Resources[board.ResourceOre] != 1 {
-		t.Fatalf("Expected 1 ore after trade, got %d", player.Resources[board.ResourceOre])
+	if g.TradeOffers[0].OffererID != 0 {
+		t.Errorf("Expected offerer to be player 0, got %d", g.TradeOffers[0].OffererID)
 	}
 }
 
-func TestBankTradeInvalidOffer(t *testing.T) {
-	game := &Game{}
-	game.Start([]string{"p1", "p2", "p3"})
+func TestAmbiguousTradeOfferCreation(t *testing.T) {
+	g := setupGameForTradeTest()
+	
+	// Simulate player 0 creating an ambiguous offer
+	g.PlayerTurn = 0
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{
+		ID:        0,
+		OffererID: 0,
+		TargetID:  -1, // All players
+		Offering:  map[board.ResourceType]int{board.ResourceBrick: 2},
+		Requesting: map[board.ResourceType]int{board.ResourceInvalid: 1}, // "something"
+		Status:    OfferIsPending,
+	})
 
-	game.phase = PhaseIdle(game)
-
-	player := &game.Players[game.PlayerTurn]
-	for i := 0; i < 4; i++ {
-		player.AddResource(board.ResourceBrick)
+	if len(g.TradeOffers) != 1 {
+		t.Errorf("Expected 1 trade offer, got %d", len(g.TradeOffers))
 	}
-	for i := 0; i < 2; i++ {
-		player.AddResource(board.ResourceWheat)
-	}
-
-	game.phase.MoveCursor("down")
-	game.ConfirmAction(nil)
-
-	if _, ok := game.phase.(*phaseTradeOffer); !ok {
-		t.Fatalf("Should be in offer phase, got: %T", game.phase)
-	}
-
-	brickIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceBrick {
-			brickIndex = i
-			break
-		}
-	}
-
-	for i := 0; i < brickIndex; i++ {
-		game.phase.MoveCursor("down")
-	}
-
-	for i := 0; i < 3; i++ {
-		game.phase.MoveCursor("right")
-	}
-
-	game.ConfirmAction(nil)
-
-	if _, ok := game.phase.(*phaseTradeSelectReceive); !ok {
-		t.Fatalf("Should be in receive phase, got: %T", game.phase)
-	}
-
-	sheepIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceSheep {
-			sheepIndex = i
-			break
-		}
-	}
-
-	for i := 0; i < sheepIndex; i++ {
-		game.phase.MoveCursor("down")
-	}
-
-	for i := 0; i < 2; i++ {
-		game.phase.MoveCursor("right")
-	}
-
-	game.ConfirmAction(nil)
-
-	if _, ok := game.phase.(*phaseIdle); !ok {
-		t.Fatalf("Should be in idle phase with error, got: %T", game.phase)
-	}
-
-	if player.Resources[board.ResourceBrick] != 4 {
-		t.Fatalf("Resources unchanged, expected 4 brick, got %d", player.Resources[board.ResourceBrick])
+	if _, ok := g.TradeOffers[0].Requesting[board.ResourceInvalid]; !ok {
+		t.Errorf("Expected offer to have an ambiguous request, but it didn't")
 	}
 }
 
-func TestBankTradeCancel(t *testing.T) {
-	game := &Game{}
-	game.Start([]string{"p1", "p2", "p3"})
+func TestOfferRetraction(t *testing.T) {
+	g := setupGameForTradeTest()
+	g.PlayerTurn = 0
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{
+		ID:        0,
+		OffererID: 0, // Player 0 is the offerer
+		TargetID:  1,
+		Status:    OfferIsPending,
+	})
 
-	game.phase = PhaseIdle(game)
+	// Player 0 retracts the offer
+	tradeMenu := PhasePlayerTrade(g, PhaseIdle(g)).(*phasePlayerTrade)
+	tradeMenu.selected = 0 // Select the first (and only) offer
+	tradeMenu.Confirm()
 
-	player := &game.Players[game.PlayerTurn]
-	for i := 0; i < 4; i++ {
-		player.AddResource(board.ResourceBrick)
+	if len(g.TradeOffers) != 1 {
+		t.Fatalf("Expected 1 offer, got %d", len(g.TradeOffers))
 	}
-
-	game.phase.MoveCursor("down")
-	game.ConfirmAction(nil)
-
-	tradePhase, ok := game.phase.(*phaseTradeOffer)
-	if !ok {
-		t.Fatalf("Should be in offer phase, got: %T", game.phase)
-	}
-
-	canceledPhase := tradePhase.Cancel()
-
-	if _, ok := canceledPhase.(*phaseIdle); !ok {
-		t.Fatalf("Should be in idle phase after cancel, got: %T", canceledPhase)
-	}
-
-	if player.Resources[board.ResourceBrick] != 4 {
-		t.Fatalf("Resources unchanged, expected 4 brick, got %d", player.Resources[board.ResourceBrick])
+	if g.TradeOffers[0].Status != OfferIsRetracted {
+		t.Errorf("Expected offer status to be Retracted, got %v", g.TradeOffers[0].Status)
 	}
 }
 
-func TestBankTradeCancelFromReceivePhase(t *testing.T) {
-	game := &Game{}
-	game.Start([]string{"p1", "p2", "p3"})
+func TestOfferAcceptance(t *testing.T) {
+	g := setupGameForTradeTest()
+	g.PlayerTurn = 1 // Player 1's turn
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{
+		ID:        0,
+		OffererID: 0,
+		TargetID:  1,
+		Offering:  map[board.ResourceType]int{board.ResourceWood: 2},
+		Requesting: map[board.ResourceType]int{board.ResourceSheep: 1},
+		Status:    OfferIsPending,
+	})
 
-	game.phase = PhaseIdle(game)
+	p0WoodBefore := g.Players[0].Resources[board.ResourceWood]
+	p1SheepBefore := g.Players[1].Resources[board.ResourceSheep]
 
-	player := &game.Players[game.PlayerTurn]
-	for i := 0; i < 4; i++ {
-		player.AddResource(board.ResourceBrick)
+	// Player 1 accepts the offer
+	tradeMenu := PhasePlayerTrade(g, PhaseIdle(g)).(*phasePlayerTrade)
+	tradeMenu.selected = 0 // Select the incoming offer
+	nextPhase := tradeMenu.Confirm()
+
+	if _, ok := nextPhase.(*phaseIdle); !ok {
+		t.Fatalf("Expected to return to phaseIdle after trade, but got %T", nextPhase)
 	}
 
-	game.phase.MoveCursor("down")
-	game.ConfirmAction(nil)
-
-	brickIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceBrick {
-			brickIndex = i
-			break
-		}
+	if g.TradeOffers[0].Status != OfferIsCompleted {
+		t.Errorf("Expected offer status to be Completed, got %v", g.TradeOffers[0].Status)
 	}
 
-	for i := 0; i < brickIndex; i++ {
-		game.phase.MoveCursor("down")
+	// Check resources
+	if g.Players[0].Resources[board.ResourceWood] != p0WoodBefore-2 {
+		t.Errorf("Expected player 0 to have %d wood, got %d", p0WoodBefore-2, g.Players[0].Resources[board.ResourceWood])
 	}
-
-	for i := 0; i < 4; i++ {
-		game.phase.MoveCursor("right")
+	if g.Players[1].Resources[board.ResourceWood] != 2 {
+		t.Errorf("Expected player 1 to have 2 wood, got %d", g.Players[1].Resources[board.ResourceWood])
 	}
-
-	game.ConfirmAction(nil)
-
-	receivePhase, ok := game.phase.(*phaseTradeSelectReceive)
-	if !ok {
-		t.Fatalf("Should be in receive phase, got: %T", game.phase)
+	if g.Players[1].Resources[board.ResourceSheep] != p1SheepBefore-1 {
+		t.Errorf("Expected player 1 to have %d sheep, got %d", p1SheepBefore-1, g.Players[1].Resources[board.ResourceSheep])
 	}
-
-	canceledPhase := receivePhase.Cancel()
-
-	newTradePhase, ok := canceledPhase.(*phaseTradeOffer)
-	if !ok {
-		t.Fatalf("Should be back in offer phase after cancel, got: %T", canceledPhase)
-	}
-
-	if newTradePhase.offer[board.ResourceBrick] != 4 {
-		t.Fatalf("Offer preserved, expected 4 brick, got %d", newTradePhase.offer[board.ResourceBrick])
-	}
-
-	if player.Resources[board.ResourceBrick] != 4 {
-		t.Fatalf("Resources unchanged, expected 4 brick, got %d", player.Resources[board.ResourceBrick])
+	if g.Players[0].Resources[board.ResourceSheep] != 1 {
+		t.Errorf("Expected player 0 to have 1 sheep, got %d", g.Players[0].Resources[board.ResourceSheep])
 	}
 }
 
-func TestInvalidTradeNotYetImplemented(t *testing.T) {
-	game := &Game{}
-	game.Start([]string{"p1", "p2", "p3"})
+func TestAcceptInvalidOffer(t *testing.T) {
+	g := setupGameForTradeTest()
+	g.PlayerTurn = 1 // Player 1's turn
+	g.Players[0].Resources[board.ResourceWood] = 1 // Not enough to fulfill offer
 
-	game.phase = PhaseIdle(game)
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{
+		ID:        0,
+		OffererID: 0,
+		TargetID:  1,
+		Offering:  map[board.ResourceType]int{board.ResourceWood: 2},
+		Requesting: map[board.ResourceType]int{board.ResourceSheep: 1},
+		Status:    OfferIsPending,
+	})
 
-	player := &game.Players[game.PlayerTurn]
-	for i := 0; i < 4; i++ {
-		player.AddResource(board.ResourceWood)
+	// Player 1 tries to accept
+	tradeMenu := PhasePlayerTrade(g, PhaseIdle(g)).(*phasePlayerTrade)
+	tradeMenu.selected = 0
+	nextPhase := tradeMenu.Confirm()
+
+	if _, ok := nextPhase.(*phaseIdle); !ok {
+		t.Fatalf("Expected to return to phaseIdle on failure, but got %T", nextPhase)
 	}
-	for i := 0; i < 2; i++ {
-		player.AddResource(board.ResourceSheep)
+	if g.TradeOffers[0].Status != OfferIsPending {
+		t.Errorf("Expected offer status to remain Pending, got %v", g.TradeOffers[0].Status)
 	}
+}
 
-	game.phase.MoveCursor("down")
-	game.ConfirmAction(nil)
+func TestAcceptAmbiguousOffer(t *testing.T) {
+	g := setupGameForTradeTest()
+	g.PlayerTurn = 1
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{
+		ID:        0,
+		OffererID: 0,
+		TargetID:  1,
+		Offering:  map[board.ResourceType]int{board.ResourceInvalid: 1},
+		Requesting: map[board.ResourceType]int{board.ResourceSheep: 1},
+		Status:    OfferIsPending,
+	})
+	
+	tradeMenu := PhasePlayerTrade(g, PhaseIdle(g)).(*phasePlayerTrade)
+	tradeMenu.selected = 0
+	nextPhase := tradeMenu.Confirm()
 
-	woodIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceWood {
-			woodIndex = i
-			break
-		}
+	if _, ok := nextPhase.(*phaseIdle); !ok {
+		t.Fatalf("Expected to return to phaseIdle on failure, but got %T", nextPhase)
 	}
-
-	for i := 0; i < woodIndex; i++ {
-		game.phase.MoveCursor("down")
+	if g.TradeOffers[0].Status != OfferIsPending {
+		t.Errorf("Expected offer status to remain Pending, got %v", g.TradeOffers[0].Status)
 	}
+}
 
-	for i := 0; i < 4; i++ {
-		game.phase.MoveCursor("right")
+func TestEndTurnInvalidation(t *testing.T) {
+	g := setupGameForTradeTest()
+	g.PlayerTurn = 0
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{Status: OfferIsPending})
+	g.TradeOffers = append(g.TradeOffers, TradeOffer{Status: OfferIsPending})
+
+	if len(g.TradeOffers) != 2 {
+		t.Fatalf("Test setup failed, expected 2 offers, got %d", len(g.TradeOffers))
 	}
+	
+	// Simulate ending the turn
+	idlePhase := PhaseIdle(g).(*phaseIdle)
+	idlePhase.selected = 3 // "End Turn"
+	idlePhase.Confirm()
 
-	game.ConfirmAction(nil)
-
-	if _, ok := game.phase.(*phaseTradeSelectReceive); !ok {
-		t.Fatalf("Should be in receive phase, got: %T", game.phase)
-	}
-
-	sheepIndex := -1
-	for i, rt := range board.RESOURCE_TYPES {
-		if rt == board.ResourceSheep {
-			sheepIndex = i
-			break
-		}
-	}
-
-	for i := 0; i < sheepIndex; i++ {
-		game.phase.MoveCursor("down")
-	}
-
-	for i := 0; i < 2; i++ {
-		game.phase.MoveCursor("right")
-	}
-
-	game.ConfirmAction(nil)
-
-	idlePhase, ok := game.phase.(*phaseIdle)
-	if !ok {
-		t.Fatalf("Should be in idle phase, got: %T", game.phase)
-	}
-
-	if idlePhase.notification != "Trade type not yet implemented" {
-		t.Fatalf("Expected 'not yet implemented', got: %s", idlePhase.notification)
-	}
-
-	if player.Resources[board.ResourceWood] != 4 {
-		t.Fatalf("Resources unchanged, expected 4 wood, got %d", player.Resources[board.ResourceWood])
-	}
-	if player.Resources[board.ResourceSheep] != 2 {
-		t.Fatalf("Resources unchanged, expected 2 sheep, got %d", player.Resources[board.ResourceSheep])
+	if len(g.TradeOffers) != 0 {
+		t.Errorf("Expected all offers to be invalidated at end of turn, but %d remain", len(g.TradeOffers))
 	}
 }

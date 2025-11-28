@@ -119,10 +119,11 @@ func (p *phaseIdle) Confirm() Phase {
 	case 0: // Build
 		return PhaseBuilding(p.game, p)
 	case 1: // Trade
-		return PhaseTradeOffer(p.game)
+		return PhaseTradeMenu(p.game, p)
 	case 2: // Play Development Card
 		return PhasePlayDevelopmentCard(p.game, p)
 	case 3: // End Turn
+		p.game.TradeOffers = nil // Invalidate all offers at the end of the turn
 		p.game.PlayerTurn++
 		p.game.PlayerTurn %= len(p.game.Players)
 		nextPlayer := &p.game.Players[p.game.PlayerTurn]
