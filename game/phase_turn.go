@@ -107,8 +107,14 @@ func PhaseIdle(game *Game) Phase {
 func PhaseIdleWithNotification(game *Game, notification string) Phase {
 	return &phaseIdle{
 		phaseWithOptions: phaseWithOptions{
-			game:    game,
-			options: []string{"Build", "Trade", "Play Development Card", "End Turn"},
+			game: game,
+			options: []string{
+				"Build",
+				"Make Trade Offer",
+				"Check Trade Offers",
+				"Play Development Card",
+				"End Turn",
+			},
 		},
 		notification: notification,
 	}
@@ -118,11 +124,13 @@ func (p *phaseIdle) Confirm() Phase {
 	switch p.selected {
 	case 0: // Build
 		return PhaseBuilding(p.game, p)
-	case 1: // Trade
+	case 1: // Make Trade Offer
 		return PhaseTradeOffer(p.game)
-	case 2: // Play Development Card
+	case 2: // Check Trade Offers
+		return PhaseTradePool(p.game)
+	case 3: // Play Development Card
 		return PhasePlayDevelopmentCard(p.game, p)
-	case 3: // End Turn
+	case 4: // End Turn
 		p.game.PlayerTurn++
 		p.game.PlayerTurn %= len(p.game.Players)
 		nextPlayer := &p.game.Players[p.game.PlayerTurn]
