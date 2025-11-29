@@ -32,7 +32,7 @@ func TestBuildingPhase(t *testing.T) {
 			game.ConfirmAction(nil)
 		}
 	}
-	
+
 	// Should be in idle phase now
 	if _, ok := game.phase.(*phaseIdle); !ok {
 		t.Fatalf("Should be in idle phase after dice roll and robber handling, got: %T", game.phase)
@@ -77,13 +77,13 @@ func TestRoadPurchase(t *testing.T) {
 
 	// Select "Build" option (first option in idle phase)
 	game.ConfirmAction(nil)
-	
+
 	// Should be in building phase now
 	if _, ok := game.phase.(*phaseBuilding); !ok {
 		t.Fatalf("Should be in building phase after selecting Build, got: %T", game.phase)
 	}
 
-	// Select "Road" option (first option in building phase)  
+	// Select "Road" option (first option in building phase)
 	game.ConfirmAction(nil)
 
 	// Should be in road start phase
@@ -115,11 +115,11 @@ func TestRoadPurchase(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if !found {
 		t.Fatal("No valid neighbor found to complete road placement")
 	}
-	
+
 	// Confirm road end position to complete the road purchase
 	game.ConfirmAction(nil)
 

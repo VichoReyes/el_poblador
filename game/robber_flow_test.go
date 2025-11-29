@@ -163,16 +163,16 @@ func TestRobberCannotBePlacedOnSameTile(t *testing.T) {
 	if !ok {
 		t.Fatal("expected valid tile coordinate (2,3)")
 	}
-	
+
 	g.Board.PlaceRobber(initialTile)
-	
+
 	// Create a place robber phase and set cursor to the same tile
 	phase := PhasePlaceRobber(g, PhaseIdle(g)).(*phasePlaceRobber)
 	phase.tileCoord = initialTile
-	
+
 	// Try to confirm placement on same tile
 	newPhase := phase.Confirm()
-	
+
 	// Should still be in place robber phase with error message
 	if prPhase, ok := newPhase.(*phasePlaceRobber); !ok {
 		t.Fatalf("expected to stay in phasePlaceRobber, got %T", newPhase)
@@ -181,7 +181,7 @@ func TestRobberCannotBePlacedOnSameTile(t *testing.T) {
 	} else if prPhase.invalid != "Robber cannot be moved to the same tile it's already on" {
 		t.Fatalf("expected specific error message, got: %s", prPhase.invalid)
 	}
-	
+
 	// Verify robber didn't move
 	currentPos := g.Board.GetRobber()
 	if currentPos != initialTile {

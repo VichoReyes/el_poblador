@@ -107,7 +107,7 @@ func newPhaseRoadEnd(game *Game, startCross board.CrossCoord, previousPhase Phas
 		panic("No neighbors found for start cross")
 	}
 	cursorCross := neighbors[0]
-	
+
 	finalContinuation := continuation
 	if finalContinuation == nil {
 		finalContinuation = previousPhase
@@ -157,7 +157,7 @@ func (p *phaseRoadEnd) Confirm() Phase {
 			message = "Free road built!"
 		}
 	}
-	
+
 	if p.continuation == nil {
 		return PhaseIdleWithNotification(p.game, message)
 	} else {

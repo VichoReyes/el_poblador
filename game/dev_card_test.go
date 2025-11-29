@@ -151,8 +151,7 @@ func TestMonopolyCard(t *testing.T) {
 	// Give Alice a monopoly card
 	game.Players[0].HiddenDevCards = []DevCard{DevCardMonopoly}
 
-
-	// Give players some resources  
+	// Give players some resources
 	game.Players[0].AddResource(board.ResourceWheat) // Alice (current player)
 	game.Players[1].AddResource(board.ResourceWheat) // Bob
 	game.Players[1].AddResource(board.ResourceWheat) // Bob (2 total)
@@ -162,7 +161,7 @@ func TestMonopolyCard(t *testing.T) {
 	// Create development card phase and select monopoly
 	devCardPhase := PhasePlayDevelopmentCard(game, PhaseIdle(game))
 	devCardPhaseImpl := devCardPhase.(*phasePlayDevelopmentCard)
-	
+
 	devCardPhaseImpl.selected = 0 // First card is monopoly
 
 	// Execute dev card phase - should play monopoly card and transition to monopoly phase

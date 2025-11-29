@@ -117,7 +117,7 @@ func TestCheckGameEndReturnsNilWhenNoWinner(t *testing.T) {
 		t.Fatal("expected valid cross coordinate")
 	}
 	g.Board.SetSettlement(coord, 0)
-	
+
 	winner = g.CheckGameEnd()
 	if winner != nil {
 		t.Fatal("expected no winner with only 1 point")
@@ -170,7 +170,7 @@ func TestCountSettlementsAndCities(t *testing.T) {
 	coord1, _ := board.NewCrossCoord(2, 4)
 	coord2, _ := board.NewCrossCoord(2, 6)
 	coord3, _ := board.NewCrossCoord(3, 5)
-	
+
 	g.Board.SetSettlement(coord1, 0) // Player 0
 	g.Board.SetSettlement(coord2, 0) // Player 0
 	g.Board.SetSettlement(coord3, 1) // Player 1

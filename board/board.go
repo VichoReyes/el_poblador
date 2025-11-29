@@ -12,7 +12,7 @@ type Board struct {
 	// Roads and Settlements are indexed by player id
 	Roads        map[PathCoord]int
 	Settlements  map[CrossCoord]int
-	CityUpgrades map[CrossCoord]int           // tracks which settlements have been upgraded to cities
+	CityUpgrades map[CrossCoord]int             // tracks which settlements have been upgraded to cities
 	PlayerColors map[int]lipgloss.AdaptiveColor // player id to adaptive color for rendering
 	Robber       TileCoord
 }

@@ -88,7 +88,7 @@ func TestGetRobberReturnsCurrentPosition(t *testing.T) {
 	}
 
 	b.PlaceRobber(tile)
-	
+
 	// Verify GetRobber returns the same position
 	currentPos := b.GetRobber()
 	if currentPos != tile {
