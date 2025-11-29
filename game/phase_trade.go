@@ -277,3 +277,57 @@ func (p *phaseTradeSelectReceive) isBankTrade() (string, board.ResourceType, boa
 
 	return "unknown", 0, 0
 }
+
+type phaseTradePool struct {
+	phaseWithOptions
+	offersSnapshot []*TradeOffer
+}
+
+// Phase for accepting offers made by non-turn holders.
+// Remember only the holder has phases.
+func PhaseTradePool(g *Game) Phase {
+	snapshot := make([]*TradeOffer, len(g.TradeOffers))
+	// TODO: add to the options an "update"
+	// and maybe filter by non-retracted ones.
+	var options []string
+	for i := range g.TradeOffers {
+		off := &g.TradeOffers[i]
+		options = append(options, off.String())
+		snapshot = append(snapshot, off)
+	}
+	return &phaseTradePool{
+		phaseWithOptions: phaseWithOptions{
+			game:    g,
+			options: options,
+		},
+		offersSnapshot: snapshot,
+	}
+}
+
+func (p *phaseTradePool) Confirm() Phase {
+	// TODO
+	// selected := p.selectedOffer()
+	return p
+}
+
+func (p *phaseTradePool) selectedOffer() *TradeOffer {
+	return p.offersSnapshot[p.selected]
+}
+
+func (p *phaseTradePool) HelpText() string {
+	selected := p.selectedOffer()
+	switch selected.canTake(p.game.PlayerTurn, p.game) {
+	case CanTakeExcludedPlayer:
+		return "Offer not for you"
+	case CanTakeIsAmbiguous:
+		return "Make counter offer to this?"
+	case CanTakeNotEnoughResources:
+		return "You don't have the necessary resources"
+	case CanTakeObsolete:
+		return "Offer no longer available"
+	case CanTakeTrue:
+		return "Accept this offer?"
+	default:
+		return "This should be impossible"
+	}
+}

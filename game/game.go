@@ -41,6 +41,7 @@ type Game struct {
 	PlayerTurn  int
 	DevCardDeck []DevCard
 	ActionLog   []string
+	TradeOffers []TradeOffer
 	shouldQuit  bool
 }
 
