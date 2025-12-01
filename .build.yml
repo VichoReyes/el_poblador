@@ -1,0 +1,9 @@
+image: alpine/edge
+packages:
+  - go
+tasks:
+  - test: |
+      cd el_poblador
+      go test -v ./...
+      go run cmd/testboard/main.go
+      go run cmd/fullscreen/main.go
