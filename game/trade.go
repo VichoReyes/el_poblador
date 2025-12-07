@@ -1,6 +1,10 @@
 package game
 
-import "el_poblador/board"
+import (
+	"el_poblador/board"
+	"fmt"
+	"strings"
+)
 
 // OfferStatus represents the state of a trade offer.
 type OfferStatus int
@@ -44,7 +48,31 @@ type TradeOffer struct {
 }
 
 func (t *TradeOffer) String() string {
-	return "some trade offer"
+	var offeringParts []string
+	for _, rt := range board.RESOURCE_TYPES {
+		if amount, ok := t.Offering[rt]; ok && amount > 0 {
+			offeringParts = append(offeringParts, fmt.Sprintf("%d %s", amount, rt))
+		}
+	}
+
+	var requestingParts []string
+	for _, rt := range board.RESOURCE_TYPES {
+		if amount, ok := t.Requesting[rt]; ok && amount > 0 {
+			requestingParts = append(requestingParts, fmt.Sprintf("%d %s", amount, rt))
+		}
+	}
+
+	offering := "nothing"
+	if len(offeringParts) > 0 {
+		offering = strings.Join(offeringParts, ", ")
+	}
+
+	requesting := "nothing"
+	if len(requestingParts) > 0 {
+		requesting = strings.Join(requestingParts, ", ")
+	}
+
+	return fmt.Sprintf("%s for %s", offering, requesting)
 }
 
 func (t *TradeOffer) canTake(playerId int, g *Game) CanTakeOffer {
@@ -70,4 +98,37 @@ func (t *TradeOffer) canTake(playerId int, g *Game) CanTakeOffer {
 		}
 	}
 	return CanTakeTrue
+}
+
+// executeTrade performs the actual resource exchange between two players
+// and marks the offer as completed. Returns true if successful.
+func (t *TradeOffer) executeTrade(acceptorID int, g *Game) bool {
+	// Verify the trade can be executed
+	if t.canTake(acceptorID, g) != CanTakeTrue {
+		return false
+	}
+
+	offerer := &g.Players[t.OffererID]
+	acceptor := &g.Players[acceptorID]
+
+	// Transfer resources from offerer to acceptor (what offerer is giving)
+	for resource, amount := range t.Offering {
+		if amount > 0 {
+			offerer.Resources[resource] -= amount
+			acceptor.Resources[resource] += amount
+		}
+	}
+
+	// Transfer resources from acceptor to offerer (what offerer is requesting)
+	for resource, amount := range t.Requesting {
+		if amount > 0 {
+			acceptor.Resources[resource] -= amount
+			offerer.Resources[resource] += amount
+		}
+	}
+
+	// Mark the offer as completed
+	t.Status = OfferIsCompleted
+
+	return true
 }

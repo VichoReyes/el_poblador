@@ -322,3 +322,336 @@ func TestInvalidTradeNotYetImplemented(t *testing.T) {
 		t.Fatalf("Resources unchanged, expected 2 sheep, got %d", player.Resources[board.ResourceSheep])
 	}
 }
+
+// setupTestGame creates a minimal game for trade testing
+func setupTestGame() *Game {
+	g := &Game{}
+	g.Start([]string{"Alice", "Bob", "Charlie"})
+	return g
+}
+
+func TestTradeOffer_canTake_Success(t *testing.T) {
+	g := setupTestGame()
+
+	// Give player 0 resources to offer
+	g.Players[0].Resources[board.ResourceWood] = 2
+	g.Players[0].Resources[board.ResourceBrick] = 1
+
+	// Give player 1 resources to accept the trade
+	g.Players[1].Resources[board.ResourceWheat] = 1
+	g.Players[1].Resources[board.ResourceSheep] = 1
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1, // offer to anyone
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood:  2,
+			board.ResourceBrick: 1,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+			board.ResourceSheep: 1,
+		},
+		Status: OfferIsPending,
+	}
+
+	result := offer.canTake(1, g)
+	if result != CanTakeTrue {
+		t.Errorf("Expected CanTakeTrue, got %v", result)
+	}
+}
+
+func TestTradeOffer_canTake_NotEnoughResources(t *testing.T) {
+	g := setupTestGame()
+
+	// Player 1 doesn't have enough resources
+	g.Players[1].Resources[board.ResourceWheat] = 0
+	g.Players[1].Resources[board.ResourceSheep] = 1
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1,
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood: 2,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+			board.ResourceSheep: 1,
+		},
+		Status: OfferIsPending,
+	}
+
+	result := offer.canTake(1, g)
+	if result != CanTakeNotEnoughResources {
+		t.Errorf("Expected CanTakeNotEnoughResources, got %v", result)
+	}
+}
+
+func TestTradeOffer_canTake_ExcludedPlayer(t *testing.T) {
+	g := setupTestGame()
+
+	// Give player 1 resources but offer is targeted to player 2
+	g.Players[1].Resources[board.ResourceWheat] = 1
+	g.Players[1].Resources[board.ResourceSheep] = 1
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  2, // offer specifically to player 2
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood: 2,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+		},
+		Status: OfferIsPending,
+	}
+
+	result := offer.canTake(1, g) // player 1 tries to accept
+	if result != CanTakeExcludedPlayer {
+		t.Errorf("Expected CanTakeExcludedPlayer, got %v", result)
+	}
+
+	// But player 2 should be able to accept (if they have resources)
+	g.Players[2].Resources[board.ResourceWheat] = 1
+	result = offer.canTake(2, g)
+	if result != CanTakeTrue {
+		t.Errorf("Expected CanTakeTrue for targeted player, got %v", result)
+	}
+}
+
+func TestTradeOffer_canTake_Obsolete(t *testing.T) {
+	g := setupTestGame()
+
+	g.Players[1].Resources[board.ResourceWheat] = 1
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1,
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood: 1,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+		},
+		Status: OfferIsCompleted, // already completed
+	}
+
+	result := offer.canTake(1, g)
+	if result != CanTakeObsolete {
+		t.Errorf("Expected CanTakeObsolete, got %v", result)
+	}
+}
+
+func TestTradeOffer_canTake_Ambiguous(t *testing.T) {
+	g := setupTestGame()
+
+	g.Players[1].Resources[board.ResourceWheat] = 5
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1,
+		Offering: map[board.ResourceType]int{
+			board.ResourceInvalid: 1, // ambiguous offer
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+		},
+		Status: OfferIsPending,
+	}
+
+	result := offer.canTake(1, g)
+	if result != CanTakeIsAmbiguous {
+		t.Errorf("Expected CanTakeIsAmbiguous, got %v", result)
+	}
+}
+
+func TestTradeOffer_executeTrade_Success(t *testing.T) {
+	g := setupTestGame()
+
+	// Setup initial resources
+	g.Players[0].Resources[board.ResourceWood] = 3
+	g.Players[0].Resources[board.ResourceBrick] = 2
+	g.Players[0].Resources[board.ResourceWheat] = 0
+	g.Players[0].Resources[board.ResourceSheep] = 0
+
+	g.Players[1].Resources[board.ResourceWood] = 1
+	g.Players[1].Resources[board.ResourceBrick] = 0
+	g.Players[1].Resources[board.ResourceWheat] = 2
+	g.Players[1].Resources[board.ResourceSheep] = 3
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1,
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood:  2,
+			board.ResourceBrick: 1,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+			board.ResourceSheep: 2,
+		},
+		Status: OfferIsPending,
+	}
+
+	success := offer.executeTrade(1, g)
+	if !success {
+		t.Fatal("Trade execution failed")
+	}
+
+	// Check offerer (player 0) resources after trade
+	if g.Players[0].Resources[board.ResourceWood] != 1 { // 3 - 2 = 1
+		t.Errorf("Offerer wood: expected 1, got %d", g.Players[0].Resources[board.ResourceWood])
+	}
+	if g.Players[0].Resources[board.ResourceBrick] != 1 { // 2 - 1 = 1
+		t.Errorf("Offerer brick: expected 1, got %d", g.Players[0].Resources[board.ResourceBrick])
+	}
+	if g.Players[0].Resources[board.ResourceWheat] != 1 { // 0 + 1 = 1
+		t.Errorf("Offerer wheat: expected 1, got %d", g.Players[0].Resources[board.ResourceWheat])
+	}
+	if g.Players[0].Resources[board.ResourceSheep] != 2 { // 0 + 2 = 2
+		t.Errorf("Offerer sheep: expected 2, got %d", g.Players[0].Resources[board.ResourceSheep])
+	}
+
+	// Check acceptor (player 1) resources after trade
+	if g.Players[1].Resources[board.ResourceWood] != 3 { // 1 + 2 = 3
+		t.Errorf("Acceptor wood: expected 3, got %d", g.Players[1].Resources[board.ResourceWood])
+	}
+	if g.Players[1].Resources[board.ResourceBrick] != 1 { // 0 + 1 = 1
+		t.Errorf("Acceptor brick: expected 1, got %d", g.Players[1].Resources[board.ResourceBrick])
+	}
+	if g.Players[1].Resources[board.ResourceWheat] != 1 { // 2 - 1 = 1
+		t.Errorf("Acceptor wheat: expected 1, got %d", g.Players[1].Resources[board.ResourceWheat])
+	}
+	if g.Players[1].Resources[board.ResourceSheep] != 1 { // 3 - 2 = 1
+		t.Errorf("Acceptor sheep: expected 1, got %d", g.Players[1].Resources[board.ResourceSheep])
+	}
+
+	// Check offer status
+	if offer.Status != OfferIsCompleted {
+		t.Errorf("Expected offer status OfferIsCompleted, got %v", offer.Status)
+	}
+}
+
+func TestTradeOffer_executeTrade_Failure_NotEnoughResources(t *testing.T) {
+	g := setupTestGame()
+
+	// Player 0 has resources to offer
+	g.Players[0].Resources[board.ResourceWood] = 2
+
+	// Player 1 doesn't have enough resources to accept
+	g.Players[1].Resources[board.ResourceWheat] = 0
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1,
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood: 2,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+		},
+		Status: OfferIsPending,
+	}
+
+	success := offer.executeTrade(1, g)
+	if success {
+		t.Error("Trade should have failed due to insufficient resources")
+	}
+
+	// Verify resources didn't change
+	if g.Players[0].Resources[board.ResourceWood] != 2 {
+		t.Error("Offerer resources should not have changed")
+	}
+	if g.Players[1].Resources[board.ResourceWheat] != 0 {
+		t.Error("Acceptor resources should not have changed")
+	}
+
+	// Verify status didn't change
+	if offer.Status != OfferIsPending {
+		t.Error("Offer status should still be pending")
+	}
+}
+
+func TestTradeOffer_executeTrade_Failure_AlreadyCompleted(t *testing.T) {
+	g := setupTestGame()
+
+	g.Players[0].Resources[board.ResourceWood] = 2
+	g.Players[1].Resources[board.ResourceWheat] = 1
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  -1,
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood: 2,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+		},
+		Status: OfferIsCompleted,
+	}
+
+	success := offer.executeTrade(1, g)
+	if success {
+		t.Error("Trade should have failed because offer is already completed")
+	}
+
+	// Verify resources didn't change
+	if g.Players[0].Resources[board.ResourceWood] != 2 {
+		t.Error("Offerer resources should not have changed")
+	}
+	if g.Players[1].Resources[board.ResourceWheat] != 1 {
+		t.Error("Acceptor resources should not have changed")
+	}
+}
+
+func TestTradeOffer_executeTrade_TargetedOffer(t *testing.T) {
+	g := setupTestGame()
+
+	// Setup resources
+	g.Players[0].Resources[board.ResourceWood] = 3
+	g.Players[1].Resources[board.ResourceWheat] = 2
+	g.Players[2].Resources[board.ResourceWheat] = 2
+
+	offer := TradeOffer{
+		OffererID: 0,
+		TargetID:  2, // specifically to player 2
+		Offering: map[board.ResourceType]int{
+			board.ResourceWood: 2,
+		},
+		Requesting: map[board.ResourceType]int{
+			board.ResourceWheat: 1,
+		},
+		Status: OfferIsPending,
+	}
+
+	// Player 1 tries to accept (should fail)
+	success := offer.executeTrade(1, g)
+	if success {
+		t.Error("Player 1 should not be able to accept offer targeted to player 2")
+	}
+
+	// Player 2 accepts (should succeed)
+	success = offer.executeTrade(2, g)
+	if !success {
+		t.Fatal("Player 2 should be able to accept the targeted offer")
+	}
+
+	// Verify the trade happened between player 0 and player 2
+	if g.Players[0].Resources[board.ResourceWood] != 1 { // 3 - 2 = 1
+		t.Errorf("Offerer wood: expected 1, got %d", g.Players[0].Resources[board.ResourceWood])
+	}
+	if g.Players[0].Resources[board.ResourceWheat] != 1 { // 0 + 1 = 1
+		t.Errorf("Offerer wheat: expected 1, got %d", g.Players[0].Resources[board.ResourceWheat])
+	}
+	if g.Players[2].Resources[board.ResourceWood] != 2 { // 0 + 2 = 2
+		t.Errorf("Acceptor wood: expected 2, got %d", g.Players[2].Resources[board.ResourceWood])
+	}
+	if g.Players[2].Resources[board.ResourceWheat] != 1 { // 2 - 1 = 1
+		t.Errorf("Acceptor wheat: expected 1, got %d", g.Players[2].Resources[board.ResourceWheat])
+	}
+
+	// Player 1's resources should be unchanged
+	if g.Players[1].Resources[board.ResourceWheat] != 2 {
+		t.Error("Player 1 resources should not have changed")
+	}
+}

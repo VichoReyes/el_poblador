@@ -305,9 +305,36 @@ func PhaseTradePool(g *Game) Phase {
 }
 
 func (p *phaseTradePool) Confirm() Phase {
-	// TODO
-	// selected := p.selectedOffer()
-	return p
+	if len(p.offersSnapshot) == 0 {
+		return PhaseIdleWithNotification(p.game, "No trade offers available")
+	}
+
+	selected := p.selectedOffer()
+	canTake := selected.canTake(p.game.PlayerTurn, p.game)
+
+	switch canTake {
+	case CanTakeExcludedPlayer:
+		return PhaseIdleWithNotification(p.game, "This offer is not for you")
+	case CanTakeIsAmbiguous:
+		// Future: could open a counter-offer phase here
+		return PhaseIdleWithNotification(p.game, "Cannot accept ambiguous offers yet")
+	case CanTakeNotEnoughResources:
+		return PhaseIdleWithNotification(p.game, "You don't have the necessary resources")
+	case CanTakeObsolete:
+		return PhaseIdleWithNotification(p.game, "This offer is no longer available")
+	case CanTakeTrue:
+		// Execute the trade
+		if selected.executeTrade(p.game.PlayerTurn, p.game) {
+			offerer := &p.game.Players[selected.OffererID]
+			acceptor := &p.game.Players[p.game.PlayerTurn]
+			p.game.LogAction(fmt.Sprintf("%s traded %s with %s",
+				acceptor.RenderName(), selected.String(), offerer.RenderName()))
+			return PhaseIdleWithNotification(p.game, "Trade completed successfully!")
+		}
+		return PhaseIdleWithNotification(p.game, "Trade execution failed")
+	default:
+		return PhaseIdleWithNotification(p.game, "Unknown trade status")
+	}
 }
 
 func (p *phaseTradePool) selectedOffer() *TradeOffer {
