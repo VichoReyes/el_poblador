@@ -3,10 +3,6 @@
 ## Project Overview
 El Poblador is a Go implementation of the Catan board game, featuring a hexagonal board, turn-based gameplay, and various game phases.
 
-## Tasks
-Things to be done can be found in TASKS.md. As you complete tasks, remove them from this file. Emphasis on _remove_, not "put in a completed section".
-If the completion of a task uncoverered a new task to be added, add it. You may put some small guidelines to provide continuity.
-
 ## Project Structure
 - **`board/`** - Board representation, coordinates, rendering, and terrain
   - `board.go` - Core Board struct with tiles, roads, settlements, cities, and robber
@@ -25,7 +21,6 @@ If the completion of a task uncoverered a new task to be added, add it. You may 
 ## Key Files
 - **`.build.yml`** - Build manifest containing commands to verify the project works
 - **`main.go`** - Main entry point
-- **`go.mod`** - Go module dependencies
 
 ## Verification Commands
 To verify if things work after a change, run the commands in `.build.yml`:
@@ -65,7 +60,7 @@ go run cmd/fullscreen/main.go
 ### Game Phase System
 The game uses a phase-based architecture where all game states implement the `Phase` interface:
 - `Phase` - Base interface with `Confirm()`, `MoveCursor()`, `BoardCursor()`, `HelpText()`
-- `PhaseWithMenu` - Phases that show selection menus (extends Phase)
+- `PhaseWithMenu` - Phases that show selection menus (implements some Phase methods)
 - `PhaseCancelable` - Phases that can be cancelled (extends Phase)
 
 Key phases include:
@@ -81,12 +76,6 @@ Key phases include:
 - **CrossCoord** - Intersection points where settlements/cities are placed
 - **PathCoord** - Edges between crosses where roads are placed
 
-### Robber Mechanics
-- Stored as `TileCoord` in `Board.robber`
-- `PlaceRobber(coord)` moves robber and returns adjacent stealable player IDs
-- `GetRobber()` returns current robber position
-- **Rule**: Cannot place robber on the same tile it's already on (enforced in `phasePlaceRobber.Confirm()`)
-
 ### Resource Generation
 - `Board.GenerateResources(sum)` returns `map[int][]ResourceType` (player ID -> resources)
 - Tiles with robber are skipped during resource generation
@@ -94,15 +83,6 @@ Key phases include:
 
 ### Development Cards
 - Stored in `Player.hiddenDevCards` (playable) and `Player.playedDevCards`
-- Knight cards trigger robber placement phase
-- Road Building gives 2 free roads
-- Monopoly and Year of Plenty have dedicated phases
 
-## Package-Specific Context
-When working on specific packages, always check for markdown files in the package directory that may contain:
-- Design decisions and rationale
-- Implementation details
-- Coordinate systems and algorithms
-- Rendering approaches
-- Testing strategies
+# remember
 - avoid committing compiled binaries. before making a commit, check whether you need to add any to gitignore
