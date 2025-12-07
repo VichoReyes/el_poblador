@@ -49,6 +49,12 @@ type TradeOffer struct {
 
 func (t *TradeOffer) String() string {
 	var offeringParts []string
+
+	// Check for ambiguous resources first
+	if amount, ok := t.Offering[board.ResourceInvalid]; ok && amount > 0 {
+		offeringParts = append(offeringParts, fmt.Sprintf("%d of something", amount))
+	}
+
 	for _, rt := range board.RESOURCE_TYPES {
 		if amount, ok := t.Offering[rt]; ok && amount > 0 {
 			offeringParts = append(offeringParts, fmt.Sprintf("%d %s", amount, rt))
@@ -56,6 +62,12 @@ func (t *TradeOffer) String() string {
 	}
 
 	var requestingParts []string
+
+	// Check for ambiguous resources first
+	if amount, ok := t.Requesting[board.ResourceInvalid]; ok && amount > 0 {
+		requestingParts = append(requestingParts, fmt.Sprintf("%d of something", amount))
+	}
+
 	for _, rt := range board.RESOURCE_TYPES {
 		if amount, ok := t.Requesting[rt]; ok && amount > 0 {
 			requestingParts = append(requestingParts, fmt.Sprintf("%d %s", amount, rt))

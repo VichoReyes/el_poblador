@@ -330,6 +330,97 @@ func setupTestGame() *Game {
 	return g
 }
 
+func TestTradeOffer_String(t *testing.T) {
+	tests := []struct {
+		name     string
+		offer    TradeOffer
+		expected string
+	}{
+		{
+			name: "simple trade",
+			offer: TradeOffer{
+				Offering: map[board.ResourceType]int{
+					board.ResourceWood: 2,
+				},
+				Requesting: map[board.ResourceType]int{
+					board.ResourceWheat: 1,
+				},
+			},
+			expected: "2 Wood for 1 Wheat",
+		},
+		{
+			name: "multiple resources",
+			offer: TradeOffer{
+				Offering: map[board.ResourceType]int{
+					board.ResourceWood:  2,
+					board.ResourceBrick: 1,
+				},
+				Requesting: map[board.ResourceType]int{
+					board.ResourceWheat: 1,
+					board.ResourceSheep: 2,
+				},
+			},
+			// Note: order is Ore, Wood, Wool, Wheat, Brick
+			expected: "2 Wood, 1 Brick for 2 Wool, 1 Wheat",
+		},
+		{
+			name: "ambiguous offering",
+			offer: TradeOffer{
+				Offering: map[board.ResourceType]int{
+					board.ResourceInvalid: 1,
+				},
+				Requesting: map[board.ResourceType]int{
+					board.ResourceWheat: 1,
+				},
+			},
+			expected: "1 of something for 1 Wheat",
+		},
+		{
+			name: "ambiguous requesting",
+			offer: TradeOffer{
+				Offering: map[board.ResourceType]int{
+					board.ResourceWood: 2,
+				},
+				Requesting: map[board.ResourceType]int{
+					board.ResourceInvalid: 1,
+				},
+			},
+			expected: "2 Wood for 1 of something",
+		},
+		{
+			name: "empty offer",
+			offer: TradeOffer{
+				Offering:   map[board.ResourceType]int{},
+				Requesting: map[board.ResourceType]int{},
+			},
+			expected: "nothing for nothing",
+		},
+		{
+			name: "mixed ambiguous and specific",
+			offer: TradeOffer{
+				Offering: map[board.ResourceType]int{
+					board.ResourceInvalid: 2,
+					board.ResourceWood:    1,
+				},
+				Requesting: map[board.ResourceType]int{
+					board.ResourceWheat:   1,
+					board.ResourceInvalid: 1,
+				},
+			},
+			expected: "2 of something, 1 Wood for 1 of something, 1 Wheat",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.offer.String()
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
 func TestTradeOffer_canTake_Success(t *testing.T) {
 	g := setupTestGame()
 
