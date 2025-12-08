@@ -245,7 +245,18 @@ func (p *phaseTradeSelectReceive) validateAndExecuteTrade() Phase {
 			fmt.Sprintf("Traded 4 %s for 1 %s!", offeredResource, requestedResource))
 	}
 
-	return PhaseIdleWithNotification(p.game, "Trade type not yet implemented")
+	// Player-to-player trade: create a broadcast offer (TargetID = -1)
+	if p.game.AddTradeOffer(p.game.PlayerTurn, -1, p.offer, p.request) {
+		offer := TradeOffer{
+			Offering:   p.offer,
+			Requesting: p.request,
+		}
+		p.game.LogAction(fmt.Sprintf("%s offered to trade %s",
+			player.RenderName(), offer.String()))
+		return PhaseIdleWithNotification(p.game, "Trade offer created!")
+	}
+
+	return PhaseIdleWithNotification(p.game, "Not enough resources to make this offer!")
 }
 
 func (p *phaseTradeSelectReceive) isBankTrade() (string, board.ResourceType, board.ResourceType) {

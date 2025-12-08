@@ -249,7 +249,7 @@ func TestBankTradeCancelFromReceivePhase(t *testing.T) {
 	}
 }
 
-func TestInvalidTradeNotYetImplemented(t *testing.T) {
+func TestPlayerToPlayerTradeCreation(t *testing.T) {
 	game := &Game{}
 	game.Start([]string{"p1", "p2", "p3"})
 
@@ -311,10 +311,24 @@ func TestInvalidTradeNotYetImplemented(t *testing.T) {
 		t.Fatalf("Should be in idle phase, got: %T", game.phase)
 	}
 
-	if idlePhase.notification != "Trade type not yet implemented" {
-		t.Fatalf("Expected 'not yet implemented', got: %s", idlePhase.notification)
+	if idlePhase.notification != "Trade offer created!" {
+		t.Fatalf("Expected 'Trade offer created!', got: %s", idlePhase.notification)
 	}
 
+	// Verify trade offer was created
+	if len(game.TradeOffers) != 1 {
+		t.Fatalf("Expected 1 trade offer, got %d", len(game.TradeOffers))
+	}
+
+	offer := game.TradeOffers[0]
+	if offer.Offering[board.ResourceWood] != 4 {
+		t.Errorf("Expected offering 4 Wood, got %d", offer.Offering[board.ResourceWood])
+	}
+	if offer.Requesting[board.ResourceSheep] != 2 {
+		t.Errorf("Expected requesting 2 Wool, got %d", offer.Requesting[board.ResourceSheep])
+	}
+
+	// Resources should remain unchanged until trade is executed
 	if player.Resources[board.ResourceWood] != 4 {
 		t.Fatalf("Resources unchanged, expected 4 wood, got %d", player.Resources[board.ResourceWood])
 	}
@@ -744,5 +758,203 @@ func TestTradeOffer_executeTrade_TargetedOffer(t *testing.T) {
 	// Player 1's resources should be unchanged
 	if g.Players[1].Resources[board.ResourceWheat] != 2 {
 		t.Error("Player 1 resources should not have changed")
+	}
+}
+
+func TestGame_AddTradeOffer_Success(t *testing.T) {
+	g := setupTestGame()
+
+	// Give player 0 resources to offer
+	g.Players[0].Resources[board.ResourceWood] = 3
+	g.Players[0].Resources[board.ResourceBrick] = 2
+
+	offering := map[board.ResourceType]int{
+		board.ResourceWood:  2,
+		board.ResourceBrick: 1,
+	}
+	requesting := map[board.ResourceType]int{
+		board.ResourceWheat: 1,
+		board.ResourceSheep: 1,
+	}
+
+	success := g.AddTradeOffer(0, -1, offering, requesting)
+	if !success {
+		t.Fatal("AddTradeOffer should have succeeded")
+	}
+
+	// Verify the offer was added
+	if len(g.TradeOffers) != 1 {
+		t.Fatalf("Expected 1 trade offer, got %d", len(g.TradeOffers))
+	}
+
+	offer := g.TradeOffers[0]
+	if offer.OffererID != 0 {
+		t.Errorf("Expected OffererID 0, got %d", offer.OffererID)
+	}
+	if offer.TargetID != -1 {
+		t.Errorf("Expected TargetID -1, got %d", offer.TargetID)
+	}
+	if offer.Status != OfferIsPending {
+		t.Errorf("Expected status OfferIsPending, got %v", offer.Status)
+	}
+	if offer.Offering[board.ResourceWood] != 2 {
+		t.Errorf("Expected offering 2 Wood, got %d", offer.Offering[board.ResourceWood])
+	}
+	if offer.Requesting[board.ResourceWheat] != 1 {
+		t.Errorf("Expected requesting 1 Wheat, got %d", offer.Requesting[board.ResourceWheat])
+	}
+}
+
+func TestGame_AddTradeOffer_InsufficientResources(t *testing.T) {
+	g := setupTestGame()
+
+	// Player 0 doesn't have enough resources
+	g.Players[0].Resources[board.ResourceWood] = 1
+
+	offering := map[board.ResourceType]int{
+		board.ResourceWood: 2,
+	}
+	requesting := map[board.ResourceType]int{
+		board.ResourceWheat: 1,
+	}
+
+	success := g.AddTradeOffer(0, -1, offering, requesting)
+	if success {
+		t.Error("AddTradeOffer should have failed due to insufficient resources")
+	}
+
+	// Verify no offer was added
+	if len(g.TradeOffers) != 0 {
+		t.Errorf("Expected 0 trade offers, got %d", len(g.TradeOffers))
+	}
+}
+
+func TestGame_AddTradeOffer_MultipleOffers(t *testing.T) {
+	g := setupTestGame()
+
+	// Give players resources
+	g.Players[0].Resources[board.ResourceWood] = 5
+	g.Players[1].Resources[board.ResourceBrick] = 3
+
+	// Player 0 creates an offer
+	g.AddTradeOffer(0, -1,
+		map[board.ResourceType]int{board.ResourceWood: 2},
+		map[board.ResourceType]int{board.ResourceWheat: 1})
+
+	// Player 1 creates an offer
+	g.AddTradeOffer(1, -1,
+		map[board.ResourceType]int{board.ResourceBrick: 1},
+		map[board.ResourceType]int{board.ResourceOre: 1})
+
+	if len(g.TradeOffers) != 2 {
+		t.Fatalf("Expected 2 trade offers, got %d", len(g.TradeOffers))
+	}
+
+	if g.TradeOffers[0].OffererID != 0 {
+		t.Errorf("First offer should be from player 0, got player %d", g.TradeOffers[0].OffererID)
+	}
+	if g.TradeOffers[1].OffererID != 1 {
+		t.Errorf("Second offer should be from player 1, got player %d", g.TradeOffers[1].OffererID)
+	}
+}
+
+func TestPlayerToPlayerTradeFlow(t *testing.T) {
+	game := &Game{}
+	game.Start([]string{"p1", "p2", "p3"})
+
+	game.phase = PhaseIdle(game)
+
+	// Give player 0 resources
+	player := &game.Players[game.PlayerTurn]
+	player.Resources[board.ResourceWood] = 3
+	player.Resources[board.ResourceBrick] = 2
+
+	// Navigate to trade phase
+	game.phase.MoveCursor("down")
+	game.ConfirmAction(nil)
+
+	tradePhase, ok := game.phase.(*phaseTradeOffer)
+	if !ok {
+		t.Fatalf("Should be in trade offer phase, got: %T", game.phase)
+	}
+
+	// Select Wood
+	woodIndex := -1
+	for i, rt := range board.RESOURCE_TYPES {
+		if rt == board.ResourceWood {
+			woodIndex = i
+			break
+		}
+	}
+	for i := 0; i < woodIndex; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	// Offer 2 wood
+	for i := 0; i < 2; i++ {
+		game.phase.MoveCursor("right")
+	}
+
+	if tradePhase.offer[board.ResourceWood] != 2 {
+		t.Fatalf("Expected offer of 2 wood, got %d", tradePhase.offer[board.ResourceWood])
+	}
+
+	// Confirm offer
+	game.ConfirmAction(nil)
+
+	receivePhase, ok := game.phase.(*phaseTradeSelectReceive)
+	if !ok {
+		t.Fatalf("Should be in receive phase, got: %T", game.phase)
+	}
+
+	// Select Wheat
+	wheatIndex := -1
+	for i, rt := range board.RESOURCE_TYPES {
+		if rt == board.ResourceWheat {
+			wheatIndex = i
+			break
+		}
+	}
+	for i := 0; i < wheatIndex; i++ {
+		game.phase.MoveCursor("down")
+	}
+
+	// Request 1 wheat
+	game.phase.MoveCursor("right")
+
+	if receivePhase.request[board.ResourceWheat] != 1 {
+		t.Fatalf("Expected request of 1 wheat, got %d", receivePhase.request[board.ResourceWheat])
+	}
+
+	// Confirm trade (should create offer, not execute bank trade)
+	game.ConfirmAction(nil)
+
+	// Should be back in idle phase
+	if _, ok := game.phase.(*phaseIdle); !ok {
+		t.Fatalf("Should be in idle phase after creating offer, got: %T", game.phase)
+	}
+
+	// Verify trade offer was created
+	if len(game.TradeOffers) != 1 {
+		t.Fatalf("Expected 1 trade offer, got %d", len(game.TradeOffers))
+	}
+
+	offer := game.TradeOffers[0]
+	if offer.OffererID != 0 {
+		t.Errorf("Expected OffererID 0, got %d", offer.OffererID)
+	}
+	if offer.Offering[board.ResourceWood] != 2 {
+		t.Errorf("Expected offering 2 Wood, got %d", offer.Offering[board.ResourceWood])
+	}
+	if offer.Requesting[board.ResourceWheat] != 1 {
+		t.Errorf("Expected requesting 1 Wheat, got %d", offer.Requesting[board.ResourceWheat])
+	}
+	if offer.Status != OfferIsPending {
+		t.Errorf("Expected status OfferIsPending, got %v", offer.Status)
+	}
+
+	// Verify player still has resources (not consumed until trade executes)
+	if player.Resources[board.ResourceWood] != 3 {
+		t.Errorf("Player should still have 3 wood, got %d", player.Resources[board.ResourceWood])
 	}
 }

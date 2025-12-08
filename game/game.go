@@ -277,3 +277,22 @@ func (g *Game) ShouldQuit() bool {
 func (g *Game) SetPhase(phase Phase) {
 	g.phase = phase
 }
+
+// AddTradeOffer creates and adds a new trade offer to the game
+func (g *Game) AddTradeOffer(offererID, targetID int, offering, requesting map[board.ResourceType]int) bool {
+	offer := TradeOffer{
+		OffererID:  offererID,
+		TargetID:   targetID,
+		Offering:   offering,
+		Requesting: requesting,
+		Status:     OfferIsPending,
+	}
+
+	// Verify the offerer has the resources they're offering
+	if !offer.canOffer(g) {
+		return false
+	}
+
+	g.TradeOffers = append(g.TradeOffers, offer)
+	return true
+}

@@ -144,3 +144,14 @@ func (t *TradeOffer) executeTrade(acceptorID int, g *Game) bool {
 
 	return true
 }
+
+// canOffer checks if the offerer has the resources they're offering
+func (t *TradeOffer) canOffer(g *Game) bool {
+	offerer := &g.Players[t.OffererID]
+	for resource, amount := range t.Offering {
+		if offerer.Resources[resource] < amount {
+			return false
+		}
+	}
+	return true
+}
